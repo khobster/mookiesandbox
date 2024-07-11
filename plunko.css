@@ -24,6 +24,7 @@
     cursor: pointer;
     margin-left: 5px;
     font-size: 14px;
+    font-family: 'Archivo Narrow', sans-serif; /* Specify the font-family */
     background: pink;
     border-radius: 50%;
     width: 24px;
@@ -41,13 +42,15 @@
     text-align: center;
     border-radius: 6px;
     padding: 5px;
-    position: absolute;
+    position: fixed; /* Change to fixed for positioning at the bottom */
     z-index: 1;
-    top: -5px;
-    left: 105%;
+    bottom: 10px; /* Position at the bottom of the screen */
+    left: 50%;
+    transform: translateX(-50%);
     opacity: 0;
     transition: opacity 0.3s, visibility 0.3s;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'Archivo Narrow', sans-serif; /* Specify the font-family */
 }
 
 .tooltip:hover .tooltiptext,
@@ -60,7 +63,7 @@
     .tooltip .tooltiptext {
         left: 50%;
         transform: translateX(-50%);
-        top: 30px;
+        bottom: 20px;
     }
 }
 
@@ -88,7 +91,7 @@
 }
 
 #submitBtn {
-    background-color: pink;
+    background-color: #00b0a9; /* Update button color */
     color: #f8f8f8;
     text-transform: uppercase;
     border: none;
@@ -103,7 +106,7 @@
 }
 
 #submitBtn:hover {
-    background-color: #ff69b4;
+    background-color: #008f8a; /* Slightly darker shade for hover */
 }
 
 #result {
@@ -269,7 +272,7 @@
 /* Added CSS for the logo */
 .logo {
     width: 100%; /* Adjust the width as needed */
-    max-width: 1900px; /* Adjust the max width as needed */
+    max-width: 300px; /* Adjust the max width as needed */
     height: auto; /* Maintain aspect ratio */
     margin: 0 auto; /* Center the logo */
 }
