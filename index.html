@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Archivo+Narrow:wght@400;700&family=Fredoka+One&family=Lilita+One&display=swap" rel="stylesheet">
+   <meta charset="UTF-8">
+   <title>PLUNKO</title>
+   <link rel="stylesheet" type="text/css" href="plunko.css">
+   <meta property="og:image" content="https://vanillafrosting.agency/wp-content/uploads/2023/12/LETS-PLAY-PLUNKO-EXCITING-OPEN-GRAPH.png">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="icon" href="basketballfavicon.png" type="image/png">
+</head>
+<body>
+   <div id="app">
+      <div class="title-container">
+         <h1>Let's play PLUNK🏀.<span class="tooltip">?<span class="tooltiptext">3 ✅ in a row is a PLUNK🏀!<br>Think the player didn’t go to college?<br>Enter “no college”<br>🪣 score is how difficult your consecutive streak is</span></span></h1>
+      </div>
+      <p id="playerQuestion">Where did <span id="playerName"></span> go to college?</p>
+      <input id="collegeGuess" type="text" placeholder="Enter college name" />
+      <div id="suggestions"></div>
+      <button id="submitBtn">Let's see if you're right.</button>
+      <div id="result"></div>
+      <div id="snippetMessage"></div>
+      <div id="shareSnippet"></div>
+      <div id="buttonContainer">
+         <button id="proofButton" style="background-color: red; color: white;">Get the 🧾</button>
+        <button id="copyButton">Copy the URL</button>
+        <button id="returnButton">Play again</button>
+      </div>
+      <div id="plunkosCounter">🪣 = <span id="plunkosCount">0</span></div>
+   </div>
+   <script src="plunko.js"></script>
+</body>
+</html>
