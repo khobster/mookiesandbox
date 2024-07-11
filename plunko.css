@@ -20,7 +20,10 @@
 
 .tooltip {
     display: inline-block;
-    position: relative;
+    position: fixed; /* Change to fixed for positioning at the bottom */
+    bottom: 20px; /* Position at the bottom of the screen */
+    left: 50%;
+    transform: translateX(-50%);
     cursor: pointer;
     margin-left: 5px;
     font-size: 14px;
@@ -42,9 +45,9 @@
     text-align: center;
     border-radius: 6px;
     padding: 5px;
-    position: fixed; /* Change to fixed for positioning at the bottom */
+    position: absolute;
     z-index: 1;
-    bottom: 10px; /* Position at the bottom of the screen */
+    bottom: 35px; /* Adjust the position relative to the question mark */
     left: 50%;
     transform: translateX(-50%);
     opacity: 0;
@@ -57,14 +60,6 @@
 .tooltip.active .tooltiptext {
     visibility: visible;
     opacity: 1;
-}
-
-@media only screen and (max-width: 600px) {
-    .tooltip .tooltiptext {
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 20px;
-    }
 }
 
 #playerQuestion {
@@ -91,7 +86,7 @@
 }
 
 #submitBtn {
-    background-color: #dd3742; /* Update button color */
+    background-color: #00b0a9; /* Update button color */
     color: #f8f8f8;
     text-transform: uppercase;
     border: none;
@@ -272,7 +267,7 @@
 /* Added CSS for the logo */
 .logo {
     width: 100%; /* Adjust the width as needed */
-    max-width: 1900px; /* Adjust the max width as needed */
+    max-width: 300px; /* Adjust the max width as needed */
     height: auto; /* Maintain aspect ratio */
     margin: 0 auto; /* Center the logo */
 }
