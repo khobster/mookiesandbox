@@ -25,16 +25,13 @@
     left: 50%;
     transform: translateX(-50%);
     cursor: pointer;
-    margin-left: 5px;
+    padding: 8px 16px; /* Add padding to fit the new text */
     font-size: 14px;
     font-family: 'Archivo Narrow', sans-serif; /* Specify the font-family */
     background: pink;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    line-height: 24px;
-    text-align: center;
+    border-radius: 12px; /* Adjust border radius for a more rounded look */
     color: white;
+    white-space: nowrap; /* Prevent text from wrapping */
 }
 
 .tooltip .tooltiptext {
@@ -47,7 +44,7 @@
     padding: 5px;
     position: absolute;
     z-index: 1;
-    bottom: 35px; /* Adjust the position relative to the question mark */
+    bottom: 35px; /* Adjust the position relative to the tooltip text */
     left: 50%;
     transform: translateX(-50%);
     opacity: 0;
@@ -267,7 +264,7 @@
 /* Added CSS for the logo */
 .logo {
     width: 100%; /* Adjust the width as needed */
-    max-width: 1200px; /* Adjust the max width as needed */
+    max-width: 300px; /* Adjust the max width as needed */
     height: auto; /* Maintain aspect ratio */
     margin: 0 auto; /* Center the logo */
 }
