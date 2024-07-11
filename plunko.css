@@ -269,7 +269,7 @@
 /* Added CSS for the logo */
 .logo {
     width: 100%; /* Adjust the width as needed */
-    max-width: 300px; /* Adjust the max width as needed */
+    max-width: 700px; /* Adjust the max width as needed */
     height: auto; /* Maintain aspect ratio */
     margin: 0 auto; /* Center the logo */
 }
