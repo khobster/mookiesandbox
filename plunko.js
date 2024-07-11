@@ -58,16 +58,16 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             lastThreeCorrectStandard.shift();
         }
         if (correctStreakStandard === 1) {
-            resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just two more to get a <span class='kaboom'>PLUNKO!</span>";
+            resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just two more to get this <span class='kaboom'>MOOoooOOKIE!</span>";
         } else if (correctStreakStandard === 2) {
-            resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just one more to get a <span class='kaboom'>PLUNKO!</span>";
+            resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just one more to get a <span class='kaboom'>MOOoooOOKIE!</span>";
         } else if (correctStreakStandard === 3) {
-            resultElement.innerHTML = "<span class='kaboom'>MOOOOOOOOOKIE!</span>";
+            resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
             const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
             const shareLink = `https://khobster.github.io/plunkosandbox?players=${encodedPlayers}`;
-            let shareText = `throwing this oop to you:\n${shareLink}`;
+            let shareText = `throwing this to you:\n${shareLink}`;
             document.getElementById('shareSnippet').innerHTML = shareText;
-            document.getElementById('snippetMessage').innerHTML = 'Challenge friends with this oop:';
+            document.getElementById('snippetMessage').innerHTML = 'Challenge friends with this one:';
             document.getElementById('snippetMessage').style.display = 'block'; // Show the message
             document.getElementById('shareSnippet').style.display = 'block'; // Show the share snippet
             document.getElementById('copyButton').setAttribute('data-snippet', shareText); // Set the share snippet as data-snippet
