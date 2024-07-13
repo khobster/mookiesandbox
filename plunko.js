@@ -66,7 +66,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
             const shareLink = `https://www.mookie.click/?players=${encodedPlayers}`;
             const decodedPlayers = decodeURIComponent(encodedPlayers).replace(/,/g, ', ');
-            let shareText = `throwing this to you: ${decodedPlayers}${shareLink}`;
+            let shareText = `throwing this to you: ${decodedPlayers} ${shareLink}`;
             document.getElementById('shareSnippet').innerHTML = shareText;
             document.getElementById('snippetMessage').innerHTML = 'Challenge friends with this one:';
             document.getElementById('snippetMessage').style.display = 'block'; // Show the message
