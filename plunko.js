@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('copyButton').addEventListener('click', copyToClipboard);
     document.getElementById('proofButton').addEventListener('click', copyToClipboard); // Add event listener for proof button
     document.getElementById('returnButton').addEventListener('click', () => {
-        window.location.href = 'https://khobster.github.io/plunkosandbox';
+        window.location.href = 'https://www.mookie.click';
     });
 
     // Tooltip handling for mobile
