@@ -64,8 +64,8 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
         } else if (correctStreakStandard === 3) {
             resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
             const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
-            const shareLink = `https://khobster.github.io/plunkosandbox?players=${encodedPlayers}`;
-            let shareText = `throwing this 🪙 to you:\n${shareLink}`;
+            const shareLink = `https://www.mookie.click/?players=${encodedPlayers}`;
+            let shareText = `throwing this to you:\n${shareLink}`;
             document.getElementById('shareSnippet').innerHTML = shareText;
             document.getElementById('snippetMessage').innerHTML = 'Challenge friends with this one:';
             document.getElementById('snippetMessage').style.display = 'block'; // Show the message
