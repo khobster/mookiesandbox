@@ -125,23 +125,23 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
             resultElement.textContent = ''; // Clear previous content
             const messageElement = document.createElement('span');
             messageElement.className = 'kaboom';
-            messageElement.innerHTML = 'YES! PLUNKO!!';
+            messageElement.innerHTML = 'YES! MOOOOooooooKIE!!';
             resultElement.appendChild(messageElement);
             resultElement.className = 'correct';
             console.log('Appended message element to resultElement:', resultElement.innerHTML);
 
             // Add share snippet and buttons
             setTimeout(() => {
-                const shareText = `I got all 3 correct in PLUNKO! Check it out: ${window.location.href}`;
+                const shareText = `I got all 3 correct in MOOKIE! Check it out: ${window.location.href}`;
                 document.getElementById('copyButton').setAttribute('data-snippet', shareText); // Set the share snippet as data-snippet
                 document.getElementById('copyButton').style.display = 'inline-block';
 
-                const proofText = `Proof I nailed the PLUNK🏀 challenge: ${window.location.href}`;
+                const proofText = `Proof I nailed the MOOKIE challenge: ${window.location.href}`;
                 document.getElementById('proofButton').setAttribute('data-snippet', proofText); // Set proof text as data-snippet
                 document.getElementById('proofButton').style.display = 'inline-block'; // Show proof button
 
                 document.getElementById('returnButton').style.display = 'inline-block';
-                document.getElementById('returnButton').textContent = 'Start a Fresh PLUNK🏀';
+                document.getElementById('returnButton').textContent = 'Start a Fresh MOOKIE';
                 document.getElementById('submitBtn').style.display = 'none';
                 document.getElementById('plunkosCount').textContent = `${Math.round(cumulativeRarityScore)}`;
                 increaseDifficulty();
@@ -169,7 +169,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         document.getElementById('copyButton').style.display = 'none';
         document.getElementById('proofButton').style.display = 'none'; // Hide proof button on incorrect
         document.getElementById('returnButton').style.display = 'inline-block';
-        document.getElementById('returnButton').textContent = 'Start a Fresh PLUNK🏀';
+        document.getElementById('returnButton').textContent = 'Start a Fresh MOOKIE';
         wrongSound.play();
         endURLChallenge(false); // call the function right away on incorrect answer
     }
@@ -288,12 +288,12 @@ function endURLChallenge(success) {
         resultElement.innerHTML = "You didn't get all 3 correct. Better luck next time!";
         resultElement.className = 'incorrect';
     }
-    const shareText = `Can you match my PLUNK🏀 score? ${Math.round(cumulativeRarityScore)}! ${window.location.href}`;
+    const shareText = `Can you match this MOOKIE? ${Math.round(cumulativeRarityScore)}! ${window.location.href}`;
     document.getElementById('copyButton').setAttribute('data-snippet', shareText); // Set the current snippet as data-snippet
     document.getElementById('copyButton').style.display = 'inline-block';
 
     if (success) {
-        const proofText = `PROOF I nailed your PLUNK🏀 challenge!🧾 ${window.location.href}`;
+        const proofText = `PROOF I nailed the MOOKIE!🧾 ${window.location.href}`;
         document.getElementById('proofButton').setAttribute('data-snippet', proofText); // Set proof text as data-snippet
         document.getElementById('proofButton').style.display = 'inline-block'; // Show proof button
     }
