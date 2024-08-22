@@ -248,7 +248,7 @@ function startStandardPlay() {
         const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
         const playerName = document.getElementById('playerName').textContent;
         const player = playersData.find(p => p.name === playerName);
-        let isCorrect = player && isCloseMatch(userGuess, player.college or 'No College');
+        let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
         updateStreakAndGenerateSnippetStandard(isCorrect, playerName, document.getElementById('result'), displayRandomPlayer);
     };
 }
