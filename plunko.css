@@ -446,6 +446,24 @@
     background-color: #45a049;
 }
 
+/* Proof button for popup */
+#proofButtonPopup {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    flex: 1;
+    font-family: 'Archivo Narrow', sans-serif;
+    display: none; /* Initially hidden */
+}
+
+/* Hover effect for proof button */
+#proofButtonPopup:hover {
+    background-color: darkred;
+}
+
 /* Close button styling */
 .close {
     position: absolute;
