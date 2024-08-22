@@ -520,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (popupContinueButton) {
         popupContinueButton.addEventListener('click', function () {
             closeMookiePopup();
+            startStandardPlay(); // Start a fresh game in regular mode
         });
     }
 
@@ -528,6 +529,11 @@ document.addEventListener('DOMContentLoaded', () => {
         closePopup.addEventListener('click', function () {
             closeMookiePopup();
         });
+    }
+
+    const popupProofButton = document.getElementById('proofButtonPopup');
+    if (popupProofButton) {
+        popupProofButton.addEventListener('click', copyToClipboard);
     }
 });
 
@@ -550,7 +556,7 @@ function displayPlayerFromDecade(decade) {
             playerDecade = '2000s';
         } else if (playerYear >= 10 && playerYear <= 19) {
             playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
+        } else if (playerYear >= 20 and playerYear <= 29) {
             playerDecade = '2020s';
         }
 
@@ -633,10 +639,25 @@ function showMookiePopup(shareText) {
     const popup = document.getElementById('mookiePopup');
     if (popup) {
         const popupCopyButton = document.getElementById('popupCopyButton');
+        const popupProofButton = document.getElementById('proofButtonPopup');
+        const popupContinueButton = document.getElementById('popupContinueButton');
+
         if (popupCopyButton) {
             popupCopyButton.setAttribute('data-snippet', shareText);
         }
+
+        if (popupProofButton) {
+            const proofText = `PROOF I nailed the MOOKIE!🧾 ${window.location.href}`;
+            popupProofButton.setAttribute('data-snippet', proofText);
+            popupProofButton.style.display = 'inline-block';
+        }
+
         popup.style.display = 'block';
+
+        popupContinueButton.onclick = function() {
+            closeMookiePopup();
+            startStandardPlay(); // Start a fresh game in regular mode
+        };
     }
 }
 
