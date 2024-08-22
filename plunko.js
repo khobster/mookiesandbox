@@ -236,6 +236,9 @@ function startStandardPlay() {
     // Hide the return button at the start of standard play
     document.getElementById('returnButton').style.display = 'none';
 
+    // Show Split It and Go Fish buttons for regular mode
+    document.getElementById('buttonRow').style.display = 'flex';
+
     document.getElementById('submitBtn').onclick = function() {
         // Hide the snippet and copy button on the next question attempt
         document.getElementById('snippetContainer').classList.remove('show');
@@ -275,6 +278,9 @@ function startURLChallenge(playerNames) {
     let playerIndex = 0;
     correctStreakURL = 0; // Reset correct streak when starting a shared link sequence
     lastThreeCorrectURL = []; // Clear last three correct players
+
+    // Hide Split It and Go Fish buttons for challenge mode
+    document.getElementById('buttonRow').style.display = 'none';
 
     function nextPlayer(index) {
         if (index < playerNames.length) {
