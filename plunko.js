@@ -517,10 +517,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const popupContinueButton = document.getElementById('popupContinueButton');
-    if (popupContinueButton) {
-        popupContinueButton.addEventListener('click', function () {
-            closeMookiePopup();
-            startStandardPlay(); // Start a fresh game in regular mode
+if (popupContinueButton) {
+    popupContinueButton.addEventListener('click', function () {
+        window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
         });
     }
 
