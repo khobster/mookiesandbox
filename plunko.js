@@ -105,16 +105,9 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             correctStreakStandard = 0;
             lastThreeCorrectStandard = [];
             cumulativeRarityScore = 0; // Reset the cumulative rarity score when the streak is broken
-            const plunkosCountElement = document.getElementById('plunkosCount');
-            if (plunkosCountElement) {
-                plunkosCountElement.textContent = '0'; // Update the display
-            }
+            document.getElementById('plunkosCount').textContent = '0'; // Update the display
             resultElement.textContent = 'Wrong answer. Try again!';
             resultElement.className = 'incorrect';
-            const returnButtonElement = document.getElementById('returnButton');
-            if (returnButtonElement) {
-                returnButtonElement.style.display = 'none'; // Hide play again button in challenge mode
-            }
             wrongSound.play();
             resetButtons(); // Reset the buttons when the answer is wrong
         }
@@ -124,18 +117,12 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
 
 function resetButtons() {
     // Re-enable and reset the Go 🐟 button
-    const goFishBtnElement = document.getElementById('goFishBtn');
-    if (goFishBtnElement) {
-        goFishBtnElement.disabled = false;
-        goFishBtnElement.classList.remove('disabled');
-    }
+    document.getElementById('goFishBtn').disabled = false;
+    document.getElementById('goFishBtn').classList.remove('disabled');
 
     // Re-enable and reset the Split It button
-    const splitItBtnElement = document.getElementById('splitItBtn');
-    if (splitItBtnElement) {
-        splitItBtnElement.disabled = false;
-        splitItBtnElement.classList.remove('disabled');
-    }
+    document.getElementById('splitItBtn').disabled = false;
+    document.getElementById('splitItBtn').classList.remove('disabled');
 }
 
 function increaseDifficulty() {
@@ -200,16 +187,11 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         correctStreakURL = 0;
         lastThreeCorrectURL = [];
         cumulativeRarityScore = 0; // Reset the cumulative rarity score when the streak is broken
-        const plunkosCountElement = document.getElementById('plunkosCount');
-        if (plunkosCountElement) {
-            plunkosCountElement.textContent = '0'; // Update the display
-        }
+        document.getElementById('plunkosCount').textContent = '0'; // Update the display
         resultElement.textContent = 'Wrong answer. Try again!';
         resultElement.className = 'incorrect';
-        const returnButtonElement = document.getElementById('returnButton');
-        if (returnButtonElement) {
-            returnButtonElement.style.display = 'none'; // Hide play again button in challenge mode
-        }
+        document.getElementById('returnButton').style.display = 'inline-block';
+        document.getElementById('returnButton').textContent = 'Start a Fresh MOOKIE';
         wrongSound.play();
         resetButtons(); // Reset the buttons when the answer is wrong
         endURLChallenge(false); // call the function right away on incorrect answer
@@ -262,7 +244,7 @@ function startStandardPlay() {
         buttonRowElement.style.display = 'flex';
     }
 
-    // Show high score and bucket score in regular mode
+    // Show high score, bucket score, and how it works elements in regular mode
     const highScoreElement = document.getElementById('highScore');
     const plunkosCounterElement = document.getElementById('plunkosCounter');
     const howItWorksElement = document.querySelector('.tooltip');
@@ -396,15 +378,9 @@ function endURLChallenge(success) {
         document.getElementById('proofButton').style.display = 'inline-block'; // Show proof button
     }
 
-    const returnButtonElement = document.getElementById('returnButton');
-    if (returnButtonElement) {
-        returnButtonElement.style.display = 'inline-block';
-        returnButtonElement.textContent = 'Play again';
-    }
-    const submitBtnElement = document.getElementById('submitBtn');
-    if (submitBtnElement) {
-        submitBtnElement.style.display = 'none';
-    }
+    document.getElementById('returnButton').style.display = 'inline-block';
+    document.getElementById('returnButton').textContent = 'Play again';
+    document.getElementById('submitBtn').style.display = 'none';
     resetButtons(); // Reset the buttons when a new game is started
 }
 
@@ -432,10 +408,7 @@ function showSuggestions(input) {
         suggestionItem.textContent = suggestion;
         suggestionItem.classList.add('suggestion-item');
         suggestionItem.addEventListener('click', () => {
-            const collegeGuessElement = document.getElementById('collegeGuess');
-            if (collegeGuessElement) {
-                collegeGuessElement.value = suggestion;
-            }
+            document.getElementById('collegeGuess').value = suggestion;
             suggestionsContainer.innerHTML = '';
         });
         suggestionsContainer.appendChild(suggestionItem);
@@ -556,104 +529,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-function displayPlayerFromDecade(decade) {
-    const playersFromDecade = playersData.filter(player => {
-        let playerYear = player.retirement_year;
-
-        // Determine the decade based on the retirement year
-        let playerDecade;
-        if (playerYear >= 50 && playerYear <= 59) {
-            playerDecade = '1950s';
-        } else if (playerYear >= 60 && playerYear <= 69) {
-            playerDecade = '1960s';
-        } else if (playerYear >= 70 && playerYear <= 79) {
-            playerDecade = '1970s';
-        } else if (playerYear >= 80 && playerYear <= 89) {
-            playerDecade = '1980s';
-        } else if (playerYear >= 90 && playerYear <= 99) {
-            playerDecade = '1990s';
-        } else if (playerYear >= 0 && playerYear <= 9) {
-            playerDecade = '2000s';
-        } else if (playerYear >= 10 && playerYear <= 19) {
-            playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
-            playerDecade = '2020s';
-        }
-
-        console.log(`Player: ${player.name}, Retirement Year: ${playerYear}, Decade: ${playerDecade}`);
-
-        return playerDecade === decade;
-    });
-
-    if (playersFromDecade.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
-        const player = playersFromDecade[randomIndex];
-        displayPlayer(player);
-    } else {
-        console.log(`No players found for the ${decade}`);
-        const playerQuestionElement = document.getElementById('playerQuestion');
-        if (playerQuestionElement) {
-            playerQuestionElement.textContent = `No players found for the ${decade}`;
-        }
-    }
-}
-
-function handleTwoForOne(isCorrect) {
-    if (isCorrect) {
-        twoForOneCounter++;
-        if (twoForOneCounter === 1) {
-            const resultElement = document.getElementById('result');
-            if (resultElement) {
-                resultElement.textContent = "Got it!";
-                resultElement.className = 'correct';
-            }
-            correctSound.play();
-            setTimeout(() => {
-                if (resultElement) {
-                    resultElement.textContent = ''; // Clear the message after a delay
-                }
-                displayRandomPlayer(); // Move to the next player
-            }, 2000); // Adjust the delay as needed
-            return false; // Return false to prevent continuing the two-for-one streak immediately
-        } else if (twoForOneCounter >= 2) {
-            isTwoForOneActive = false;
-            const playingTwoForOneElement = document.getElementById('playingTwoForOne');
-            if (playingTwoForOneElement) {
-                playingTwoForOneElement.style.display = 'none';
-            }
-            const splitItBtnElement = document.getElementById('splitItBtn');
-            if (splitItBtnElement) {
-                splitItBtnElement.disabled = false; // Re-enable the button after 2-for-1 is done
-                splitItBtnElement.classList.remove('disabled'); // Remove the disabled class
-            }
-            const goFishBtnElement = document.getElementById('goFishBtn');
-            if (goFishBtnElement) {
-                goFishBtnElement.disabled = false; // Re-enable the Go Fish button after 2-for-1 is done
-                goFishBtnElement.classList.remove('disabled'); // Remove the disabled class
-            }
-            return true; // Consider as one correct answer
-        }
-    } else {
-        isTwoForOneActive = false;
-        twoForOneCounter = 0;
-        const playingTwoForOneElement = document.getElementById('playingTwoForOne');
-        if (playingTwoForOneElement) {
-            playingTwoForOneElement.style.display = 'none';
-        }
-        const splitItBtnElement = document.getElementById('splitItBtn');
-        if (splitItBtnElement) {
-            splitItBtnElement.disabled = false; // Re-enable the button if the user gets it wrong
-            splitItBtnElement.classList.remove('disabled'); // Remove the disabled class
-        }
-        const goFishBtnElement = document.getElementById('goFishBtn');
-        if (goFishBtnElement) {
-            goFishBtnElement.disabled = false; // Re-enable the Go Fish button if the user gets it wrong
-            goFishBtnElement.classList.remove('disabled'); // Remove the disabled class from Go Fish button
-        }
-    }
-    return false; // Not yet two correct answers
-}
 
 // MOOKIE Popup Functions
 function showMookiePopup(shareText) {
