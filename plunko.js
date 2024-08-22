@@ -351,7 +351,7 @@ function showSuggestions(input) {
     }
     const suggestions = Array.from(new Set(playersData
         .map(player => player.college)
-        .filter(college => college and college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
+        .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
         .slice(0, 5); // Show up to 5 unique suggestions
     suggestions.forEach(suggestion => {
         const suggestionItem = document.createElement('div');
