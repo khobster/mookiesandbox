@@ -296,7 +296,7 @@ function startURLChallenge(playerNames) {
                     document.getElementById('proofButton').style.display = 'none'; // Hide proof button in URL play until needed
 
                     const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
-                    let isCorrect = player and isCloseMatch(userGuess, player.college or 'No College');
+                    let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
                     updateStreakAndGenerateSnippetURL(isCorrect, player.name, document.getElementById('result'), nextPlayer, index, playerNames.length);
                 };
             } else {
