@@ -408,7 +408,7 @@
     padding: 20px;
 }
 
-/* MOOKIE logo in the popup */
+/* MOOKIE and NOPE logos in the popups */
 .popup-logo {
     max-width: 100%;
     height: auto;
@@ -430,7 +430,7 @@
 }
 
 /* Buttons styling */
-#popupCopyButton, #popupContinueButton {
+#popupCopyButton, #popupContinueButton, #popupNopeCopyButton, #popupNopeContinueButton {
     background-color: #4CAF50;
     color: white;
     border: none;
@@ -442,12 +442,12 @@
 }
 
 /* Hover effect for buttons */
-#popupCopyButton:hover, #popupContinueButton:hover {
+#popupCopyButton:hover, #popupContinueButton:hover, #popupNopeCopyButton:hover, #popupNopeContinueButton:hover {
     background-color: #45a049;
 }
 
-/* Proof button for popup */
-#proofButtonPopup {
+/* Proof button for popups */
+#proofButtonPopup, #proofButtonNopePopup {
     background-color: red;
     color: white;
     border: none;
@@ -459,8 +459,8 @@
     display: none; /* Initially hidden */
 }
 
-/* Hover effect for proof button */
-#proofButtonPopup:hover {
+/* Hover effect for proof buttons */
+#proofButtonPopup:hover, #proofButtonNopePopup:hover {
     background-color: darkred;
 }
 
