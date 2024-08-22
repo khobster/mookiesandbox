@@ -102,7 +102,6 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             resultElement.textContent = 'Wrong answer. Try again!';
             resultElement.className = 'incorrect';
             wrongSound.play();
-            showNopePopup();  // Show the nope popup here
             resetButtons();
         }
     }
@@ -352,7 +351,6 @@ function endURLChallenge(success) {
     } else {
         resultElement.innerHTML = "You didn't get all 3 correct. Better luck next time!";
         resultElement.className = 'incorrect';
-        showNopePopup();  // Show the nope popup here
     }
 
     if (copyButton) {
@@ -519,8 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const popupContinueButton = document.getElementById('popupContinueButton');
     if (popupContinueButton) {
         popupContinueButton.addEventListener('click', function () {
-            closeMookiePopup();
-            startStandardPlay(); // Start a fresh game in regular mode
+            window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
         });
     }
 
@@ -556,7 +553,7 @@ function displayPlayerFromDecade(decade) {
             playerDecade = '2000s';
         } else if (playerYear >= 10 && playerYear <= 19) {
             playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
+        } else if (playerYear >= 20 and playerYear <= 29) {
             playerDecade = '2020s';
         }
 
@@ -656,7 +653,7 @@ function showMookiePopup(shareText) {
 
         popupContinueButton.onclick = function() {
             closeMookiePopup();
-            // Don't reset cumulativeRarityScore and other game data
+            startStandardPlay(); // Start a fresh game in regular mode
         };
     }
 }
@@ -666,45 +663,36 @@ function showNopePopup() {
     overlay.id = 'popupOverlay';
     document.body.appendChild(overlay);
 
-    const popup = document.getElementById('nopePopup');
+    const popup = document.getElementById('mookiePopup');
     if (popup) {
-        const popupCopyButton = document.getElementById('popupCopyButtonNope');
-        const popupProofButton = document.getElementById('proofButtonPopupNope');
-        const popupContinueButton = document.getElementById('popupContinueButtonNope');
+        const popupLogo = document.querySelector('.popup-logo');
+        popupLogo.src = 'nopewordlogo.png'; // Update the logo to the "nope" logo
+
+        const popupProofButton = document.getElementById('proofButtonPopup');
+        const popupContinueButton = document.getElementById('popupContinueButton');
+        const popupCopyButton = document.getElementById('popupCopyButton');
 
         if (popupCopyButton) {
-            const shareText = `You won't believe it, I got it wrong in MOOKIE! ${window.location.href}`;
-            popupCopyButton.setAttribute('data-snippet', shareText);
+            popupCopyButton.style.display = 'none'; // Hide the copy button
         }
 
         if (popupProofButton) {
-            const proofText = `PROOF I failed the MOOKIE!🧾 ${window.location.href}`;
+            const proofText = `PROOF I couldn't make the MOOKIE!🧾 ${window.location.href}`;
             popupProofButton.setAttribute('data-snippet', proofText);
             popupProofButton.style.display = 'inline-block';
         }
 
-        popup.style.display = 'block';
-
+        popupContinueButton.textContent = 'Start a New Game';
         popupContinueButton.onclick = function() {
-            closeNopePopup();
-            startStandardPlay(); // Start a fresh game in regular mode
+            window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
         };
+
+        popup.style.display = 'block';
     }
 }
 
 function closeMookiePopup() {
     const popup = document.getElementById('mookiePopup');
-    const overlay = document.getElementById('popupOverlay');
-    if (popup) {
-        popup.style.display = 'none';
-    }
-    if (overlay) {
-        overlay.remove();
-    }
-}
-
-function closeNopePopup() {
-    const popup = document.getElementById('nopePopup');
     const overlay = document.getElementById('popupOverlay');
     if (popup) {
         popup.style.display = 'none';
