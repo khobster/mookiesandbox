@@ -142,7 +142,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
 
     const player = playersData.find(p => p.name === playerName);
 
-    if (isCorrect and player) {
+    if (isCorrect && player) {
         correctStreakURL++;
         lastThreeCorrectURL.push(playerName);
         cumulativeRarityScore += player.rarity_score;
