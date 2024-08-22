@@ -62,10 +62,9 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             console.log(`Current Streak: ${correctStreakStandard}`);
 
             // Update high score after every correct answer
-            const highScoreElement = document.getElementById('highScore');
-            if (cumulativeRarityScore > highScore && highScoreElement) {
+            if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore;
-                highScoreElement.textContent = `🏆=${Math.round(highScore)}`;
+                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
             }
 
             if (lastThreeCorrectStandard.length > 3) {
@@ -93,10 +92,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
                 lastThreeCorrectStandard = []; // Clear the list of last three correct players after achieving MOOKIE
                 resetButtons(); // Reset the buttons when a Mookie is achieved
             }
-            const plunkosCountElement = document.getElementById('plunkosCount');
-            if (plunkosCountElement) {
-                plunkosCountElement.textContent = `${Math.round(cumulativeRarityScore)}`;
-            }
+            document.getElementById('plunkosCount').textContent = `${Math.round(cumulativeRarityScore)}`;
             resultElement.className = 'correct';
             correctSound.play();
         }
@@ -115,6 +111,10 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             }
             resultElement.textContent = 'Wrong answer. Try again!';
             resultElement.className = 'incorrect';
+            const returnButtonElement = document.getElementById('returnButton');
+            if (returnButtonElement) {
+                returnButtonElement.style.display = 'none'; // Hide play again button in challenge mode
+            }
             wrongSound.play();
             resetButtons(); // Reset the buttons when the answer is wrong
         }
@@ -123,17 +123,18 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
 }
 
 function resetButtons() {
-    const goFishBtn = document.getElementById('goFishBtn');
-    const splitItBtn = document.getElementById('splitItBtn');
-
-    if (goFishBtn) {
-        goFishBtn.disabled = false;
-        goFishBtn.classList.remove('disabled');
+    // Re-enable and reset the Go 🐟 button
+    const goFishBtnElement = document.getElementById('goFishBtn');
+    if (goFishBtnElement) {
+        goFishBtnElement.disabled = false;
+        goFishBtnElement.classList.remove('disabled');
     }
 
-    if (splitItBtn) {
-        splitItBtn.disabled = false;
-        splitItBtn.classList.remove('disabled');
+    // Re-enable and reset the Split It button
+    const splitItBtnElement = document.getElementById('splitItBtn');
+    if (splitItBtnElement) {
+        splitItBtnElement.disabled = false;
+        splitItBtnElement.classList.remove('disabled');
     }
 }
 
@@ -183,10 +184,9 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
             resetButtons(); // Reset the buttons when a MOOKIE is achieved
             endURLChallenge(true); // call the function right away on MOOKIE
 
-            const highScoreElement = document.getElementById('highScore');
-            if (cumulativeRarityScore > highScore && highScoreElement) {
+            if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore;
-                highScoreElement.textContent = `🏆=${highScore}`;
+                document.getElementById('highScore').textContent = `🏆=${highScore}`;
             }
         } else {
             resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Keep going!";
@@ -244,10 +244,7 @@ function loadPlayersData() {
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
-            const playerQuestionElement = document.getElementById('playerQuestion');
-            if (playerQuestionElement) {
-                playerQuestionElement.textContent = 'Error loading player data.';
-            }
+            document.getElementById('playerQuestion').textContent = 'Error loading player data.';
         });
 }
 
@@ -268,12 +265,16 @@ function startStandardPlay() {
     // Show high score and bucket score in regular mode
     const highScoreElement = document.getElementById('highScore');
     const plunkosCounterElement = document.getElementById('plunkosCounter');
+    const howItWorksElement = document.querySelector('.tooltip');
 
     if (highScoreElement) {
         highScoreElement.style.display = 'inline-block';
     }
     if (plunkosCounterElement) {
         plunkosCounterElement.style.display = 'block';
+    }
+    if (howItWorksElement) {
+        howItWorksElement.style.display = 'inline-block';
     }
 
     const submitBtnElement = document.getElementById('submitBtn');
@@ -309,15 +310,9 @@ function displayPlayer(player) {
     const playerNameElement = document.getElementById('playerName');
     if (playerNameElement) {
         playerNameElement.textContent = player.name;
-        const collegeGuessElement = document.getElementById('collegeGuess');
-        if (collegeGuessElement) {
-            collegeGuessElement.value = '';
-        }
-        const resultElement = document.getElementById('result');
-        if (resultElement) {
-            resultElement.textContent = '';
-            resultElement.className = '';
-        }
+        document.getElementById('collegeGuess').value = '';
+        document.getElementById('result').textContent = '';
+        document.getElementById('result').className = '';
     } else {
         console.error("Player name element not found");
     }
@@ -333,6 +328,7 @@ function startURLChallenge(playerNames) {
     const highScoreElement = document.getElementById('highScore');
     const plunkosCounterElement = document.getElementById('plunkosCounter');
     const returnButtonElement = document.getElementById('returnButton');
+    const howItWorksElement = document.querySelector('.tooltip');
 
     if (buttonRowElement) {
         buttonRowElement.style.display = 'none';
@@ -345,6 +341,9 @@ function startURLChallenge(playerNames) {
     }
     if (returnButtonElement) {
         returnButtonElement.style.display = 'none';
+    }
+    if (howItWorksElement) {
+        howItWorksElement.style.display = 'none';
     }
 
     function nextPlayer(index) {
@@ -381,33 +380,32 @@ function startURLChallenge(playerNames) {
 function endURLChallenge(success) {
     const resultElement = document.getElementById('result');
     if (success) {
-        resultElement.innerHTML = ""; // Clear the previous content for challenge mode
+        resultElement.innerHTML += "<span class='kaboom'><br>Hit Copy & Challenge a Pal!<br>Or Grab Your Receipt!</span>";
         resultElement.className = 'correct';
-        const submitBtnElement = document.getElementById('submitBtn');
-        if (submitBtnElement) {
-            submitBtnElement.style.display = 'none';
-        }
-
-        // Show the MOOKIE popup with the proof button inside it
-        showMookiePopup(`Can you match this MOOKIE? ${Math.round(cumulativeRarityScore)}! ${window.location.href}`);
-        const proofButtonPopupElement = document.getElementById('proofButtonPopup');
-        if (proofButtonPopupElement) {
-            proofButtonPopupElement.style.display = 'inline-block';
-        }
-
     } else {
         resultElement.innerHTML = "You didn't get all 3 correct. Better luck next time!";
         resultElement.className = 'incorrect';
-        const submitBtnElement = document.getElementById('submitBtn');
-        if (submitBtnElement) {
-            submitBtnElement.style.display = 'none';
-        }
+    }
+    const shareText = `Can you match this MOOKIE? ${Math.round(cumulativeRarityScore)}! ${window.location.href}`;
+    document.getElementById('copyButton').setAttribute('data-snippet', shareText); // Set the current snippet as data-snippet
+    document.getElementById('copyButton').style.display = 'inline-block';
+
+    if (success) {
+        const proofText = `PROOF I nailed the MOOKIE!🧾 ${window.location.href}`;
+        document.getElementById('proofButton').setAttribute('data-snippet', proofText); // Set proof text as data-snippet
+        document.getElementById('proofButton').style.display = 'inline-block'; // Show proof button
     }
 
     const returnButtonElement = document.getElementById('returnButton');
     if (returnButtonElement) {
-        returnButtonElement.style.display = 'none'; // Hide play again button in challenge mode
+        returnButtonElement.style.display = 'inline-block';
+        returnButtonElement.textContent = 'Play again';
     }
+    const submitBtnElement = document.getElementById('submitBtn');
+    if (submitBtnElement) {
+        submitBtnElement.style.display = 'none';
+    }
+    resetButtons(); // Reset the buttons when a new game is started
 }
 
 function getPlayersFromURL() {
@@ -421,7 +419,6 @@ function getPlayersFromURL() {
 
 function showSuggestions(input) {
     const suggestionsContainer = document.getElementById('suggestions');
-    if (!suggestionsContainer) return;
     suggestionsContainer.innerHTML = '';
     if (input.length === 0) {
         return;
@@ -515,17 +512,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (copyButtonElement) {
         copyButtonElement.addEventListener('click', copyToClipboard);
     }
-
     const popupCopyButtonElement = document.getElementById('popupCopyButton');
     if (popupCopyButtonElement) {
         popupCopyButtonElement.addEventListener('click', copyToClipboard);
     }
-
     const proofButtonElement = document.getElementById('proofButton');
     if (proofButtonElement) {
         proofButtonElement.addEventListener('click', copyToClipboard); // Add event listener for proof button
     }
-
     const returnButtonElement = document.getElementById('returnButton');
     if (returnButtonElement) {
         returnButtonElement.addEventListener('click', () => {
@@ -540,13 +534,13 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             tooltip.classList.toggle('active');
         });
-    }
 
-    document.addEventListener('click', (e) => {
-        if (tooltip && !tooltip.contains(e.target)) {
-            tooltip.classList.remove('active');
-        }
-    });
+        document.addEventListener('click', (e) => {
+            if (!tooltip.contains(e.target)) {
+                tooltip.classList.remove('active');
+            }
+        });
+    }
 
     // Event listeners for MOOKIE popup buttons
     const popupContinueButtonElement = document.getElementById('popupContinueButton');
@@ -555,7 +549,6 @@ document.addEventListener('DOMContentLoaded', () => {
             closeMookiePopup();
         });
     }
-
     const closePopupElement = document.getElementById('closePopup');
     if (closePopupElement) {
         closePopupElement.addEventListener('click', function () {
