@@ -190,8 +190,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         document.getElementById('plunkosCount').textContent = '0'; // Update the display
         resultElement.textContent = 'Wrong answer. Try again!';
         resultElement.className = 'incorrect';
-        document.getElementById('returnButton').style.display = 'inline-block';
-        document.getElementById('returnButton').textContent = 'Start a Fresh MOOKIE';
+        document.getElementById('returnButton').style.display = 'none'; // Hide play again button in challenge mode
         wrongSound.play();
         resetButtons(); // Reset the buttons when the answer is wrong
         endURLChallenge(false); // call the function right away on incorrect answer
@@ -239,6 +238,10 @@ function startStandardPlay() {
     // Show Split It and Go Fish buttons for regular mode
     document.getElementById('buttonRow').style.display = 'flex';
 
+    // Show high score and bucket score in regular mode
+    document.getElementById('highScore').style.display = 'inline-block';
+    document.getElementById('plunkosCounter').style.display = 'block';
+
     document.getElementById('submitBtn').onclick = function() {
         // Hide the snippet and copy button on the next question attempt
         document.getElementById('snippetContainer').classList.remove('show');
@@ -279,8 +282,11 @@ function startURLChallenge(playerNames) {
     correctStreakURL = 0; // Reset correct streak when starting a shared link sequence
     lastThreeCorrectURL = []; // Clear last three correct players
 
-    // Hide Split It and Go Fish buttons for challenge mode
+    // Hide elements specific to regular mode in challenge mode
     document.getElementById('buttonRow').style.display = 'none';
+    document.getElementById('highScore').style.display = 'none';
+    document.getElementById('plunkosCounter').style.display = 'none';
+    document.getElementById('returnButton').style.display = 'none';
 
     function nextPlayer(index) {
         if (index < playerNames.length) {
@@ -310,26 +316,21 @@ function startURLChallenge(playerNames) {
 function endURLChallenge(success) {
     const resultElement = document.getElementById('result');
     if (success) {
-        resultElement.innerHTML += "<span class='kaboom'><br>Hit Copy & Challenge a Pal!<br>Or Grab Your Receipt!</span>";
+        resultElement.innerHTML = ""; // Clear the previous content for challenge mode
         resultElement.className = 'correct';
+        document.getElementById('submitBtn').style.display = 'none';
+
+        // Show the MOOKIE popup with the proof button inside it
+        showMookiePopup(`Can you match this MOOKIE? ${Math.round(cumulativeRarityScore)}! ${window.location.href}`);
+        document.getElementById('proofButtonPopup').style.display = 'inline-block';
+
     } else {
         resultElement.innerHTML = "You didn't get all 3 correct. Better luck next time!";
         resultElement.className = 'incorrect';
-    }
-    const shareText = `Can you match this MOOKIE? ${Math.round(cumulativeRarityScore)}! ${window.location.href}`;
-    document.getElementById('copyButton').setAttribute('data-snippet', shareText); // Set the current snippet as data-snippet
-    document.getElementById('copyButton').style.display = 'inline-block';
-
-    if (success) {
-        const proofText = `PROOF I nailed the MOOKIE!🧾 ${window.location.href}`;
-        document.getElementById('proofButton').setAttribute('data-snippet', proofText); // Set proof text as data-snippet
-        document.getElementById('proofButton').style.display = 'inline-block'; // Show proof button
+        document.getElementById('submitBtn').style.display = 'none';
     }
 
-    document.getElementById('returnButton').style.display = 'inline-block';
-    document.getElementById('returnButton').textContent = 'Play again';
-    document.getElementById('submitBtn').style.display = 'none';
-    resetButtons(); // Reset the buttons when a new game is started
+    document.getElementById('returnButton').style.display = 'none'; // Hide play again button in challenge mode
 }
 
 function getPlayersFromURL() {
