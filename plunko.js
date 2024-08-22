@@ -38,7 +38,7 @@ function isCloseMatch(guess, answer) {
         return true;
     }
 
-    if (simpleAnswer === 'unc' && (simpleGuess === 'north carolina' or simpleGuess === 'carolina')) {
+    if (simpleAnswer === 'unc' && (simpleGuess === 'north carolina' || simpleGuess === 'carolina')) {
         return true;
     }
 
