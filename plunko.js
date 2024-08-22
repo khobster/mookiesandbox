@@ -80,6 +80,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
                 const decodedPlayers = decodeURIComponent(encodedPlayers).replace(/,/g, ', ');
                 let shareText = `throwing this to you: ${decodedPlayers} ${shareLink}`;
 
+                console.log('Displaying MOOKIE popup.');
                 showMookiePopup(shareText);
 
                 increaseDifficulty();
@@ -163,7 +164,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
 
             if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore;
-                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
+                document.getElementById('highScore').textContent = `🏆=${highScore}`;
             }
         } else {
             resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Keep going!";
@@ -223,46 +224,28 @@ function loadPlayersData() {
 function startStandardPlay() {
     displayRandomPlayer();
 
-    const returnButtonElement = document.getElementById('returnButton');
-    if (returnButtonElement) {
-        returnButtonElement.style.display = 'none';
-    }
-
-    const buttonRowElement = document.getElementById('buttonRow');
-    if (buttonRowElement) {
-        buttonRowElement.style.display = 'flex';
-    }
+    document.getElementById('returnButton').style.display = 'none';
 
     const highScoreElement = document.getElementById('highScore');
-    const plunkosCounterElement = document.getElementById('plunkosCounter');
     const howItWorksElement = document.querySelector('.tooltip');
 
     if (highScoreElement) {
         highScoreElement.style.display = 'inline-block';
     }
-    if (plunkosCounterElement) {
-        plunkosCounterElement.style.display = 'block';
-    }
     if (howItWorksElement) {
         howItWorksElement.style.display = 'inline-block';
     }
 
-    const submitBtnElement = document.getElementById('submitBtn');
-    if (submitBtnElement) {
-        submitBtnElement.onclick = function() {
-            document.getElementById('snippetContainer').classList.remove('show');
-            const proofButtonElement = document.getElementById('proofButton');
-            if (proofButtonElement) {
-                proofButtonElement.style.display = 'none';
-            }
+    document.getElementById('submitBtn').onclick = function() {
+        document.getElementById('snippetContainer').classList.remove('show');
+        document.getElementById('proofButton').style.display = 'none';
 
-            const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
-            const playerName = document.getElementById('playerName').textContent;
-            const player = playersData.find(p => p.name === playerName);
-            let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
-            updateStreakAndGenerateSnippetStandard(isCorrect, playerName, document.getElementById('result'), displayRandomPlayer);
-        };
-    }
+        const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
+        const playerName = document.getElementById('playerName').textContent;
+        const player = playersData.find(p => p.name === playerName);
+        let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
+        updateStreakAndGenerateSnippetStandard(isCorrect, playerName, document.getElementById('result'), displayRandomPlayer);
+    };
 }
 
 function displayRandomPlayer() {
@@ -292,23 +275,10 @@ function startURLChallenge(playerNames) {
     correctStreakURL = 0;
     lastThreeCorrectURL = [];
 
-    const buttonRowElement = document.getElementById('buttonRow');
     const highScoreElement = document.getElementById('highScore');
-    const plunkosCounterElement = document.getElementById('plunkosCounter');
-    const returnButtonElement = document.getElementById('returnButton');
     const howItWorksElement = document.querySelector('.tooltip');
-
-    if (buttonRowElement) {
-        buttonRowElement.style.display = 'none';
-    }
     if (highScoreElement) {
         highScoreElement.style.display = 'none';
-    }
-    if (plunkosCounterElement) {
-        plunkosCounterElement.style.display = 'none';
-    }
-    if (returnButtonElement) {
-        returnButtonElement.style.display = 'none';
     }
     if (howItWorksElement) {
         howItWorksElement.style.display = 'none';
@@ -320,20 +290,14 @@ function startURLChallenge(playerNames) {
             const player = playersData.find(p => p.name === playerName);
             if (player) {
                 displayPlayer(player);
-                const submitBtnElement = document.getElementById('submitBtn');
-                if (submitBtnElement) {
-                    submitBtnElement.onclick = function() {
-                        document.getElementById('snippetContainer').classList.remove('show');
-                        const proofButtonElement = document.getElementById('proofButton');
-                        if (proofButtonElement) {
-                            proofButtonElement.style.display = 'none';
-                        }
+                document.getElementById('submitBtn').onclick = function() {
+                    document.getElementById('snippetContainer').classList.remove('show');
+                    document.getElementById('proofButton').style.display = 'none';
 
-                        const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
-                        let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
-                        updateStreakAndGenerateSnippetURL(isCorrect, player.name, document.getElementById('result'), nextPlayer, index, playerNames.length);
-                    };
-                }
+                    const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
+                    let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
+                    updateStreakAndGenerateSnippetURL(isCorrect, player.name, document.getElementById('result'), nextPlayer, index, playerNames.length);
+                };
             } else {
                 nextPlayer(index + 1);
             }
@@ -398,114 +362,84 @@ function showSuggestions(input) {
         });
         suggestionsContainer.appendChild(suggestionItem);
     });
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayersData();
 
+    const highScoreElement = document.getElementById('highScore');
+    const howItWorksElement = document.querySelector('.tooltip');
+
+    if (highScoreElement) {
+        highScoreElement.style.display = 'inline-block';
+    }
+    if (howItWorksElement) {
+        howItWorksElement.style.display = 'inline-block';
+    }
+
     document.getElementById('collegeGuess').addEventListener('input', (e) => {
         showSuggestions(e.target.value);
     });
 
-    const splitItBtnElement = document.getElementById('splitItBtn');
-    if (splitItBtnElement) {
-        splitItBtnElement.addEventListener('click', () => {
-            if (isTwoForOneActive) {
-                return;
-            }
-            const playingTwoForOneElement = document.getElementById('playingTwoForOne');
-            if (playingTwoForOneElement) {
-                playingTwoForOneElement.style.display = 'inline';
-                playingTwoForOneElement.textContent = 'playing 2 for 1 now';
-            }
-            isTwoForOneActive = true;
-            twoForOneCounter = 0;
-            splitItBtnElement.disabled = true;
-            splitItBtnElement.classList.add('disabled');
-            const goFishBtnElement = document.getElementById('goFishBtn');
-            if (goFishBtnElement) {
-                goFishBtnElement.disabled = true;
-                goFishBtnElement.classList.add('disabled');
-            }
-            displayRandomPlayer();
-        });
-    }
+    document.getElementById('splitItBtn').addEventListener('click', () => {
+        if (isTwoForOneActive) {
+            return;
+        }
+        document.getElementById('playingTwoForOne').style.display = 'inline';
+        document.getElementById('playingTwoForOne').textContent = 'playing 2 for 1 now';
+        isTwoForOneActive = true;
+        twoForOneCounter = 0;
+        document.getElementById('splitItBtn').disabled = true;
+        document.getElementById('splitItBtn').classList.add('disabled');
+        document.getElementById('goFishBtn').disabled = true;
+        document.getElementById('goFishBtn').classList.add('disabled');
+        displayRandomPlayer();
+    });
 
-    const goFishBtnElement = document.getElementById('goFishBtn');
-    if (goFishBtnElement) {
-        goFishBtnElement.addEventListener('click', () => {
-            if (isTwoForOneActive) {
-                return;
-            }
-            const decadeDropdownContainerElement = document.getElementById('decadeDropdownContainer');
-            if (decadeDropdownContainerElement) {
-                decadeDropdownContainerElement.style.display = 'block';
-            }
-            goFishBtnElement.disabled = true;
-            goFishBtnElement.classList.add('disabled');
-        });
-    }
+    document.getElementById('goFishBtn').addEventListener('click', () => {
+        if (isTwoForOneActive) {
+            return;
+        }
+        document.getElementById('decadeDropdownContainer').style.display = 'block';
+        document.getElementById('goFishBtn').disabled = true;
+        document.getElementById('goFishBtn').classList.add('disabled');
+    });
 
-    const decadeDropdownElement = document.getElementById('decadeDropdown');
-    if (decadeDropdownElement) {
-        decadeDropdownElement.addEventListener('change', (e) => {
-            const selectedDecade = e.target.value;
-            if (selectedDecade) {
-                displayPlayerFromDecade(selectedDecade);
-                const decadeDropdownContainerElement = document.getElementById('decadeDropdownContainer');
-                if (decadeDropdownContainerElement) {
-                    decadeDropdownContainerElement.style.display = 'none';
-                }
-            }
-        });
-    }
+    document.getElementById('decadeDropdown').addEventListener('change', (e) => {
+        const selectedDecade = e.target.value;
+        if (selectedDecade) {
+            displayPlayerFromDecade(selectedDecade);
+            document.getElementById('decadeDropdownContainer').style.display = 'none';
+        }
+    });
 
-    const copyButtonElement = document.getElementById('copyButton');
-    if (copyButtonElement) {
-        copyButtonElement.addEventListener('click', copyToClipboard);
-    }
-    const popupCopyButtonElement = document.getElementById('popupCopyButton');
-    if (popupCopyButtonElement) {
-        popupCopyButtonElement.addEventListener('click', copyToClipboard);
-    }
-    const proofButtonElement = document.getElementById('proofButton');
-    if (proofButtonElement) {
-        proofButtonElement.addEventListener('click', copyToClipboard);
-    }
-    const returnButtonElement = document.getElementById('returnButton');
-    if (returnButtonElement) {
-        returnButtonElement.addEventListener('click', () => {
-            window.location.href = 'https://www.mookie.click';
-        });
-    }
+    document.getElementById('copyButton').addEventListener('click', copyToClipboard);
+    document.getElementById('popupCopyButton').addEventListener('click', copyToClipboard);
+    document.getElementById('proofButton').addEventListener('click', copyToClipboard);
+    document.getElementById('returnButton').addEventListener('click', () => {
+        window.location.href = 'https://www.mookie.click';
+    });
 
     const tooltip = document.querySelector('.tooltip');
-    if (tooltip) {
-        tooltip.addEventListener('click', (e) => {
-            e.stopPropagation();
-            tooltip.classList.toggle('active');
-        });
-    }
+    tooltip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        tooltip.classList.toggle('active');
+    });
 
     document.addEventListener('click', (e) => {
-        if (tooltip && !tooltip.contains(e.target)) {
+        if (!tooltip.contains(e.target)) {
             tooltip.classList.remove('active');
         }
     });
 
-    const popupContinueButtonElement = document.getElementById('popupContinueButton');
-    if (popupContinueButtonElement) {
-        popupContinueButtonElement.addEventListener('click', function () {
-            closeMookiePopup();
-        });
-    }
+    document.getElementById('popupContinueButton').addEventListener('click', function () {
+        closeMookiePopup();
+    });
 
-    const closePopupElement = document.getElementById('closePopup');
-    if (closePopupElement) {
-        closePopupElement.addEventListener('click', function () {
-            closeMookiePopup();
-        });
-    }
+    document.getElementById('closePopup').addEventListener('click', function () {
+        closeMookiePopup();
+    });
 });
 
 function displayPlayerFromDecade(decade) {
@@ -560,39 +494,21 @@ function handleTwoForOne(isCorrect) {
             return false;
         } else if (twoForOneCounter >= 2) {
             isTwoForOneActive = false;
-            const playingTwoForOneElement = document.getElementById('playingTwoForOne');
-            if (playingTwoForOneElement) {
-                playingTwoForOneElement.style.display = 'none';
-            }
-            const splitItBtnElement = document.getElementById('splitItBtn');
-            if (splitItBtnElement) {
-                splitItBtnElement.disabled = false;
-                splitItBtnElement.classList.remove('disabled');
-            }
-            const goFishBtnElement = document.getElementById('goFishBtn');
-            if (goFishBtnElement) {
-                goFishBtnElement.disabled = false;
-                goFishBtnElement.classList.remove('disabled');
-            }
+            document.getElementById('playingTwoForOne').style.display = 'none';
+            document.getElementById('splitItBtn').disabled = false;
+            document.getElementById('splitItBtn').classList.remove('disabled');
+            document.getElementById('goFishBtn').disabled = false;
+            document.getElementById('goFishBtn').classList.remove('disabled');
             return true;
         }
     } else {
         isTwoForOneActive = false;
         twoForOneCounter = 0;
-        const playingTwoForOneElement = document.getElementById('playingTwoForOne');
-        if (playingTwoForOneElement) {
-            playingTwoForOneElement.style.display = 'none';
-        }
-        const splitItBtnElement = document.getElementById('splitItBtn');
-        if (splitItBtnElement) {
-            splitItBtnElement.disabled = false;
-            splitItBtnElement.classList.remove('disabled');
-        }
-        const goFishBtnElement = document.getElementById('goFishBtn');
-        if (goFishBtnElement) {
-            goFishBtnElement.disabled = false;
-            goFishBtnElement.classList.remove('disabled');
-        }
+        document.getElementById('playingTwoForOne').style.display = 'none';
+        document.getElementById('splitItBtn').disabled = false;
+        document.getElementById('splitItBtn').classList.remove('disabled');
+        document.getElementById('goFishBtn').disabled = false;
+        document.getElementById('goFishBtn').classList.remove('disabled');
     }
     return false;
 }
