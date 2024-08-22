@@ -102,6 +102,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             resultElement.textContent = 'Wrong answer. Try again!';
             resultElement.className = 'incorrect';
             wrongSound.play();
+            showNopePopup();  // Show the nope popup here
             resetButtons();
         }
     }
@@ -176,9 +177,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         document.getElementById('plunkosCount').textContent = '0';
         resultElement.textContent = 'Wrong answer. Try again!';
         resultElement.className = 'incorrect';
-        document.getElementById('returnButton').style.display = 'inline-block';
-        document.getElementById('returnButton').textContent = 'Start a Fresh MOOKIE';
-        wrongSound.play();
+        showNopePopup();  // Show the nope popup here
         resetButtons();
         endURLChallenge(false);
     }
@@ -353,6 +352,7 @@ function endURLChallenge(success) {
     } else {
         resultElement.innerHTML = "You didn't get all 3 correct. Better luck next time!";
         resultElement.className = 'incorrect';
+        showNopePopup();  // Show the nope popup here
     }
 
     if (copyButton) {
@@ -519,7 +519,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const popupContinueButton = document.getElementById('popupContinueButton');
     if (popupContinueButton) {
         popupContinueButton.addEventListener('click', function () {
-            window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
+            closeMookiePopup();
+            startStandardPlay(); // Start a fresh game in regular mode
         });
     }
 
@@ -534,25 +535,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (popupProofButton) {
         popupProofButton.addEventListener('click', copyToClipboard);
     }
-
-    const popupNopeContinueButton = document.getElementById('popupNopeContinueButton');
-    if (popupNopeContinueButton) {
-        popupNopeContinueButton.addEventListener('click', function () {
-            window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
-        });
-    }
-
-    const closeNopePopup = document.getElementById('closeNopePopup');
-    if (closeNopePopup) {
-        closeNopePopup.addEventListener('click', function () {
-            closeNopePopup();
-        });
-    }
-
-    const popupNopeProofButton = document.getElementById('proofButtonNopePopup');
-    if (popupNopeProofButton) {
-        popupNopeProofButton.addEventListener('click', copyToClipboard);
-    }
 });
 
 function displayPlayerFromDecade(decade) {
@@ -564,17 +546,17 @@ function displayPlayerFromDecade(decade) {
             playerDecade = '1950s';
         } else if (playerYear >= 60 && playerYear <= 69) {
             playerDecade = '1960s';
-        } else if (playerYear >= 70 && playerYear <= 79) {
+        } else if (playerYear >= 70 and playerYear <= 79) {
             playerDecade = '1970s';
-        } else if (playerYear >= 80 && playerYear <= 89) {
+        } else if (playerYear >= 80 and playerYear <= 89) {
             playerDecade = '1980s';
-        } else if (playerYear >= 90 && playerYear <= 99) {
+        } else if (playerYear >= 90 and playerYear <= 99) {
             playerDecade = '1990s';
-        } else if (playerYear >= 0 && playerYear <= 9) {
+        } else if (playerYear >= 0 and playerYear <= 9) {
             playerDecade = '2000s';
-        } else if (playerYear >= 10 && playerYear <= 19) {
+        } else if (playerYear >= 10 and playerYear <= 19) {
             playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
+        } else if (playerYear >= 20 and playerYear <= 29) {
             playerDecade = '2020s';
         }
 
@@ -674,23 +656,24 @@ function showMookiePopup(shareText) {
 
         popupContinueButton.onclick = function() {
             closeMookiePopup();
-            startStandardPlay(); // Start a fresh game in regular mode
+            // Don't reset cumulativeRarityScore and other game data
         };
     }
 }
 
-function showNopePopup(shareText) {
+function showNopePopup() {
     const overlay = document.createElement('div');
     overlay.id = 'popupOverlay';
     document.body.appendChild(overlay);
 
     const popup = document.getElementById('nopePopup');
     if (popup) {
-        const popupCopyButton = document.getElementById('popupNopeCopyButton');
-        const popupProofButton = document.getElementById('proofButtonNopePopup');
-        const popupContinueButton = document.getElementById('popupNopeContinueButton');
+        const popupCopyButton = document.getElementById('popupCopyButtonNope');
+        const popupProofButton = document.getElementById('proofButtonPopupNope');
+        const popupContinueButton = document.getElementById('popupContinueButtonNope');
 
         if (popupCopyButton) {
+            const shareText = `You won't believe it, I got it wrong in MOOKIE! ${window.location.href}`;
             popupCopyButton.setAttribute('data-snippet', shareText);
         }
 
