@@ -517,9 +517,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const popupContinueButton = document.getElementById('popupContinueButton');
-if (popupContinueButton) {
-    popupContinueButton.addEventListener('click', function () {
-        window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
+    if (popupContinueButton) {
+        popupContinueButton.addEventListener('click', function () {
+            window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
         });
     }
 
@@ -533,6 +533,25 @@ if (popupContinueButton) {
     const popupProofButton = document.getElementById('proofButtonPopup');
     if (popupProofButton) {
         popupProofButton.addEventListener('click', copyToClipboard);
+    }
+
+    const popupNopeContinueButton = document.getElementById('popupNopeContinueButton');
+    if (popupNopeContinueButton) {
+        popupNopeContinueButton.addEventListener('click', function () {
+            window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
+        });
+    }
+
+    const closeNopePopup = document.getElementById('closeNopePopup');
+    if (closeNopePopup) {
+        closeNopePopup.addEventListener('click', function () {
+            closeNopePopup();
+        });
+    }
+
+    const popupNopeProofButton = document.getElementById('proofButtonNopePopup');
+    if (popupNopeProofButton) {
+        popupNopeProofButton.addEventListener('click', copyToClipboard);
     }
 });
 
@@ -660,8 +679,49 @@ function showMookiePopup(shareText) {
     }
 }
 
+function showNopePopup(shareText) {
+    const overlay = document.createElement('div');
+    overlay.id = 'popupOverlay';
+    document.body.appendChild(overlay);
+
+    const popup = document.getElementById('nopePopup');
+    if (popup) {
+        const popupCopyButton = document.getElementById('popupNopeCopyButton');
+        const popupProofButton = document.getElementById('proofButtonNopePopup');
+        const popupContinueButton = document.getElementById('popupNopeContinueButton');
+
+        if (popupCopyButton) {
+            popupCopyButton.setAttribute('data-snippet', shareText);
+        }
+
+        if (popupProofButton) {
+            const proofText = `PROOF I failed the MOOKIE!🧾 ${window.location.href}`;
+            popupProofButton.setAttribute('data-snippet', proofText);
+            popupProofButton.style.display = 'inline-block';
+        }
+
+        popup.style.display = 'block';
+
+        popupContinueButton.onclick = function() {
+            closeNopePopup();
+            startStandardPlay(); // Start a fresh game in regular mode
+        };
+    }
+}
+
 function closeMookiePopup() {
     const popup = document.getElementById('mookiePopup');
+    const overlay = document.getElementById('popupOverlay');
+    if (popup) {
+        popup.style.display = 'none';
+    }
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function closeNopePopup() {
+    const popup = document.getElementById('nopePopup');
     const overlay = document.getElementById('popupOverlay');
     if (popup) {
         popup.style.display = 'none';
