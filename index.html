@@ -51,13 +51,12 @@
          <span id="snippetMessage">Challenge friends with your MOOKIE:</span>
          <button id="copyButton">Copy the URL</button>
       </div>
-      <div id="buttonContainer">
+      <div id="buttonContainer" style="display: none;"> <!-- Initially hidden in challenge mode -->
          <button id="proofButton" style="background-color: red; color: white;">Get the 🧾</button>
-         <button id="returnButton">Play again</button>
       </div>
-      <div id="plunkosCounter">🪣 = <span id="plunkosCount">0</span></div>
+      <div id="plunkosCounter" style="display: none;">🪣 = <span id="plunkosCount">0</span></div>
    </div>
-   <div class="bottom-container">
+   <div class="bottom-container" style="display: none;"> <!-- Initially hidden in challenge mode -->
       <span class="tooltip">🔍 how it works<span class="tooltiptext">🏀 3 correct in a row creates a challenge.<br>✅ copy the url.<br>📱 text it to your friends.<br>👀 see if they can nail it.<br>🤔 think the player didn’t go to college?<br>enter “no college”<br>🪣 = your current score<br>♣️ = stuck? skip for a 2 for 1<br>🐟 = another skip (pick a decade)<br>🏆 = your high score</span></span>
       <span id="highScore">🏆=0</span>
    </div>
@@ -70,6 +69,7 @@
            <p class="popup-message">👇 Challenge friends with this one<span id="mookieLogoText"></span>!</p>
            <div class="popup-buttons">
                <button id="popupCopyButton">Copy the URL</button>
+               <button id="proofButtonPopup" style="display: none;">Get the 🧾</button> <!-- Proof button added to popup -->
                <button id="popupContinueButton">Keep on PLAYING</button>
            </div>
            <span id="closePopup" class="close">&times;</span>
