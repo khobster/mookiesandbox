@@ -129,7 +129,7 @@ function resetButtons() {
 
 function increaseDifficulty() {
     currentDifficultyLevel += 0.1; // Increment by a smaller step for more gradual difficulty increase
-    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 and player.retirement_year < 2000));
+    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
 }
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
