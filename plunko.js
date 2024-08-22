@@ -58,9 +58,6 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             lastThreeCorrectStandard.push(playerName);
             cumulativeRarityScore += player.rarity_score;
 
-            // Debugging log to check streak progression
-            console.log(`Current Streak: ${correctStreakStandard}`);
-
             // Update high score after every correct answer
             if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore;
@@ -116,18 +113,23 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
 }
 
 function resetButtons() {
-    // Re-enable and reset the Go 🐟 button
-    document.getElementById('goFishBtn').disabled = false;
-    document.getElementById('goFishBtn').classList.remove('disabled');
+    const goFishBtn = document.getElementById('goFishBtn');
+    const splitItBtn = document.getElementById('splitItBtn');
 
-    // Re-enable and reset the Split It button
-    document.getElementById('splitItBtn').disabled = false;
-    document.getElementById('splitItBtn').classList.remove('disabled');
+    if (goFishBtn) {
+        goFishBtn.disabled = false;
+        goFishBtn.classList.remove('disabled');
+    }
+
+    if (splitItBtn) {
+        splitItBtn.disabled = false;
+        splitItBtn.classList.remove('disabled');
+    }
 }
 
 function increaseDifficulty() {
     currentDifficultyLevel += 0.1; // Increment by a smaller step for more gradual difficulty increase
-    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
+    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 and player.retirement_year < 2000));
 }
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
@@ -140,7 +142,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
 
     const player = playersData.find(p => p.name === playerName);
 
-    if (isCorrect && player) {
+    if (isCorrect and player) {
         correctStreakURL++;
         lastThreeCorrectURL.push(playerName);
         cumulativeRarityScore += player.rarity_score;
@@ -210,13 +212,118 @@ function copyToClipboard(event) {
     });
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    loadPlayersData();
+
+    const collegeGuess = document.getElementById('collegeGuess');
+    if (collegeGuess) {
+        collegeGuess.addEventListener('input', (e) => {
+            showSuggestions(e.target.value);
+        });
+    }
+
+    const splitItBtn = document.getElementById('splitItBtn');
+    const goFishBtn = document.getElementById('goFishBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const returnButton = document.getElementById('returnButton');
+    const proofButton = document.getElementById('proofButton');
+    const popupCopyButton = document.getElementById('popupCopyButton');
+    const popupContinueButton = document.getElementById('popupContinueButton');
+    const closePopup = document.getElementById('closePopup');
+    const copyButton = document.getElementById('copyButton');
+    const decadeDropdown = document.getElementById('decadeDropdown');
+
+    if (splitItBtn) {
+        splitItBtn.addEventListener('click', () => {
+            if (isTwoForOneActive) {
+                return;
+            }
+            document.getElementById('playingTwoForOne').style.display = 'inline';
+            document.getElementById('playingTwoForOne').textContent = 'playing 2 for 1 now';
+            isTwoForOneActive = true;
+            twoForOneCounter = 0;
+            splitItBtn.disabled = true;
+            splitItBtn.classList.add('disabled');
+            goFishBtn.disabled = true;
+            goFishBtn.classList.add('disabled');
+            displayRandomPlayer();
+        });
+    }
+
+    if (goFishBtn) {
+        goFishBtn.addEventListener('click', () => {
+            if (isTwoForOneActive) {
+                return;
+            }
+            document.getElementById('decadeDropdownContainer').style.display = 'block';
+            goFishBtn.disabled = true;
+            goFishBtn.classList.add('disabled');
+        });
+    }
+
+    if (decadeDropdown) {
+        decadeDropdown.addEventListener('change', (e) => {
+            const selectedDecade = e.target.value;
+            if (selectedDecade) {
+                displayPlayerFromDecade(selectedDecade);
+                document.getElementById('decadeDropdownContainer').style.display = 'none';
+            }
+        });
+    }
+
+    if (copyButton) {
+        copyButton.addEventListener('click', copyToClipboard);
+    }
+
+    if (popupCopyButton) {
+        popupCopyButton.addEventListener('click', copyToClipboard);
+    }
+
+    if (proofButton) {
+        proofButton.addEventListener('click', copyToClipboard);
+    }
+
+    if (returnButton) {
+        returnButton.addEventListener('click', () => {
+            window.location.href = 'https://www.mookie.click';
+        });
+    }
+
+    // Tooltip handling for mobile
+    const tooltip = document.querySelector('.tooltip');
+    if (tooltip) {
+        tooltip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tooltip.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!tooltip.contains(e.target)) {
+                tooltip.classList.remove('active');
+            }
+        });
+    }
+
+    if (popupContinueButton) {
+        popupContinueButton.addEventListener('click', function () {
+            closeMookiePopup();
+        });
+    }
+
+    if (closePopup) {
+        closePopup.addEventListener('click', function () {
+            closeMookiePopup();
+        });
+    }
+});
+
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox23/main/updated_test_data_with_rarity.json')
         .then(response => response.json())
         .then(data => {
             playersData = data;
-            playersData.sort((a, b) => a.rarity_score - b.rarity_score); // Sort by rarity score
-            playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000)); // Filter initial players
+            playersData.sort((a, b) => a.rarity_score - b.rarity_score);
+            playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
             const urlPlayers = getPlayersFromURL();
             if (urlPlayers.length > 0) {
                 startURLChallenge(urlPlayers);
@@ -233,32 +340,34 @@ function loadPlayersData() {
 function startStandardPlay() {
     displayRandomPlayer();
 
-    // Hide the return button at the start of standard play
-    document.getElementById('returnButton').style.display = 'none';
+    const returnButton = document.getElementById('returnButton');
+    if (returnButton) {
+        returnButton.style.display = 'none';
+    }
 
-    // Show the Split It and Go Fish buttons for standard mode
     const buttonRow = document.getElementById('buttonRow');
     if (buttonRow) {
         buttonRow.style.display = 'flex';
     }
 
-    // Show plunkosCounter for standard mode
     const plunkosCounter = document.getElementById('plunkosCounter');
     if (plunkosCounter) {
         plunkosCounter.style.display = 'block';
     }
 
-    document.getElementById('submitBtn').onclick = function () {
-        // Hide the snippet and copy button on the next question attempt
-        document.getElementById('snippetContainer').classList.remove('show');
-        document.getElementById('proofButton').style.display = 'none'; // Hide proof button in standard play
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.onclick = function () {
+            document.getElementById('snippetContainer').classList.remove('show');
+            document.getElementById('proofButton').style.display = 'none';
 
-        const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
-        const playerName = document.getElementById('playerName').textContent;
-        const player = playersData.find(p => p.name === playerName);
-        let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
-        updateStreakAndGenerateSnippetStandard(isCorrect, playerName, document.getElementById('result'), displayRandomPlayer);
-    };
+            const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
+            const playerName = document.getElementById('playerName').textContent;
+            const player = playersData.find(p => p.name === playerName);
+            let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
+            updateStreakAndGenerateSnippetStandard(isCorrect, playerName, document.getElementById('result'), displayRandomPlayer);
+        };
+    }
 }
 
 function displayRandomPlayer() {
@@ -288,26 +397,13 @@ function startURLChallenge(playerNames) {
     correctStreakURL = 0; // Reset correct streak when starting a shared link sequence
     lastThreeCorrectURL = []; // Clear last three correct players
 
-    // Hide Split It and Go Fish buttons for challenge mode
-    const buttonRow = document.getElementById('buttonRow');
-    if (buttonRow) {
-        buttonRow.style.display = 'none';
-    }
-
-    // Hide plunkosCounter for challenge mode
-    const plunkosCounter = document.getElementById('plunkosCounter');
-    if (plunkosCounter) {
-        plunkosCounter.style.display = 'none';
-    }
-
     function nextPlayer(index) {
         if (index < playerNames.length) {
             const playerName = playerNames[index];
             const player = playersData.find(p => p.name === playerName);
             if (player) {
                 displayPlayer(player);
-                document.getElementById('submitBtn').onclick = function () {
-                    // Hide the snippet and copy button on the next question attempt
+                document.getElementById('submitBtn').onclick = function() {
                     document.getElementById('snippetContainer').classList.remove('show');
                     document.getElementById('proofButton').style.display = 'none'; // Hide proof button in URL play until needed
 
@@ -367,7 +463,7 @@ function showSuggestions(input) {
     }
     const suggestions = Array.from(new Set(playersData
         .map(player => player.college)
-        .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
+        .filter(college => college and college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
         .slice(0, 5); // Show up to 5 unique suggestions
     suggestions.forEach(suggestion => {
         const suggestionItem = document.createElement('div');
@@ -381,77 +477,6 @@ function showSuggestions(input) {
     });
 
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    loadPlayersData();
-
-    document.getElementById('collegeGuess').addEventListener('input', (e) => {
-        showSuggestions(e.target.value);
-    });
-
-    document.getElementById('splitItBtn').addEventListener('click', () => {
-        if (isTwoForOneActive) {
-            // If they are already in 2-for-1 mode, do nothing
-            return;
-        }
-        document.getElementById('playingTwoForOne').style.display = 'inline';
-        document.getElementById('playingTwoForOne').textContent = 'playing 2 for 1 now';
-        isTwoForOneActive = true;
-        twoForOneCounter = 0;
-        document.getElementById('splitItBtn').disabled = true; // Disable the button
-        document.getElementById('splitItBtn').classList.add('disabled'); // Add a class to gray it out
-        document.getElementById('goFishBtn').disabled = true; // Disable Go Fish during Split It
-        document.getElementById('goFishBtn').classList.add('disabled'); // Add a class to gray it out
-        displayRandomPlayer(); // Skip the current question
-    });
-
-    document.getElementById('goFishBtn').addEventListener('click', () => {
-        if (isTwoForOneActive) {
-            // If they are already in 2-for-1 mode, do nothing
-            return;
-        }
-        document.getElementById('decadeDropdownContainer').style.display = 'block';
-        document.getElementById('goFishBtn').disabled = true; // Disable the button after it's clicked
-        document.getElementById('goFishBtn').classList.add('disabled'); // Add a class to gray it out
-    });
-
-    document.getElementById('decadeDropdown').addEventListener('change', (e) => {
-        const selectedDecade = e.target.value;
-        if (selectedDecade) {
-            displayPlayerFromDecade(selectedDecade); // Display a new player based on the selected decade
-            document.getElementById('decadeDropdownContainer').style.display = 'none'; // Hide dropdown after selection
-        }
-    });
-
-    document.getElementById('copyButton').addEventListener('click', copyToClipboard);
-    document.getElementById('popupCopyButton').addEventListener('click', copyToClipboard);
-    document.getElementById('proofButton').addEventListener('click', copyToClipboard); // Add event listener for proof button
-    document.getElementById('returnButton').addEventListener('click', () => {
-        window.location.href = 'https://www.mookie.click';
-    });
-
-    // Tooltip handling for mobile
-    const tooltip = document.querySelector('.tooltip');
-    tooltip.addEventListener('click', (e) => {
-        e.stopPropagation();
-        tooltip.classList.toggle('active');
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!tooltip.contains(e.target)) {
-            tooltip.classList.remove('active');
-        }
-    });
-
-    // Event listeners for MOOKIE popup buttons
-    document.getElementById('popupContinueButton').addEventListener('click', function () {
-        closeMookiePopup();
-    });
-
-    document.getElementById('closePopup').addEventListener('click', function () {
-        closeMookiePopup();
-    });
-});
 
 function displayPlayerFromDecade(decade) {
     const playersFromDecade = playersData.filter(player => {
@@ -476,8 +501,6 @@ function displayPlayerFromDecade(decade) {
         } else if (playerYear >= 20 && playerYear <= 29) {
             playerDecade = '2020s';
         }
-
-        console.log(`Player: ${player.name}, Retirement Year: ${playerYear}, Decade: ${playerDecade}`);
 
         return playerDecade === decade;
     });
@@ -530,7 +553,7 @@ function showMookiePopup(shareText) {
     const overlay = document.createElement('div');
     overlay.id = 'popupOverlay';
     document.body.appendChild(overlay);
-
+    
     const popup = document.getElementById('mookiePopup');
     document.getElementById('popupCopyButton').setAttribute('data-snippet', shareText);
     popup.style.display = 'block';
