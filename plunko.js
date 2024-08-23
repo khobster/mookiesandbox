@@ -672,6 +672,14 @@ function showMookiePopup(shareText, isChallengeMode = false) {
 
         if (isChallengeMode) {
             popupProofButton.style.display = 'inline-block'; // Show the red receipt button in challenge mode
+            popupProofButton.onclick = function() {
+                const proofText = `PROOF I nailed the MOOKIE! 🧾 ${window.location.href}`;
+                navigator.clipboard.writeText(proofText).then(() => {
+                    const originalText = popupProofButton.textContent;
+                    popupProofButton.textContent = 'Copied!';
+                    setTimeout(() => popupProofButton.textContent = originalText, 2000);
+                });
+            };
             popupContinueButton.textContent = 'Play again';
             popupContinueButton.onclick = function () {
                 window.location.href = 'https://www.mookie.click'; // Redirect to main page
