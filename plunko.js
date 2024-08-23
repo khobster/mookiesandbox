@@ -34,7 +34,7 @@ function isCloseMatch(guess, answer) {
         "nocollege",
     ];
 
-    if (noCollegePhrases includes(normalizedGuess) && simpleAnswer === '') {
+    if (noCollegePhrases.indexOf(normalizedGuess) !== -1 && simpleAnswer === '') {
         return true;
     }
 
@@ -42,7 +42,7 @@ function isCloseMatch(guess, answer) {
         return true;
     }
 
-    return simpleAnswer includes(simpleGuess);
+    return simpleAnswer.indexOf(simpleGuess) !== -1;
 }
 
 function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
@@ -517,8 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const popupContinueButton = document.getElementById('popupContinueButton');
     if (popupContinueButton) {
         popupContinueButton.addEventListener('click', function () {
-            closeMookiePopup();
-            startStandardPlay(); // Resume the game in regular mode without resetting scores
+            window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
         });
     }
 
@@ -554,7 +553,7 @@ function displayPlayerFromDecade(decade) {
             playerDecade = '2000s';
         } else if (playerYear >= 10 && playerYear <= 19) {
             playerDecade = '2010s';
-        } else if (playerYear >= 20 and playerYear <= 29) {
+        } else if (playerYear >= 20 && playerYear <= 29) {
             playerDecade = '2020s';
         }
 
@@ -654,7 +653,7 @@ function showMookiePopup(shareText) {
 
         popupContinueButton.onclick = function() {
             closeMookiePopup();
-            startStandardPlay(); // Resume the game in regular mode without resetting scores
+            startStandardPlay(); // Start a fresh game in regular mode
         };
     }
 }
@@ -701,4 +700,10 @@ function closeMookiePopup() {
     if (overlay) {
         overlay.remove();
     }
+}
+
+function keepPlayingInStandardMode() {
+    closeMookiePopup();
+    // Don't reset the scores
+    startStandardPlay(); 
 }
