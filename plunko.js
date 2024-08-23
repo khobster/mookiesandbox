@@ -34,7 +34,7 @@ function isCloseMatch(guess, answer) {
         "nocollege",
     ];
 
-    if (noCollegePhrases.includes(normalizedGuess) && simpleAnswer === '') {
+    if (noCollegePhrases includes(normalizedGuess) && simpleAnswer === '') {
         return true;
     }
 
@@ -42,17 +42,10 @@ function isCloseMatch(guess, answer) {
         return true;
     }
 
-    return simpleAnswer.includes(simpleGuess);
+    return simpleAnswer includes(simpleGuess);
 }
 
 function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
-    const bucketScoreElement = document.getElementById('plunkosCounter');
-    
-    // Hide the bucket score when showing the result message
-    if (bucketScoreElement) {
-        bucketScoreElement.style.display = 'none';
-    }
-
     const player = playersData.find(p => p.name === playerName);
 
     if (isCorrect && player) {
@@ -112,24 +105,30 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             resetButtons();
         }
     }
+    setTimeout(nextPlayerCallback, 3000);
+}
 
-    // Show the bucket score again after the result message is hidden
-    setTimeout(() => {
-        if (bucketScoreElement) {
-            bucketScoreElement.style.display = 'block';
-        }
-        nextPlayerCallback();
-    }, 3000);
+function resetButtons() {
+    const goFishBtn = document.getElementById('goFishBtn');
+    const splitItBtn = document.getElementById('splitItBtn');
+
+    if (goFishBtn) {
+        goFishBtn.disabled = false;
+        goFishBtn.classList.remove('disabled');
+    }
+
+    if (splitItBtn) {
+        splitItBtn.disabled = false;
+        splitItBtn.classList.remove('disabled');
+    }
+}
+
+function increaseDifficulty() {
+    currentDifficultyLevel += 0.1;
+    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
 }
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
-    const bucketScoreElement = document.getElementById('plunkosCounter');
-    
-    // Hide the bucket score when showing the result message
-    if (bucketScoreElement) {
-        bucketScoreElement.style.display = 'none';
-    }
-
     const player = playersData.find(p => p.name === playerName);
 
     if (isCorrect && player) {
@@ -181,34 +180,6 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         resetButtons();
         endURLChallenge(false);
     }
-
-    // Show the bucket score again after the result message is hidden
-    setTimeout(() => {
-        if (bucketScoreElement) {
-            bucketScoreElement.style.display = 'block';
-        }
-        nextPlayerCallback(playerIndex + 1);
-    }, 3000);
-}
-
-function resetButtons() {
-    const goFishBtn = document.getElementById('goFishBtn');
-    const splitItBtn = document.getElementById('splitItBtn');
-
-    if (goFishBtn) {
-        goFishBtn.disabled = false;
-        goFishBtn.classList.remove('disabled');
-    }
-
-    if (splitItBtn) {
-        splitItBtn.disabled = false;
-        splitItBtn.classList.remove('disabled');
-    }
-}
-
-function increaseDifficulty() {
-    currentDifficultyLevel += 0.1;
-    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
 }
 
 function copyToClipboard(event) {
@@ -546,7 +517,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const popupContinueButton = document.getElementById('popupContinueButton');
     if (popupContinueButton) {
         popupContinueButton.addEventListener('click', function () {
-            window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
+            closeMookiePopup();
+            startStandardPlay(); // Resume the game in regular mode without resetting scores
         });
     }
 
@@ -582,7 +554,7 @@ function displayPlayerFromDecade(decade) {
             playerDecade = '2000s';
         } else if (playerYear >= 10 && playerYear <= 19) {
             playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
+        } else if (playerYear >= 20 and playerYear <= 29) {
             playerDecade = '2020s';
         }
 
@@ -682,7 +654,7 @@ function showMookiePopup(shareText) {
 
         popupContinueButton.onclick = function() {
             closeMookiePopup();
-            startStandardPlay(); // Start a fresh game in regular mode
+            startStandardPlay(); // Resume the game in regular mode without resetting scores
         };
     }
 }
