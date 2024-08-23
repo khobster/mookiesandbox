@@ -78,39 +78,6 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
     }
 }
 
-function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
-    const bucketScoreElement = document.getElementById('plunkosCounter');
-    
-    // Hide the bucket score when showing the result message
-    if (bucketScoreElement) {
-        bucketScoreElement.style.display = 'none';
-    }
-
-    const player = playersData.find(p => p.name === playerName);
-
-    if (isCorrect && player) {
-        // Existing logic for handling correct answers...
-
-        // Show the bucket score again after the result message is hidden
-        setTimeout(() => {
-            if (bucketScoreElement) {
-                bucketScoreElement.style.display = 'block';
-            }
-            nextPlayerCallback();
-        }, 3000);
-    } else {
-        // Existing logic for handling incorrect answers...
-
-        // Show the bucket score again after the result message is hidden
-        setTimeout(() => {
-            if (bucketScoreElement) {
-                bucketScoreElement.style.display = 'block';
-            }
-            nextPlayerCallback();
-        }, 3000);
-    }
-}
-
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
     const bucketScoreElement = document.getElementById('plunkosCounter');
     
@@ -119,51 +86,6 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         bucketScoreElement.style.display = 'none';
     }
 
-    const player = playersData.find(p => p.name === playerName);
-
-    if (isCorrect && player) {
-        // Existing logic for handling correct answers in challenge mode...
-
-        // Show the bucket score again after the result message is hidden
-        setTimeout(() => {
-            if (bucketScoreElement) {
-                bucketScoreElement.style.display = 'block';
-            }
-            nextPlayerCallback(playerIndex + 1);
-        }, 3000);
-    } else {
-        // Existing logic for handling incorrect answers in challenge mode...
-
-        // Show the bucket score again after the result message is hidden
-        setTimeout(() => {
-            if (bucketScoreElement) {
-                bucketScoreElement.style.display = 'block';
-            }
-            nextPlayerCallback(playerIndex + 1);
-        }, 3000);
-    }
-
-function resetButtons() {
-    const goFishBtn = document.getElementById('goFishBtn');
-    const splitItBtn = document.getElementById('splitItBtn');
-
-    if (goFishBtn) {
-        goFishBtn.disabled = false;
-        goFishBtn.classList.remove('disabled');
-    }
-
-    if (splitItBtn) {
-        splitItBtn.disabled = false;
-        splitItBtn.classList.remove('disabled');
-    }
-}
-
-function increaseDifficulty() {
-    currentDifficultyLevel += 0.1;
-    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
-}
-
-function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
     const player = playersData.find(p => p.name === playerName);
 
     if (isCorrect && player) {
@@ -215,6 +137,26 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         resetButtons();
         endURLChallenge(false);
     }
+}
+
+function resetButtons() {
+    const goFishBtn = document.getElementById('goFishBtn');
+    const splitItBtn = document.getElementById('splitItBtn');
+
+    if (goFishBtn) {
+        goFishBtn.disabled = false;
+        goFishBtn.classList.remove('disabled');
+    }
+
+    if (splitItBtn) {
+        splitItBtn.disabled = false;
+        splitItBtn.classList.remove('disabled');
+    }
+}
+
+function increaseDifficulty() {
+    currentDifficultyLevel += 0.1;
+    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
 }
 
 function copyToClipboard(event) {
@@ -518,14 +460,9 @@ document.addEventListener('DOMContentLoaded', () => {
         copyButton.addEventListener('click', copyToClipboard);
     }
 
-    const popupCopyButton = document.getElementById('popupCopyButton');
-    if (popupCopyButton) {
-        popupCopyButton.addEventListener('click', copyToClipboard);
-    }
-
-    const proofButton = document.getElementById('proofButton');
-    if (proofButton) {
-        proofButton.addEventListener('click', copyToClipboard);
+    const popupProofButton = document.getElementById('proofButtonPopup');
+    if (popupProofButton) {
+        popupProofButton.addEventListener('click', copyToClipboard);
     }
 
     const returnButton = document.getElementById('returnButton');
@@ -586,9 +523,9 @@ function displayPlayerFromDecade(decade) {
             playerDecade = '1990s';
         } else if (playerYear >= 0 && playerYear <= 9) {
             playerDecade = '2000s';
-        } else if (playerYear >= 10 && playerYear <= 19) {
+        } else if (playerYear >= 10 and playerYear <= 19) {
             playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
+        } else if (playerYear >= 20 and playerYear <= 29) {
             playerDecade = '2020s';
         }
 
