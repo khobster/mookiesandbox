@@ -550,6 +550,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Keep scores when starting a new game
             startStandardPlay(); 
         });
+        popupContinueButton.style.width = '80%';
+        popupContinueButton.style.fontSize = 'larger';
     }
 
     const closePopup = document.getElementById('closePopup');
@@ -561,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const popupProofButton = document.getElementById('proofButtonPopup');
     if (popupProofButton) {
-        popupProofButton.addEventListener('click', copyToClipboard);
+        popupProofButton.style.display = 'none'; // Hide the proof button for standard play
     }
 });
 
@@ -687,6 +689,8 @@ function showMookiePopup(shareText) {
             // Keep scores when starting a new game
             startStandardPlay(); 
         };
+        popupContinueButton.style.width = '80%';
+        popupContinueButton.style.fontSize = 'larger';
     }
 }
 
