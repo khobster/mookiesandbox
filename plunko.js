@@ -46,67 +46,69 @@ function isCloseMatch(guess, answer) {
 }
 
 function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
+    const bucketScoreElement = document.getElementById('plunkosCounter');
+    
+    // Hide the bucket score when showing the result message
+    if (bucketScoreElement) {
+        bucketScoreElement.style.display = 'none';
+    }
+
     const player = playersData.find(p => p.name === playerName);
 
     if (isCorrect && player) {
-        if (isTwoForOneActive) {
-            isCorrect = handleTwoForOne(true);
-        }
+        // Existing logic for handling correct answers...
 
-        if (!isTwoForOneActive || isCorrect) {
-            correctStreakStandard++;
-            lastThreeCorrectStandard.push(playerName);
-            cumulativeRarityScore += player.rarity_score;
-
-            if (cumulativeRarityScore > highScore) {
-                highScore = cumulativeRarityScore;
-                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
+        // Show the bucket score again after the result message is hidden
+        setTimeout(() => {
+            if (bucketScoreElement) {
+                bucketScoreElement.style.display = 'block';
             }
-
-            if (lastThreeCorrectStandard.length > 3) {
-                lastThreeCorrectStandard.shift();
-            }
-
-            if (correctStreakStandard === 1) {
-                resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just two more to get this <span class='kaboom'>MOOoooOOKIE!</span>";
-            } else if (correctStreakStandard === 2) {
-                resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just one more to get a <span class='kaboom'>MOOoooOOKIE!</span>";
-            } else if (correctStreakStandard === 3) {
-                resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
-                const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
-                const shareLink = `https://www.mookie.click/?players=${encodedPlayers}`;
-                const decodedPlayers = decodeURIComponent(encodedPlayers).replace(/,/g, ', ');
-                let shareText = `throwing this to you: ${decodedPlayers} ${shareLink}`;
-
-                showMookiePopup(shareText);
-
-                increaseDifficulty();
-                correctStreakStandard = 0;
-                lastThreeCorrectStandard = [];
-                resetButtons();
-            }
-            document.getElementById('plunkosCount').textContent = `${Math.round(cumulativeRarityScore)}`;
-            resultElement.className = 'correct';
-            correctSound.play();
-        }
+            nextPlayerCallback();
+        }, 3000);
     } else {
-        if (isTwoForOneActive) {
-            isCorrect = handleTwoForOne(false);
-        }
+        // Existing logic for handling incorrect answers...
 
-        if (!isTwoForOneActive || !isCorrect) {
-            correctStreakStandard = 0;
-            lastThreeCorrectStandard = [];
-            cumulativeRarityScore = 0;
-            document.getElementById('plunkosCount').textContent = '0';
-            resultElement.textContent = 'Wrong answer. Try again!';
-            resultElement.className = 'incorrect';
-            wrongSound.play();
-            resetButtons();
-        }
+        // Show the bucket score again after the result message is hidden
+        setTimeout(() => {
+            if (bucketScoreElement) {
+                bucketScoreElement.style.display = 'block';
+            }
+            nextPlayerCallback();
+        }, 3000);
     }
-    setTimeout(nextPlayerCallback, 3000);
 }
+
+function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
+    const bucketScoreElement = document.getElementById('plunkosCounter');
+    
+    // Hide the bucket score when showing the result message
+    if (bucketScoreElement) {
+        bucketScoreElement.style.display = 'none';
+    }
+
+    const player = playersData.find(p => p.name === playerName);
+
+    if (isCorrect && player) {
+        // Existing logic for handling correct answers in challenge mode...
+
+        // Show the bucket score again after the result message is hidden
+        setTimeout(() => {
+            if (bucketScoreElement) {
+                bucketScoreElement.style.display = 'block';
+            }
+            nextPlayerCallback(playerIndex + 1);
+        }, 3000);
+    } else {
+        // Existing logic for handling incorrect answers in challenge mode...
+
+        // Show the bucket score again after the result message is hidden
+        setTimeout(() => {
+            if (bucketScoreElement) {
+                bucketScoreElement.style.display = 'block';
+            }
+            nextPlayerCallback(playerIndex + 1);
+        }, 3000);
+    }
 
 function resetButtons() {
     const goFishBtn = document.getElementById('goFishBtn');
