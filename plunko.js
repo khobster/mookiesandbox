@@ -550,8 +550,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Keep scores when starting a new game
             startStandardPlay(); 
         });
-        popupContinueButton.style.width = '80%';
-        popupContinueButton.style.fontSize = 'larger';
     }
 
     const closePopup = document.getElementById('closePopup');
@@ -563,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const popupProofButton = document.getElementById('proofButtonPopup');
     if (popupProofButton) {
-        popupProofButton.style.display = 'none'; // Hide the proof button for standard play
+        popupProofButton.addEventListener('click', copyToClipboard);
     }
 });
 
@@ -669,18 +667,21 @@ function showMookiePopup(shareText) {
     const popup = document.getElementById('mookiePopup');
     if (popup) {
         const popupCopyButton = document.getElementById('popupCopyButton');
-        const popupProofButton = document.getElementById('proofButtonPopup');
         const popupContinueButton = document.getElementById('popupContinueButton');
 
         if (popupCopyButton) {
             popupCopyButton.setAttribute('data-snippet', shareText);
         }
 
+        // Remove the red receipt button and enlarge the "Keep on Playing" button
+        const popupProofButton = document.getElementById('proofButtonPopup');
         if (popupProofButton) {
-            const proofText = `PROOF I nailed the MOOKIE!🧾 ${window.location.href}`;
-            popupProofButton.setAttribute('data-snippet', proofText);
-            popupProofButton.style.display = 'inline-block';
+            popupProofButton.style.display = 'none';
         }
+
+        popupContinueButton.style.width = '100%';
+        popupContinueButton.style.fontSize = '1.5em';
+        popupContinueButton.style.padding = '1em';
 
         popup.style.display = 'block';
 
@@ -689,8 +690,6 @@ function showMookiePopup(shareText) {
             // Keep scores when starting a new game
             startStandardPlay(); 
         };
-        popupContinueButton.style.width = '80%';
-        popupContinueButton.style.fontSize = 'larger';
     }
 }
 
