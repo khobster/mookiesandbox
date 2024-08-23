@@ -78,6 +78,39 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
     }
 }
 
+function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
+    const bucketScoreElement = document.getElementById('plunkosCounter');
+    
+    // Hide the bucket score when showing the result message
+    if (bucketScoreElement) {
+        bucketScoreElement.style.display = 'none';
+    }
+
+    const player = playersData.find(p => p.name === playerName);
+
+    if (isCorrect && player) {
+        // Existing logic for handling correct answers...
+
+        // Show the bucket score again after the result message is hidden
+        setTimeout(() => {
+            if (bucketScoreElement) {
+                bucketScoreElement.style.display = 'block';
+            }
+            nextPlayerCallback();
+        }, 3000);
+    } else {
+        // Existing logic for handling incorrect answers...
+
+        // Show the bucket score again after the result message is hidden
+        setTimeout(() => {
+            if (bucketScoreElement) {
+                bucketScoreElement.style.display = 'block';
+            }
+            nextPlayerCallback();
+        }, 3000);
+    }
+}
+
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
     const bucketScoreElement = document.getElementById('plunkosCounter');
     
