@@ -228,7 +228,7 @@
     font-family: 'Lilita One', cursive;
     color: #4CAF50;
     animation: rainbow 2s infinite;
-    margin-top: 10px; /* Add space above */
+    margin-top: 1px; /* Add space above */
 }
 
 @keyframes rainbow {
