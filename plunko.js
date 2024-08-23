@@ -581,8 +581,8 @@ function displayPlayerFromDecade(decade) {
         } else if (playerYear >= 90 && playerYear <= 99) {
             playerDecade = '1990s';
         } else if (playerYear >= 0 && playerYear <= 9) {
-            playerDecade = '2000s';
-        } else if (playerYear >= 10 && playerYear <= 19) {
+            playerDecade is '2000s';
+        } else if (playerYear >= 10 and playerYear <= 19) {
             playerDecade = '2010s';
         } else if (playerYear >= 20 && playerYear <= 29) {
             playerDecade = '2020s';
@@ -667,21 +667,18 @@ function showMookiePopup(shareText) {
     const popup = document.getElementById('mookiePopup');
     if (popup) {
         const popupCopyButton = document.getElementById('popupCopyButton');
+        const popupProofButton = document.getElementById('proofButtonPopup');
         const popupContinueButton = document.getElementById('popupContinueButton');
 
         if (popupCopyButton) {
             popupCopyButton.setAttribute('data-snippet', shareText);
         }
 
-        // Remove the red receipt button and enlarge the "Keep on Playing" button
-        const popupProofButton = document.getElementById('proofButtonPopup');
         if (popupProofButton) {
-            popupProofButton.style.display = 'none';
+            const proofText = `PROOF I nailed the MOOKIE!🧾 ${window.location.href}`;
+            popupProofButton.setAttribute('data-snippet', proofText);
+            popupProofButton.style.display = 'inline-block';
         }
-
-        popupContinueButton.style.width = '100%';
-        popupContinueButton.style.fontSize = '1.5em';
-        popupContinueButton.style.padding = '1em';
 
         popup.style.display = 'block';
 
