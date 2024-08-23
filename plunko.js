@@ -144,9 +144,9 @@ function increaseDifficulty() {
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
     const bucketScoreElement = document.getElementById('plunkosCounter');
-    
-    // Hide the bucket score when showing the result message
-    if (bucketScoreElement) {
+
+    // Ensure bucket score is hidden in challenge mode
+    if (bucketScoreElement && bucketScoreElement.style.display !== 'none') {
         bucketScoreElement.style.display = 'none';
     }
 
@@ -169,7 +169,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
             resultElement.className = 'correct';
 
             const shareText = `I got all 3 correct in MOOKIE! Check it out: ${window.location.href}`;
-            showMookiePopup(shareText);
+            showMookiePopup(shareText, true);  // Pass true to indicate challenge mode
 
             correctSound.play();
             increaseDifficulty();
@@ -202,11 +202,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         endURLChallenge(false);
     }
 
-    // Show the bucket score again after the result message is hidden
     setTimeout(() => {
-        if (bucketScoreElement) {
-            bucketScoreElement.style.display = 'block';
-        }
         nextPlayerCallback(playerIndex + 1);
     }, 3000);
 }
@@ -659,7 +655,7 @@ function handleTwoForOne(isCorrect) {
     return false;
 }
 
-function showMookiePopup(shareText) {
+function showMookiePopup(shareText, isChallengeMode = false) {
     const overlay = document.createElement('div');
     overlay.id = 'popupOverlay';
     document.body.appendChild(overlay);
@@ -668,28 +664,28 @@ function showMookiePopup(shareText) {
     if (popup) {
         const popupCopyButton = document.getElementById('popupCopyButton');
         const popupContinueButton = document.getElementById('popupContinueButton');
+        const popupProofButton = document.getElementById('proofButtonPopup');
 
         if (popupCopyButton) {
             popupCopyButton.setAttribute('data-snippet', shareText);
         }
 
-        // Remove the red receipt button and enlarge the "Keep on Playing" button
-        const popupProofButton = document.getElementById('proofButtonPopup');
-        if (popupProofButton) {
-            popupProofButton.style.display = 'none';
+        if (isChallengeMode) {
+            popupProofButton.style.display = 'inline-block'; // Show the red receipt button in challenge mode
+            popupContinueButton.textContent = 'Play again';
+            popupContinueButton.onclick = function () {
+                window.location.href = 'https://www.mookie.click'; // Redirect to main page
+            };
+        } else {
+            popupProofButton.style.display = 'none'; // Hide the red receipt button in regular mode
+            popupContinueButton.textContent = 'Keep on PLAYING';
+            popupContinueButton.onclick = function () {
+                closeMookiePopup();
+                startStandardPlay(); // Continue in regular mode
+            };
         }
 
-        popupContinueButton.style.width = '100%';
-        popupContinueButton.style.fontSize = '1.5em';
-        popupContinueButton.style.padding = '1em';
-
         popup.style.display = 'block';
-
-        popupContinueButton.onclick = function() {
-            closeMookiePopup();
-            // Keep scores when starting a new game
-            startStandardPlay(); 
-        };
     }
 }
 
