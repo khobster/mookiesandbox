@@ -46,6 +46,13 @@ function isCloseMatch(guess, answer) {
 }
 
 function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
+    const bucketScoreElement = document.getElementById('plunkosCounter');
+    
+    // Hide the bucket score when showing the result message
+    if (bucketScoreElement) {
+        bucketScoreElement.style.display = 'none';
+    }
+
     const player = playersData.find(p => p.name === playerName);
 
     if (isCorrect && player) {
@@ -105,30 +112,24 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             resetButtons();
         }
     }
-    setTimeout(nextPlayerCallback, 3000);
-}
 
-function resetButtons() {
-    const goFishBtn = document.getElementById('goFishBtn');
-    const splitItBtn = document.getElementById('splitItBtn');
-
-    if (goFishBtn) {
-        goFishBtn.disabled = false;
-        goFishBtn.classList.remove('disabled');
-    }
-
-    if (splitItBtn) {
-        splitItBtn.disabled = false;
-        splitItBtn.classList.remove('disabled');
-    }
-}
-
-function increaseDifficulty() {
-    currentDifficultyLevel += 0.1;
-    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
+    // Show the bucket score again after the result message is hidden
+    setTimeout(() => {
+        if (bucketScoreElement) {
+            bucketScoreElement.style.display = 'block';
+        }
+        nextPlayerCallback();
+    }, 3000);
 }
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
+    const bucketScoreElement = document.getElementById('plunkosCounter');
+    
+    // Hide the bucket score when showing the result message
+    if (bucketScoreElement) {
+        bucketScoreElement.style.display = 'none';
+    }
+
     const player = playersData.find(p => p.name === playerName);
 
     if (isCorrect && player) {
@@ -180,6 +181,34 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         resetButtons();
         endURLChallenge(false);
     }
+
+    // Show the bucket score again after the result message is hidden
+    setTimeout(() => {
+        if (bucketScoreElement) {
+            bucketScoreElement.style.display = 'block';
+        }
+        nextPlayerCallback(playerIndex + 1);
+    }, 3000);
+}
+
+function resetButtons() {
+    const goFishBtn = document.getElementById('goFishBtn');
+    const splitItBtn = document.getElementById('splitItBtn');
+
+    if (goFishBtn) {
+        goFishBtn.disabled = false;
+        goFishBtn.classList.remove('disabled');
+    }
+
+    if (splitItBtn) {
+        splitItBtn.disabled = false;
+        splitItBtn.classList.remove('disabled');
+    }
+}
+
+function increaseDifficulty() {
+    currentDifficultyLevel += 0.1;
+    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
 }
 
 function copyToClipboard(event) {
