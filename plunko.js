@@ -143,13 +143,6 @@ function increaseDifficulty() {
 }
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
-    const bucketScoreElement = document.getElementById('plunkosCounter');
-    
-    // Hide the bucket score when showing the result message
-    if (bucketScoreElement) {
-        bucketScoreElement.style.display = 'none';
-    }
-
     const player = playersData.find(p => p.name === playerName);
 
     if (isCorrect && player) {
@@ -671,7 +664,7 @@ function showMookiePopup(shareText) {
         const popupContinueButton = document.getElementById('popupContinueButton');
 
         if (popupCopyButton) {
-            popupCopyButton.setAttribute('data-snippet', shareText);
+            popupCopyButton.style.display = 'none'; // Hide the copy button in challenge mode
         }
 
         if (popupProofButton) {
@@ -683,9 +676,7 @@ function showMookiePopup(shareText) {
         popup.style.display = 'block';
 
         popupContinueButton.onclick = function() {
-            closeMookiePopup();
-            // Keep scores when starting a new game
-            startStandardPlay(); 
+            window.location.href = 'https://www.mookie.click'; // Redirect to the regular game
         };
     }
 }
