@@ -301,12 +301,22 @@ function displayRandomPlayer() {
 function displayPlayer(player) {
     const playerNameElement = document.getElementById('playerName');
     const playerImageElement = document.getElementById('playerImage');
+
     if (playerNameElement && playerImageElement) {
         playerNameElement.textContent = player.name;
-        playerImageElement.src = player.image_url || 'astronaut.jpg'; // Fallback to default image if URL is not available
-        playerImageElement.onerror = function() {
-            this.src = 'astronaut.jpg'; // Fallback if image fails to load
+
+        // Set the image URL, fallback to astronaut.jpg if no URL or image fails to load
+        if (player.image_url) {
+            playerImageElement.src = player.image_url;
+        } else {
+            playerImageElement.src = 'astronaut.jpg';
+        }
+
+        // Ensure that if the image fails to load, it falls back to astronaut.jpg
+        playerImageElement.onerror = function () {
+            playerImageElement.src = 'astronaut.jpg'; // Fallback if image fails to load
         };
+
         document.getElementById('collegeGuess').value = '';
         document.getElementById('result').textContent = '';
         document.getElementById('result').className = '';
