@@ -306,7 +306,7 @@ function displayPlayer(player) {
         playerNameElement.textContent = player.name;
 
         // Set a default image first
-        playerImageElement.src = 'stilllife.png';
+        playerImageElement.src = 'astronaut2.png';
 
         // Check if player has a valid image URL
         if (player.image_url) {
@@ -315,7 +315,7 @@ function displayPlayer(player) {
             // If the image fails to load, set it back to the default image
             playerImageElement.onerror = function () {
                 this.onerror = null; // Prevent infinite loop if default image also fails
-                this.src = 'stilllife.png';
+                this.src = 'astronaut2.png';
             };
         }
 
@@ -560,6 +560,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (popupContinueButton) {
         popupContinueButton.addEventListener('click', function () {
             closeMookiePopup();
+            // Resetting only the streaks and not the scores
+            correctStreakStandard = 0;
+            lastThreeCorrectStandard = [];
             startStandardPlay(); 
         });
     }
@@ -698,7 +701,10 @@ function showMookiePopup(shareText) {
         popup.style.display = 'block';
 
         popupContinueButton.onclick = function() {
-            window.location.href = 'https://www.mookie.click'; // Redirect to main page to start a new game
+            closeMookiePopup();
+            correctStreakStandard = 0;
+            lastThreeCorrectStandard = [];
+            startStandardPlay();
         };
     }
 }
