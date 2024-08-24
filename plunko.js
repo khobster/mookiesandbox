@@ -305,17 +305,19 @@ function displayPlayer(player) {
     if (playerNameElement && playerImageElement) {
         playerNameElement.textContent = player.name;
 
-        // Set the image URL, fallback to astronaut.jpg if no URL or image fails to load
+        // Set a default image first
+        playerImageElement.src = 'astronaut.jpg';
+
+        // Check if player has a valid image URL
         if (player.image_url) {
             playerImageElement.src = player.image_url;
-        } else {
-            playerImageElement.src = 'astronaut.jpg';
-        }
 
-        // Ensure that if the image fails to load, it falls back to astronaut.jpg
-        playerImageElement.onerror = function () {
-            playerImageElement.src = 'astronaut.jpg'; // Fallback if image fails to load
-        };
+            // If the image fails to load, set it back to the default image
+            playerImageElement.onerror = function () {
+                this.onerror = null; // Prevent infinite loop if default image also fails
+                this.src = 'astronaut.jpg';
+            };
+        }
 
         document.getElementById('collegeGuess').value = '';
         document.getElementById('result').textContent = '';
