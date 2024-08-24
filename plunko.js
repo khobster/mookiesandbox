@@ -686,9 +686,7 @@ function showMookiePopup(shareText) {
         popup.style.display = 'block';
 
         popupContinueButton.onclick = function() {
-            closeMookiePopup();
-            // Keep scores when starting a new game
-            startStandardPlay(); 
+            window.location.href = 'https://www.mookie.click'; // Redirect to main page to start a new game
         };
     }
 }
