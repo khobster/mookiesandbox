@@ -306,7 +306,7 @@ function displayPlayer(player) {
         playerNameElement.textContent = player.name;
 
         // Set a default image first
-        playerImageElement.src = 'uranus.png';
+        playerImageElement.src = 'monet2.png';
 
         // Check if player has a valid image URL
         if (player.image_url) {
@@ -315,7 +315,7 @@ function displayPlayer(player) {
             // If the image fails to load, set it back to the default image
             playerImageElement.onerror = function () {
                 this.onerror = null; // Prevent infinite loop if default image also fails
-                this.src = 'uranus.png';
+                this.src = 'monet2.png';
             };
         }
 
