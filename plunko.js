@@ -764,9 +764,18 @@ function showNopePopup() {
         }
 
         if (popupProofButton) {
+            // Correctly define the proof text for the nope scenario
             const proofText = `PROOF I couldn't make the MOOKIE!🧾 ${window.location.href}`;
             popupProofButton.setAttribute('data-snippet', proofText);
             popupProofButton.style.display = 'inline-block';
+
+            // Explicitly define what happens on button click
+            popupProofButton.onclick = () => {
+                navigator.clipboard.writeText(proofText).then(() => {
+                    popupProofButton.textContent = 'Receipt Copied!';
+                    setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+                });
+            };
         }
 
         popupContinueButton.textContent = 'Start a New Game';
