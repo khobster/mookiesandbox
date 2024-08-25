@@ -700,11 +700,9 @@ function showMookiePopup(shareText) {
 
         popup.style.display = 'block';
 
+        // Update this section
         popupContinueButton.onclick = function() {
-            closeMookiePopup();
-            correctStreakStandard = 0;
-            lastThreeCorrectStandard = [];
-            startStandardPlay();
+            window.location.href = 'https://www.mookie.click'; // Redirect to main page to start a new game
         };
     }
 }
