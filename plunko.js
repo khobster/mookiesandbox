@@ -85,7 +85,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
                 const decodedPlayers = decodeURIComponent(encodedPlayers).replace(/,/g, ', ');
                 let shareText = `throwing this to you: ${decodedPlayers} ${shareLink}`;
 
-                showMookiePopup(shareText);
+                showMookiePopup(shareText, false); // Pass false to indicate standard mode
 
                 increaseDifficulty();
                 correctStreakStandard = 0;
@@ -306,7 +306,7 @@ function displayPlayer(player) {
         playerNameElement.textContent = player.name;
 
         // Set a default image first
-        playerImageElement.src = 'stilllife.png';
+        playerImageElement.src = 'astronaut2.png';
 
         // Check if player has a valid image URL
         if (player.image_url) {
@@ -315,7 +315,7 @@ function displayPlayer(player) {
             // If the image fails to load, set it back to the default image
             playerImageElement.onerror = function () {
                 this.onerror = null; // Prevent infinite loop if default image also fails
-                this.src = 'stilllife.png';
+                this.src = 'astronaut2.png';
             };
         }
 
@@ -560,10 +560,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (popupContinueButton) {
         popupContinueButton.addEventListener('click', function () {
             closeMookiePopup();
-            // Resetting only the streaks and not the scores
-            correctStreakStandard = 0;
-            lastThreeCorrectStandard = [];
-            startStandardPlay(); 
+            // Ensure only streaks reset, not the scores, in standard play mode
+            if (popupContinueButton.classList.contains('standard-mode')) {
+                correctStreakStandard = 0;
+                lastThreeCorrectStandard = [];
+                startStandardPlay();
+            } else {
+                window.location.href = 'https://www.mookie.click'; // Redirect to the main page in challenge mode
+            }
         });
     }
 
@@ -674,7 +678,7 @@ function handleTwoForOne(isCorrect) {
     return false;
 }
 
-function showMookiePopup(shareText) {
+function showMookiePopup(shareText, isChallengeMode) {
     const overlay = document.createElement('div');
     overlay.id = 'popupOverlay';
     document.body.appendChild(overlay);
@@ -700,10 +704,21 @@ function showMookiePopup(shareText) {
 
         popup.style.display = 'block';
 
-        // Update this section
-        popupContinueButton.onclick = function() {
-            window.location.href = 'https://www.mookie.click'; // Redirect to main page to start a new game
-        };
+        // Adjust functionality based on mode
+        if (isChallengeMode) {
+            popupContinueButton.classList.remove('standard-mode');
+            popupContinueButton.onclick = function() {
+                window.location.href = 'https://www.mookie.click';
+            };
+        } else {
+            popupContinueButton.classList.add('standard-mode');
+            popupContinueButton.onclick = function() {
+                closeMookiePopup();
+                correctStreakStandard = 0;
+                lastThreeCorrectStandard = [];
+                startStandardPlay();
+            };
+        }
     }
 }
 
