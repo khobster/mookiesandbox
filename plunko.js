@@ -580,7 +580,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const popupProofButton = document.getElementById('proofButtonPopup');
     if (popupProofButton) {
-        popupProofButton.addEventListener('click', copyToClipboard);
+        popupProofButton.addEventListener('click', () => {
+            const proofText = `PROOF I nailed the MOOKIE!🧾 ${window.location.href}`;
+            navigator.clipboard.writeText(proofText).then(() => {
+                popupProofButton.textContent = 'Receipt Copied!';
+                setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+            });
+        });
     }
 });
 
@@ -699,6 +705,13 @@ function showMookiePopup(shareText, isChallengeMode) {
                 popupProofButton.style.display = 'inline-block';
                 popupProofButton.style.width = '45%'; // Adjust width for proper alignment
                 popupProofButton.style.marginRight = '10px'; // Add some spacing to the right
+                popupProofButton.onclick = () => {
+                    const proofText = `PROOF I nailed the MOOKIE!🧾 ${window.location.href}`;
+                    navigator.clipboard.writeText(proofText).then(() => {
+                        popupProofButton.textContent = 'Receipt Copied!';
+                        setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+                    });
+                };
             }
 
             popupContinueButton.style.width = '45%'; // Adjust width for proper alignment
