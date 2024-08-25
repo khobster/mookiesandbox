@@ -687,30 +687,38 @@ function showMookiePopup(shareText, isChallengeMode) {
     if (popup) {
         const popupCopyButton = document.getElementById('popupCopyButton');
         const popupContinueButton = document.getElementById('popupContinueButton');
+        const popupProofButton = document.getElementById('proofButtonPopup');
 
         if (popupCopyButton) {
             popupCopyButton.setAttribute('data-snippet', shareText);
         }
 
-        // Remove the red receipt button and enlarge the "Keep on Playing" button
-        const popupProofButton = document.getElementById('proofButtonPopup');
-        if (popupProofButton) {
-            popupProofButton.style.display = 'none';
-        }
-
-        popupContinueButton.style.width = '100%';
-        popupContinueButton.style.fontSize = '1.5em';
-        popupContinueButton.style.padding = '1em';
-
-        popup.style.display = 'block';
-
-        // Adjust functionality based on mode
         if (isChallengeMode) {
+            // Display the red receipt button and position it to the left of the "Keep on Playing" button
+            if (popupProofButton) {
+                popupProofButton.style.display = 'inline-block';
+                popupProofButton.style.width = '45%'; // Adjust width for proper alignment
+                popupProofButton.style.marginRight = '10px'; // Add some spacing to the right
+            }
+
+            popupContinueButton.style.width = '45%'; // Adjust width for proper alignment
+            popupContinueButton.style.fontSize = '1.5em';
+            popupContinueButton.style.padding = '1em';
+
             popupContinueButton.classList.remove('standard-mode');
             popupContinueButton.onclick = function() {
                 window.location.href = 'https://www.mookie.click';
             };
         } else {
+            // Hide the red receipt button in standard mode
+            if (popupProofButton) {
+                popupProofButton.style.display = 'none';
+            }
+
+            popupContinueButton.style.width = '100%';
+            popupContinueButton.style.fontSize = '1.5em';
+            popupContinueButton.style.padding = '1em';
+
             popupContinueButton.classList.add('standard-mode');
             popupContinueButton.onclick = function() {
                 closeMookiePopup();
@@ -719,6 +727,8 @@ function showMookiePopup(shareText, isChallengeMode) {
                 startStandardPlay();
             };
         }
+
+        popup.style.display = 'block';
     }
 }
 
