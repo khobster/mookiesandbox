@@ -47,16 +47,13 @@ function isCloseMatch(guess, answer) {
 
 function generateShareText(isChallengeMode, correctCount, totalPlayers = 3) {
     const score = Math.round(cumulativeRarityScore);
-
-    // Calculate correct and incorrect counts based on totalPlayers in challenge mode
-    const incorrectCount = totalPlayers - correctCount;
+    const incorrectCount = totalPlayers - correctCount; 
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
 
     let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
     if (isChallengeMode) {
-        // Generate URL with player names encoded for challenge mode, even if there are less than 3
         const encodedPlayers = encodeURIComponent(lastThreeCorrectURL.join(','));
         shareText += `🔗 Try it here: ${window.location.href.split('?')[0]}?players=${encodedPlayers}`;
     } else {
