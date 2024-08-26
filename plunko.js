@@ -45,11 +45,10 @@ function isCloseMatch(guess, answer) {
     return simpleAnswer.includes(simpleGuess);
 }
 
-function generateShareText(isChallengeMode) {
+function generateShareText(isChallengeMode, correctCount) {
     const score = Math.round(cumulativeRarityScore);
 
     // Calculate the correct and incorrect counts based on actual answers in challenge mode
-    const correctCount = isChallengeMode ? lastThreeCorrectURL.length : lastThreeCorrectStandard.length;
     const incorrectCount = 3 - correctCount;
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
@@ -103,7 +102,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
                 resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just one more to get a <span class='kaboom'>MOOoooOOKIE!</span>";
             } else if (correctStreakStandard === 3) {
                 resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
-                const shareText = generateShareText(false); // Standard mode
+                const shareText = generateShareText(false, correctStreakStandard); // Standard mode
 
                 showMookiePopup(shareText, false); // Pass false to indicate standard mode
 
@@ -186,7 +185,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
             resultElement.appendChild(messageElement);
             resultElement.className = 'correct';
 
-            const shareText = generateShareText(true);  // Challenge mode
+            const shareText = generateShareText(true, correctStreakURL);  // Challenge mode
 
             showMookiePopup(shareText, true);  // Pass true to indicate challenge mode
 
@@ -415,8 +414,9 @@ function endURLChallenge(success) {
         copyButton.style.display = 'none'; // Remove in challenge mode
     }
 
-    if (success && proofButton) {
-        const shareText = generateShareText(true); // Challenge mode
+    if (proofButton) {
+        const correctCount = lastThreeCorrectURL.length;
+        const shareText = generateShareText(true, correctCount); // Challenge mode
         proofButton.setAttribute('data-snippet', shareText);
         proofButton.style.display = 'inline-block';
         proofButton.onclick = () => {
@@ -600,7 +600,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const popupProofButton = document.getElementById('proofButtonPopup');
     if (popupProofButton) {
         popupProofButton.addEventListener('click', () => {
-            const proofText = generateShareText(true);
+            const correctCount = lastThreeCorrectURL.length;
+            const proofText = generateShareText(true, correctCount);
             navigator.clipboard.writeText(proofText).then(() => {
                 popupProofButton.textContent = 'Receipt Copied!';
                 setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
@@ -726,7 +727,8 @@ function showMookiePopup(shareText, isChallengeMode) {
                 popupProofButton.style.width = '100%'; // Full width since we're removing the "Copy the URL" button
                 popupProofButton.style.marginRight = '0'; // Remove margin
                 popupProofButton.onclick = () => {
-                    const proofText = generateShareText(true); // Challenge mode share text
+                    const correctCount = lastThreeCorrectURL.length;
+                    const proofText = generateShareText(true, correctCount); // Challenge mode share text
                     navigator.clipboard.writeText(proofText).then(() => {
                         popupProofButton.textContent = 'Receipt Copied!';
                         setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
