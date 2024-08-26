@@ -55,106 +55,13 @@ function generateShareText(isChallengeMode, correctCount, totalPlayers) {
     let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
     if (isChallengeMode) {
-        const encodedPlayers = encodeURIComponent(lastThreeCorrectURL.join(','));
-        shareText += `🔗 Try it here: ${window.location.href.split('?')[0]}?players=${encodedPlayers}`;
+        shareText += `🔗 Try it here: ${window.location.href}`;
     } else {
         const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
         shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
     }
 
     return shareText;
-}
-
-function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
-    const bucketScoreElement = document.getElementById('plunkosCounter');
-
-    if (bucketScoreElement) {
-        bucketScoreElement.style.display = 'none';
-    }
-
-    const player = playersData.find(p => p.name === playerName);
-
-    if (isCorrect && player) {
-        if (isTwoForOneActive) {
-            isCorrect = handleTwoForOne(true);
-        }
-
-        if (!isTwoForOneActive || isCorrect) {
-            correctStreakStandard++;
-            lastThreeCorrectStandard.push(playerName);
-            cumulativeRarityScore += player.rarity_score;
-
-            if (cumulativeRarityScore > highScore) {
-                highScore = cumulativeRarityScore;
-                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
-            }
-
-            if (lastThreeCorrectStandard.length > 3) {
-                lastThreeCorrectStandard.shift();
-            }
-
-            if (correctStreakStandard === 1) {
-                resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just two more to get this <span class='kaboom'>MOOoooOOKIE!</span>";
-            } else if (correctStreakStandard === 2) {
-                resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just one more to get a <span class='kaboom'>MOOoooOOKIE!</span>";
-            } else if (correctStreakStandard === 3) {
-                resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
-                const shareText = generateShareText(false, correctStreakStandard, 3); // Standard mode
-
-                showMookiePopup(shareText, false); // Pass false to indicate standard mode
-
-                increaseDifficulty();
-                correctStreakStandard = 0;
-                lastThreeCorrectStandard = [];
-                resetButtons();
-            }
-            document.getElementById('plunkosCount').textContent = `${Math.round(cumulativeRarityScore)}`;
-            resultElement.className = 'correct';
-            correctSound.play();
-        }
-    } else {
-        if (isTwoForOneActive) {
-            isCorrect = handleTwoForOne(false);
-        }
-
-        if (!isTwoForOneActive || !isCorrect) {
-            correctStreakStandard = 0;
-            lastThreeCorrectStandard = [];
-            cumulativeRarityScore = 0;
-            document.getElementById('plunkosCount').textContent = '0';
-            resultElement.textContent = 'Wrong answer. Try again!';
-            resultElement.className = 'incorrect';
-            wrongSound.play();
-            resetButtons();
-        }
-    }
-
-    setTimeout(() => {
-        if (bucketScoreElement) {
-            bucketScoreElement.style.display = 'block';
-        }
-        nextPlayerCallback();
-    }, 3000);
-}
-
-function resetButtons() {
-    const goFishBtn = document.getElementById('goFishBtn');
-    const splitItBtn = document.getElementById('splitItBtn');
-
-    if (goFishBtn) {
-        goFishBtn.disabled = false;
-        goFishBtn.classList.remove('disabled');
-    }
-
-    if (splitItBtn) {
-        splitItBtn.disabled = false;
-        splitItBtn.classList.remove('disabled');
-    }
-}
-
-function increaseDifficulty() {
-    currentDifficultyLevel += 0.1;
-    playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
 }
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
@@ -165,6 +72,8 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         lastThreeCorrectURL.push(playerName);
         cumulativeRarityScore += player.rarity_score;
 
+        console.log(`Challenge mode: cumulativeRarityScore updated to ${cumulativeRarityScore}`);
+
         if (lastThreeCorrectURL.length > 3) {
             lastThreeCorrectURL.shift();
         }
@@ -173,7 +82,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
             resultElement.textContent = 'YES! MOOOOooooooKIE!!';
             resultElement.className = 'correct';
 
-            const shareText = generateShareText(true, correctStreakURL, totalPlayers);  // Pass totalPlayers to generateShareText
+            const shareText = generateShareText(true, correctStreakURL, totalPlayers);
             showMookiePopup(shareText, true);
 
             correctSound.play();
@@ -181,7 +90,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
 
             if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore;
-                document.getElementById('highScore').textContent = `🏆=${highScore}`;
+                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
             }
         } else {
             resultElement.innerHTML = "That's correct! Keep going!";
@@ -192,10 +101,11 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         }
         correctSound.play();
     } else {
-        const shareText = generateShareText(true, correctStreakURL, totalPlayers);  // Generate share text before resetting the score
+        console.log('Incorrect answer detected.');
+        const shareText = generateShareText(true, correctStreakURL, totalPlayers);
         resultElement.textContent = 'Wrong answer. Try again!';
         resultElement.className = 'incorrect';
-        showNopePopup(shareText);  // Pass the shareText to showNopePopup
+        showNopePopup(shareText);
         correctStreakURL = 0;
         lastThreeCorrectURL = [];
         cumulativeRarityScore = 0;
@@ -242,7 +152,7 @@ function copyToClipboard(event) {
 }
 
 function loadPlayersData() {
-    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_rarity.json')
+    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox23/main/updated_test_data_with_rarity.json')
         .then(response => response.json())
         .then(data => {
             playersData = data;
