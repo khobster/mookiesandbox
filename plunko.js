@@ -82,10 +82,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
                 resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
                 const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
                 const shareLink = `https://www.mookie.click/?players=${encodedPlayers}`;
-                const decodedPlayers = decodeURIComponent(encodedPlayers).replace(/,/g, ', ');
-                let shareText = `throwing this to you: ${decodedPlayers} ${shareLink}`;
-
-                showMookiePopup(shareText, false); // Pass false to indicate standard mode
+                generateShareText(shareLink, lastThreeCorrectStandard, cumulativeRarityScore);
 
                 increaseDifficulty();
                 correctStreakStandard = 0;
@@ -168,8 +165,9 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
             resultElement.appendChild(messageElement);
             resultElement.className = 'correct';
 
-            const shareText = `I got all 3 correct in MOOKIE! Check it out: ${window.location.href}`;
-            showMookiePopup(shareText, true);  // Pass true to indicate challenge mode
+            const encodedPlayers = encodeURIComponent(lastThreeCorrectURL.join(','));
+            const shareLink = `https://www.mookie.click/?players=${encodedPlayers}`;
+            generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
 
             correctSound.play();
             increaseDifficulty();
@@ -205,6 +203,21 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
     setTimeout(() => {
         nextPlayerCallback(playerIndex + 1);
     }, 3000);
+}
+
+function generateShareText(shareLink, playerNames, score) {
+    let emojiText = '';
+
+    // Generate emojis for correct and incorrect answers
+    for (let i = 0; i < playerNames.length; i++) {
+        emojiText += '🟢 ';  // Green circle emoji for correct answers
+    }
+    for (let i = playerNames.length; i < 3; i++) {
+        emojiText += '🔴 ';  // Red circle emoji for incorrect answers
+    }
+
+    // Unified shareable text format
+    return `🔌 MOOKIE! 🔌\n${emojiText.trim()}\n🏆 ${Math.round(score)}\n🔗 Try it here: ${shareLink}`;
 }
 
 function copyToClipboard(event) {
@@ -384,20 +397,8 @@ function startURLChallenge(playerNames) {
 
 function endURLChallenge(success) {
     const resultElement = document.getElementById('result');
+    const copyButton = document.getElementById('copyButton');
     const proofButton = document.getElementById('proofButton');
-
-    let emojiText = '';
-
-    // Generate emojis for correct and incorrect answers
-    for (let i = 0; i < correctStreakStandard; i++) {
-        emojiText += '🟢 ';  // Green circle emoji for correct answers
-    }
-    for (let i = correctStreakStandard; i < 3; i++) {
-        emojiText += '🔴 ';  // Red circle emoji for incorrect answers
-    }
-
-    // Unified shareable text format
-    const colorfulText = `🔌 MOOKIE! 🔌\n${emojiText.trim()}\n🏆 ${Math.round(cumulativeRarityScore)}\n🔗 Try it here: ${window.location.href}`;
 
     if (success) {
         resultElement.innerHTML += "<span class='kaboom'><br>Hit Copy & Challenge a Pal!<br>Or Grab Your Receipt!</span>";
@@ -407,15 +408,16 @@ function endURLChallenge(success) {
         resultElement.className = 'incorrect';
     }
 
-    if (proofButton) {
-        proofButton.setAttribute('data-snippet', colorfulText);
+    if (copyButton) {
+        const shareText = generateShareText(window.location.href, lastThreeCorrectURL, cumulativeRarityScore);
+        copyButton.setAttribute('data-snippet', shareText);
+        copyButton.style.display = 'inline-block';
+    }
+
+    if (success && proofButton) {
+        const shareText = generateShareText(window.location.href, lastThreeCorrectURL, cumulativeRarityScore);
+        proofButton.setAttribute('data-snippet', shareText);
         proofButton.style.display = 'inline-block';
-        proofButton.onclick = () => {
-            navigator.clipboard.writeText(colorfulText).then(() => {
-                proofButton.textContent = 'Receipt Copied!';
-                setTimeout(() => proofButton.textContent = 'Get the 🧾', 2000);
-            });
-        };
     }
 
     const returnButton = document.getElementById('returnButton');
@@ -536,14 +538,15 @@ document.addEventListener('DOMContentLoaded', () => {
         copyButton.addEventListener('click', copyToClipboard);
     }
 
-    const popupCopyButton = document.getElementById('popupCopyButton');
-    if (popupCopyButton) {
-        popupCopyButton.addEventListener('click', copyToClipboard);
-    }
-
-    const proofButton = document.getElementById('proofButton');
-    if (proofButton) {
-        proofButton.addEventListener('click', copyToClipboard);
+    const popupProofButton = document.getElementById('proofButtonPopup');
+    if (popupProofButton) {
+        popupProofButton.addEventListener('click', () => {
+            const shareText = generateShareText(window.location.href, lastThreeCorrectURL, cumulativeRarityScore);
+            navigator.clipboard.writeText(shareText).then(() => {
+                popupProofButton.textContent = 'Receipt Copied!';
+                setTimeout(() => popupProofButton.textContent = 'Get the 🧾', 2000);
+            });
+        });
     }
 
     const returnButton = document.getElementById('returnButton');
@@ -586,29 +589,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closePopup) {
         closePopup.addEventListener('click', function () {
             closeMookiePopup();
-        });
-    }
-
-    const popupProofButton = document.getElementById('proofButtonPopup');
-    if (popupProofButton) {
-        popupProofButton.addEventListener('click', () => {
-            let emojiText = '';
-
-            // Generate emojis for correct and incorrect answers
-            for (let i = 0; i < correctStreakStandard; i++) {
-                emojiText += '🟢 ';  // Green circle emoji for correct answers
-            }
-            for (let i = correctStreakStandard; i < 3; i++) {
-                emojiText += '🔴 ';  // Red circle emoji for incorrect answers
-            }
-
-            // Unified shareable text format
-            const colorfulText = `🔌 MOOKIE! 🔌\n${emojiText.trim()}\n🏆 ${Math.round(cumulativeRarityScore)}\n🔗 Try it here: ${window.location.href}`;
-
-            navigator.clipboard.writeText(colorfulText).then(() => {
-                popupProofButton.textContent = 'Receipt Copied!';
-                setTimeout(() => popupProofButton.textContent = 'Get the 🧾', 2000);
-            });
         });
     }
 });
@@ -718,28 +698,14 @@ function showMookiePopup(shareText, isChallengeMode) {
         const popupContinueButton = document.getElementById('popupContinueButton');
         const popupProofButton = document.getElementById('proofButtonPopup');
 
-        let emojiText = '';
-
-        // Generate emojis for correct and incorrect answers
-        for (let i = 0; i < correctStreakStandard; i++) {
-            emojiText += '🟢 ';  // Green circle emoji for correct answers
-        }
-        for (let i = correctStreakStandard; i < 3; i++) {
-            emojiText += '🔴 ';  // Red circle emoji for incorrect answers
-        }
-
-        // Unified shareable text format
-        const colorfulText = `🔌 MOOKIE! 🔌\n${emojiText.trim()}\n🏆 ${Math.round(cumulativeRarityScore)}\n🔗 Try it here: ${window.location.href}`;
+        const colorfulText = generateShareText(shareText, lastThreeCorrectURL, cumulativeRarityScore);
 
         if (isChallengeMode) {
-            // In Challenge Mode, use the "Get the 🧾" button and remove "Copy the URL" button
-            if (popupCopyButton) {
-                popupCopyButton.style.display = 'none'; // Hide the "Copy the URL" button
-            }
-
             if (popupProofButton) {
-                popupProofButton.style.display = 'inline-block'; // Show "Get the 🧾" button
-                popupProofButton.style.width = '100%'; // Full width for alignment
+                popupProofButton.style.display = 'inline-block';
+                popupProofButton.style.width = '45%'; // Adjust width for proper alignment
+                popupProofButton.style.marginRight = '10px'; // Add some spacing to the right
+                popupProofButton.setAttribute('data-snippet', colorfulText);
                 popupProofButton.onclick = () => {
                     navigator.clipboard.writeText(colorfulText).then(() => {
                         popupProofButton.textContent = 'Receipt Copied!';
@@ -748,7 +714,14 @@ function showMookiePopup(shareText, isChallengeMode) {
                 };
             }
 
-            popupContinueButton.style.display = 'none'; // No need for continue button in challenge mode
+            popupContinueButton.style.width = '45%'; // Adjust width for proper alignment
+            popupContinueButton.style.fontSize = '1.5em';
+            popupContinueButton.style.padding = '1em';
+
+            popupContinueButton.classList.remove('standard-mode');
+            popupContinueButton.onclick = function() {
+                window.location.href = 'https://www.mookie.click';
+            };
         } else {
             // In Standard Mode, use "Copy the URL" button
             if (popupCopyButton) {
@@ -788,16 +761,16 @@ function showNopePopup() {
 
         const popupProofButton = document.getElementById('proofButtonPopup');
         const popupContinueButton = document.getElementById('popupContinueButton');
+        const popupCopyButton = document.getElementById('popupCopyButton');
 
-        let emojiText = '🔴 🔴 🔴 '; // Assume all wrong for NOPE popup
-
-        // Unified shareable text format for NOPE popup
-        const colorfulText = `🔌 MOOKIE! 🔌\n${emojiText.trim()}\n🏆 ${Math.round(cumulativeRarityScore)}\n🔗 Try it here: ${window.location.href}`;
+        if (popupCopyButton) {
+            popupCopyButton.style.display = 'none'; // Hide the copy button
+        }
 
         if (popupProofButton) {
+            const colorfulText = generateShareText(window.location.href, lastThreeCorrectURL, cumulativeRarityScore);
             popupProofButton.setAttribute('data-snippet', colorfulText);
             popupProofButton.style.display = 'inline-block';
-
             popupProofButton.onclick = () => {
                 navigator.clipboard.writeText(colorfulText).then(() => {
                     popupProofButton.textContent = 'Receipt Copied!';
