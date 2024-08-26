@@ -47,8 +47,10 @@ function isCloseMatch(guess, answer) {
 
 function generateShareText(isChallengeMode) {
     const score = Math.round(cumulativeRarityScore);
-    const correctEmojis = lastThreeCorrectStandard.map(() => '🟢').join(' ');
-    const incorrectEmojis = new Array(3 - lastThreeCorrectStandard.length).fill('🔴').join(' ');
+    const correctCount = lastThreeCorrectStandard.length;
+    const incorrectCount = 3 - correctCount;
+    const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
+    const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
 
     let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
@@ -83,7 +85,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
 
             if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore;
-                document.getElementById('highScore').textContent = ` =${Math.round(highScore)}`;
+                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
             }
 
             if (lastThreeCorrectStandard.length > 3) {
@@ -192,7 +194,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
 
             if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore;
-                document.getElementById('highScore').textContent = ` =${highScore}`;
+                document.getElementById('highScore').textContent = `🏆=${highScore}`;
             }
         } else {
             resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Keep going!";
@@ -593,7 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const popupProofButton = document.getElementById('proofButtonPopup');
     if (popupProofButton) {
         popupProofButton.addEventListener('click', () => {
-            const proofText = `PROOF I nailed the MOOKIE! ${window.location.href}`;
+            const proofText = generateShareText(true);
             navigator.clipboard.writeText(proofText).then(() => {
                 popupProofButton.textContent = 'Receipt Copied!';
                 setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
