@@ -47,7 +47,7 @@ function isCloseMatch(guess, answer) {
 
 function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
     const bucketScoreElement = document.getElementById('plunkosCounter');
-
+    
     // Hide the bucket score when showing the result message
     if (bucketScoreElement) {
         bucketScoreElement.style.display = 'none';
@@ -82,9 +82,9 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
                 resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
                 const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
                 const shareLink = `https://www.mookie.click/?players=${encodedPlayers}`;
-                const shareText = generateShareText(shareLink, lastThreeCorrectStandard, cumulativeRarityScore);
+                const proofText = generateShareText(shareLink, lastThreeCorrectStandard, cumulativeRarityScore);
 
-                showMookiePopup(shareText, false); // Pass false to indicate standard mode
+                showMookiePopup(proofText, false); // Pass false to indicate standard mode
 
                 increaseDifficulty();
                 correctStreakStandard = 0;
@@ -167,10 +167,9 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
             resultElement.appendChild(messageElement);
             resultElement.className = 'correct';
 
-            const shareLink = `https://www.mookie.click/?players=${lastThreeCorrectURL.join(',')}`;
-            const shareText = generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
-
-            showMookiePopup(shareText, true);  // Pass true to indicate challenge mode
+            const shareLink = `https://www.mookie.click/?players=${encodeURIComponent(lastThreeCorrectURL.join(','))}`;
+            const proofText = generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
+            showMookiePopup(proofText, true);  // Pass true to indicate challenge mode
 
             correctSound.play();
             increaseDifficulty();
@@ -385,6 +384,7 @@ function startURLChallenge(playerNames) {
 
 function endURLChallenge(success) {
     const resultElement = document.getElementById('result');
+    const copyButton = document.getElementById('copyButton');
     const proofButton = document.getElementById('proofButton');
 
     if (success) {
@@ -395,8 +395,14 @@ function endURLChallenge(success) {
         resultElement.className = 'incorrect';
     }
 
+    if (copyButton) {
+        const shareText = `Can you match this MOOKIE? ${Math.round(cumulativeRarityScore)}! ${window.location.href}`;
+        copyButton.setAttribute('data-snippet', shareText);
+        copyButton.style.display = 'inline-block';
+    }
+
     if (success && proofButton) {
-        const shareLink = `https://www.mookie.click/?players=${lastThreeCorrectURL.join(',')}`;
+        const shareLink = `https://www.mookie.click/?players=${encodeURIComponent(lastThreeCorrectURL.join(','))}`;
         const proofText = generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
         proofButton.setAttribute('data-snippet', proofText);
         proofButton.style.display = 'inline-block';
@@ -520,16 +526,14 @@ document.addEventListener('DOMContentLoaded', () => {
         copyButton.addEventListener('click', copyToClipboard);
     }
 
-    const popupProofButton = document.getElementById('proofButtonPopup');
-    if (popupProofButton) {
-        popupProofButton.addEventListener('click', () => {
-            const shareLink = `https://www.mookie.click/?players=${lastThreeCorrectURL.join(',')}`;
-            const proofText = generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
-            navigator.clipboard.writeText(proofText).then(() => {
-                popupProofButton.textContent = 'Receipt Copied!';
-                setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
-            });
-        });
+    const popupCopyButton = document.getElementById('popupCopyButton');
+    if (popupCopyButton) {
+        popupCopyButton.addEventListener('click', copyToClipboard);
+    }
+
+    const proofButton = document.getElementById('proofButton');
+    if (proofButton) {
+        proofButton.addEventListener('click', copyToClipboard);
     }
 
     const returnButton = document.getElementById('returnButton');
@@ -572,6 +576,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closePopup) {
         closePopup.addEventListener('click', function () {
             closeMookiePopup();
+        });
+    }
+
+    const popupProofButton = document.getElementById('proofButtonPopup');
+    if (popupProofButton) {
+        popupProofButton.addEventListener('click', () => {
+            const shareLink = `https://www.mookie.click/?players=${encodeURIComponent(lastThreeCorrectURL.join(','))}`;
+            const proofText = generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
+            navigator.clipboard.writeText(proofText).then(() => {
+                popupProofButton.textContent = 'Receipt Copied!';
+                setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+            });
         });
     }
 });
@@ -677,21 +693,8 @@ function showMookiePopup(shareText, isChallengeMode) {
 
     const popup = document.getElementById('mookiePopup');
     if (popup) {
-        const popupCopyButton = document.getElementById('popupCopyButton');
         const popupContinueButton = document.getElementById('popupContinueButton');
         const popupProofButton = document.getElementById('proofButtonPopup');
-
-        if (popupCopyButton && !isChallengeMode) {
-            popupCopyButton.setAttribute('data-snippet', shareText);
-            popupCopyButton.onclick = () => {
-                navigator.clipboard.writeText(shareText).then(() => {
-                    popupCopyButton.textContent = 'URL Copied!';
-                    setTimeout(() => popupCopyButton.textContent = 'Copy the URL', 2000);
-                });
-            };
-        } else if (popupCopyButton) {
-            popupCopyButton.style.display = 'none'; // Hide the copy button in challenge mode
-        }
 
         if (isChallengeMode) {
             // Display the red receipt button and position it to the left of the "Keep on Playing" button
@@ -700,9 +703,7 @@ function showMookiePopup(shareText, isChallengeMode) {
                 popupProofButton.style.width = '45%'; // Adjust width for proper alignment
                 popupProofButton.style.marginRight = '10px'; // Add some spacing to the right
                 popupProofButton.onclick = () => {
-                    const shareLink = `https://www.mookie.click/?players=${lastThreeCorrectURL.join(',')}`;
-                    const proofText = generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
-                    navigator.clipboard.writeText(proofText).then(() => {
+                    navigator.clipboard.writeText(shareText).then(() => {
                         popupProofButton.textContent = 'Receipt Copied!';
                         setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
                     });
@@ -755,7 +756,7 @@ function showNopePopup() {
 
         if (popupProofButton) {
             // Correctly define the proof text for the nope scenario
-            const shareLink = `https://www.mookie.click/?players=${lastThreeCorrectURL.join(',')}`;
+            const shareLink = `https://www.mookie.click/?players=${encodeURIComponent(lastThreeCorrectURL.join(','))}`;
             const proofText = generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
             popupProofButton.setAttribute('data-snippet', proofText);
             popupProofButton.style.display = 'inline-block';
@@ -789,7 +790,10 @@ function closeMookiePopup() {
     }
 }
 
-function generateShareText(shareLink, players, score) {
-    let playerSymbols = players.map((_, i) => (i < players.length ? '🟢' : '🔴')).join(' ');
-    return `🔌 MOOKIE! 🔌\n${playerSymbols}\n🏆 ${Math.round(score)}\n🔗 Try it here: ${shareLink}`;
+function generateShareText(shareLink, correctPlayers, score) {
+    const correctIcons = correctPlayers.map(() => '🟢').join(' ');
+    const incorrectIcons = Array(3 - correctPlayers.length).fill('🔴').join(' ');
+    const iconText = correctIcons + incorrectIcons;
+    
+    return `🔌 MOOKIE! 🔌\n${iconText}\n🏆 ${score}\n🔗 Try it here: ${shareLink}`;
 }
