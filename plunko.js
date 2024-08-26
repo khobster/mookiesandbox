@@ -64,6 +64,78 @@ function generateShareText(isChallengeMode, correctCount, totalPlayers) {
     return shareText;
 }
 
+function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
+    const bucketScoreElement = document.getElementById('plunkosCounter');
+
+    if (bucketScoreElement) {
+        bucketScoreElement.style.display = 'none';
+    }
+
+    const player = playersData.find(p => p.name === playerName);
+
+    if (isCorrect && player) {
+        if (isTwoForOneActive) {
+            isCorrect = handleTwoForOne(true);
+        }
+
+        if (!isTwoForOneActive || isCorrect) {
+            correctStreakStandard++;
+            lastThreeCorrectStandard.push(playerName);
+            cumulativeRarityScore += player.rarity_score;
+
+            if (cumulativeRarityScore > highScore) {
+                highScore = cumulativeRarityScore;
+                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
+            }
+
+            if (lastThreeCorrectStandard.length > 3) {
+                lastThreeCorrectStandard.shift();
+            }
+
+            if (correctStreakStandard === 1) {
+                resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just two more to get this <span class='kaboom'>MOOoooOOKIE!</span>";
+            } else if (correctStreakStandard === 2) {
+                resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just one more to get a <span class='kaboom'>MOOoooOOKIE!</span>";
+            } else if (correctStreakStandard === 3) {
+                resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
+                const shareText = generateShareText(false, correctStreakStandard, 3); // Standard mode
+
+                showMookiePopup(shareText, false); // Pass false to indicate standard mode
+
+                increaseDifficulty();
+                correctStreakStandard = 0;
+                lastThreeCorrectStandard = [];
+                resetButtons();
+            }
+            document.getElementById('plunkosCount').textContent = `${Math.round(cumulativeRarityScore)}`;
+            resultElement.className = 'correct';
+            correctSound.play();
+        }
+    } else {
+        if (isTwoForOneActive) {
+            isCorrect = handleTwoForOne(false);
+        }
+
+        if (!isTwoForOneActive || !isCorrect) {
+            correctStreakStandard = 0;
+            lastThreeCorrectStandard = [];
+            cumulativeRarityScore = 0;
+            document.getElementById('plunkosCount').textContent = '0';
+            resultElement.textContent = 'Wrong answer. Try again!';
+            resultElement.className = 'incorrect';
+            wrongSound.play();
+            resetButtons();
+        }
+    }
+
+    setTimeout(() => {
+        if (bucketScoreElement) {
+            bucketScoreElement.style.display = 'block';
+        }
+        nextPlayerCallback();
+    }, 3000);
+}
+
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
     const player = playersData.find(p => p.name === playerName);
 
