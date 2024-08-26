@@ -47,7 +47,9 @@ function isCloseMatch(guess, answer) {
 
 function generateShareText(isChallengeMode) {
     const score = Math.round(cumulativeRarityScore);
-    const correctCount = lastThreeCorrectStandard.length;
+
+    // Fix: Correctly calculate the number of correct and incorrect answers
+    const correctCount = isChallengeMode ? lastThreeCorrectURL.length : lastThreeCorrectStandard.length;
     const incorrectCount = 3 - correctCount;
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
@@ -57,7 +59,7 @@ function generateShareText(isChallengeMode) {
     if (isChallengeMode) {
         shareText += `🔗 Try it here: ${window.location.href}`;
     } else {
-        // Ensure the player names are correctly encoded
+        // Fix: Ensure the player names are correctly joined and encoded
         const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
         shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
     }
@@ -713,7 +715,7 @@ function showMookiePopup(shareText, isChallengeMode) {
         if (popupCopyButton) {
             popupCopyButton.setAttribute('data-snippet', shareText);
             popupCopyButton.onclick = () => {
-                navigator.clipboard.writeText(generateShareText(isChallengeMode)).then(() => {
+                navigator.clipboard.writeText(shareText).then(() => {
                     popupCopyButton.textContent = 'Copied!';
                     setTimeout(() => popupCopyButton.textContent = 'Copy the URL', 2000);
                 });
