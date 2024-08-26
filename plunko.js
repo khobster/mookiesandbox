@@ -49,7 +49,7 @@ function generateShareText(isChallengeMode, correctCount) {
     const score = Math.round(cumulativeRarityScore);
 
     // Calculate the correct and incorrect counts based on actual answers in challenge mode
-    const incorrectCount = 3 - correctCount;
+    const incorrectCount = 3 - correctCount; // Assuming a total of 3 answers are required
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
 
@@ -171,11 +171,11 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
 
     if (isCorrect && player) {
         correctStreakURL++;
-        lastThreeCorrectURL.push(playerName);
+        lastThreeCorrectURL.push(playerName); // Ensure player names are added to the array
         cumulativeRarityScore += player.rarity_score;
 
         if (lastThreeCorrectURL.length > 3) {
-            lastThreeCorrectURL.shift();
+            lastThreeCorrectURL.shift(); // Keep only the last three
         }
         if (correctStreakURL === totalPlayers) {
             resultElement.textContent = '';
@@ -210,7 +210,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         correctSound.play();
     } else {
         correctStreakURL = 0;
-        lastThreeCorrectURL = [];
+        lastThreeCorrectURL = []; // Reset array on incorrect
         cumulativeRarityScore = 0;
         document.getElementById('plunkosCount').textContent = '0';
         resultElement.textContent = 'Wrong answer. Try again!';
