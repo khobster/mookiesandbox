@@ -45,11 +45,12 @@ function isCloseMatch(guess, answer) {
     return simpleAnswer.includes(simpleGuess);
 }
 
-function generateShareText(isChallengeMode, correctCount, totalPlayers = 3) {
+function generateShareText(isChallengeMode, correctCount, totalPlayers) {
     const score = Math.round(cumulativeRarityScore);
-    const incorrectCount = totalPlayers - correctCount; 
+
+    // Correct and incorrect emojis based on the current game state
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
-    const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
+    const incorrectEmojis = new Array(totalPlayers - correctCount).fill('🔴').join(' ');
 
     let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
@@ -98,7 +99,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
                 resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just one more to get a <span class='kaboom'>MOOoooOOKIE!</span>";
             } else if (correctStreakStandard === 3) {
                 resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
-                const shareText = generateShareText(false, correctStreakStandard); // Standard mode
+                const shareText = generateShareText(false, correctStreakStandard, 3); // Standard mode
 
                 showMookiePopup(shareText, false); // Pass false to indicate standard mode
 
@@ -191,14 +192,13 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         }
         correctSound.play();
     } else {
-        console.log('Answer was incorrect.');
         const shareText = generateShareText(true, correctStreakURL, totalPlayers);  // Generate share text before resetting the score
-        correctStreakURL = 0;
-        lastThreeCorrectURL = [];
-        cumulativeRarityScore = 0;
         resultElement.textContent = 'Wrong answer. Try again!';
         resultElement.className = 'incorrect';
         showNopePopup(shareText);  // Pass the shareText to showNopePopup
+        correctStreakURL = 0;
+        lastThreeCorrectURL = [];
+        cumulativeRarityScore = 0;
         resetButtons();
         endURLChallenge(false);
     }
@@ -242,7 +242,7 @@ function copyToClipboard(event) {
 }
 
 function loadPlayersData() {
-    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_rarity.json')
+    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox23/main/updated_test_data_with_rarity.json')
         .then(response => response.json())
         .then(data => {
             playersData = data;
@@ -410,7 +410,7 @@ function endURLChallenge(success) {
         resultElement.innerHTML += "<span class='kaboom'><br>Hit Copy & Challenge a Pal!<br>Or Grab Your Receipt!</span>";
         resultElement.className = 'correct';
     } else {
-        resultElement.innerHTML = "You didn't get all 3 correct. Better luck next time!";
+        resultElement.innerHTML = "You didn't get all correct. Better luck next time!";
         resultElement.className = 'incorrect';
     }
 
@@ -803,7 +803,7 @@ function showNopePopup() {
 
         if (popupProofButton) {
             const correctCount = lastThreeCorrectURL.length;
-            const incorrectCount = 3 - correctCount;
+            const incorrectCount = getPlayersFromURL().length - correctCount;
             const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
             const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
 
