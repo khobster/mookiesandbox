@@ -57,6 +57,7 @@ function generateShareText(isChallengeMode) {
     if (isChallengeMode) {
         shareText += `🔗 Try it here: ${window.location.href}`;
     } else {
+        // Ensure the player names are correctly encoded
         const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
         shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
     }
