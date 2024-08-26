@@ -396,12 +396,13 @@ function endURLChallenge(success) {
     }
 
     if (copyButton) {
-        const shareText = `Can you match this MOOKIE? ${Math.round(cumulativeRarityScore)}! ${window.location.href}`;
-        copyButton.setAttribute('data-snippet', shareText);
+        const shareLink = `https://www.mookie.click/?players=${encodeURIComponent(lastThreeCorrectURL.join(','))}`;
+        const proofText = generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
+        copyButton.setAttribute('data-snippet', proofText);
         copyButton.style.display = 'inline-block';
     }
 
-    if (success && proofButton) {
+    if (proofButton) {
         const shareLink = `https://www.mookie.click/?players=${encodeURIComponent(lastThreeCorrectURL.join(','))}`;
         const proofText = generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
         proofButton.setAttribute('data-snippet', proofText);
@@ -526,9 +527,9 @@ document.addEventListener('DOMContentLoaded', () => {
         copyButton.addEventListener('click', copyToClipboard);
     }
 
-    const popupCopyButton = document.getElementById('popupCopyButton');
-    if (popupCopyButton) {
-        popupCopyButton.addEventListener('click', copyToClipboard);
+    const popupProofButton = document.getElementById('proofButtonPopup');
+    if (popupProofButton) {
+        popupProofButton.addEventListener('click', copyToClipboard);
     }
 
     const proofButton = document.getElementById('proofButton');
@@ -576,18 +577,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closePopup) {
         closePopup.addEventListener('click', function () {
             closeMookiePopup();
-        });
-    }
-
-    const popupProofButton = document.getElementById('proofButtonPopup');
-    if (popupProofButton) {
-        popupProofButton.addEventListener('click', () => {
-            const shareLink = `https://www.mookie.click/?players=${encodeURIComponent(lastThreeCorrectURL.join(','))}`;
-            const proofText = generateShareText(shareLink, lastThreeCorrectURL, cumulativeRarityScore);
-            navigator.clipboard.writeText(proofText).then(() => {
-                popupProofButton.textContent = 'Receipt Copied!';
-                setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
-            });
         });
     }
 });
@@ -693,8 +682,12 @@ function showMookiePopup(shareText, isChallengeMode) {
 
     const popup = document.getElementById('mookiePopup');
     if (popup) {
-        const popupContinueButton = document.getElementById('popupContinueButton');
         const popupProofButton = document.getElementById('proofButtonPopup');
+        const popupContinueButton = document.getElementById('popupContinueButton');
+
+        if (popupProofButton) {
+            popupProofButton.setAttribute('data-snippet', shareText);
+        }
 
         if (isChallengeMode) {
             // Display the red receipt button and position it to the left of the "Keep on Playing" button
@@ -791,9 +784,6 @@ function closeMookiePopup() {
 }
 
 function generateShareText(shareLink, correctPlayers, score) {
-    const correctIcons = correctPlayers.map(() => '🟢').join(' ');
-    const incorrectIcons = Array(3 - correctPlayers.length).fill('🔴').join(' ');
-    const iconText = correctIcons + incorrectIcons;
-    
-    return `🔌 MOOKIE! 🔌\n${iconText}\n🏆 ${score}\n🔗 Try it here: ${shareLink}`;
+    const emojiCircles = correctPlayers.map(player => '🟢').concat(Array(3 - correctPlayers.length).fill('🔴')).join(' ');
+    return `🔌 MOOKIE! 🔌\n${emojiCircles}\n🏆 ${Math.round(score)}\n🔗 Try it here: ${shareLink}`;
 }
