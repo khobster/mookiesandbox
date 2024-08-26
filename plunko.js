@@ -53,6 +53,8 @@ function generateShareText(isChallengeMode, correctCount) {
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
 
+    console.log('Correct count:', correctCount, 'Incorrect count:', incorrectCount); // Debugging
+
     let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
     if (isChallengeMode) {
@@ -64,6 +66,8 @@ function generateShareText(isChallengeMode, correctCount) {
         const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
         shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
     }
+
+    console.log('Generated Share Text:', shareText); // Debugging
 
     return shareText;
 }
@@ -177,6 +181,8 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         if (lastThreeCorrectURL.length > 3) {
             lastThreeCorrectURL.shift(); // Keep only the last three
         }
+        console.log('Correct Streak URL:', correctStreakURL, 'Player Names:', lastThreeCorrectURL); // Debugging
+
         if (correctStreakURL === totalPlayers) {
             resultElement.textContent = '';
             const messageElement = document.createElement('span');
@@ -238,7 +244,7 @@ function copyToClipboard(event) {
 }
 
 function loadPlayersData() {
-    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_rarity.json')
+    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox23/main/updated_test_data_with_rarity.json')
         .then(response => response.json())
         .then(data => {
             playersData = data;
