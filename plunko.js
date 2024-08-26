@@ -48,6 +48,7 @@ function isCloseMatch(guess, answer) {
 function generateShareText(isChallengeMode) {
     const score = Math.round(cumulativeRarityScore);
 
+    // Calculate the correct and incorrect counts based on actual answers in challenge mode
     const correctCount = isChallengeMode ? lastThreeCorrectURL.length : lastThreeCorrectStandard.length;
     const incorrectCount = 3 - correctCount;
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
@@ -56,8 +57,11 @@ function generateShareText(isChallengeMode) {
     let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
     if (isChallengeMode) {
-        shareText += `🔗 Try it here: ${window.location.href}`;
+        // Generate URL with player names encoded for challenge mode
+        const encodedPlayers = encodeURIComponent(lastThreeCorrectURL.join(','));
+        shareText += `🔗 Try it here: ${window.location.href.split('?')[0]}?players=${encodedPlayers}`;
     } else {
+        // Generate URL with player names encoded for standard mode
         const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
         shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
     }
@@ -790,7 +794,15 @@ function showNopePopup() {
         }
 
         if (popupProofButton) {
-            const shareText = generateShareText(true); // Challenge mode share text
+            const correctCount = lastThreeCorrectURL.length;
+            const incorrectCount = 3 - correctCount;
+            const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
+            const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
+
+            const score = Math.round(cumulativeRarityScore);
+            const encodedPlayers = encodeURIComponent(lastThreeCorrectURL.join(','));
+            const shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n🔗 Try it here: ${window.location.href.split('?')[0]}?players=${encodedPlayers}`;
+
             popupProofButton.setAttribute('data-snippet', shareText);
             popupProofButton.style.display = 'inline-block';
             popupProofButton.onclick = () => {
