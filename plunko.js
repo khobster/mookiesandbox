@@ -45,19 +45,18 @@ function isCloseMatch(guess, answer) {
     return simpleAnswer.includes(simpleGuess);
 }
 
-function generateShareText(isChallengeMode, correctCount) {
+function generateShareText(isChallengeMode, correctCount, totalPlayers = 3) {
     const score = Math.round(cumulativeRarityScore);
 
-    // Calculate the correct and incorrect counts based on actual answers
-    const incorrectCount = 3 - correctCount;
+    // Calculate correct and incorrect counts based on totalPlayers in challenge mode
+    const incorrectCount = totalPlayers - correctCount;
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
 
-    console.log(`Correct Count: ${correctCount}, Incorrect Count: ${incorrectCount}`);
-    
     let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
     if (isChallengeMode) {
+        // Generate URL with player names encoded for challenge mode, even if there are less than 3
         const encodedPlayers = encodeURIComponent(lastThreeCorrectURL.join(','));
         shareText += `🔗 Try it here: ${window.location.href.split('?')[0]}?players=${encodedPlayers}`;
     } else {
@@ -65,13 +64,12 @@ function generateShareText(isChallengeMode, correctCount) {
         shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
     }
 
-    console.log(`Generated Share Text: ${shareText}`);
     return shareText;
 }
 
 function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
     const bucketScoreElement = document.getElementById('plunkosCounter');
-    
+
     if (bucketScoreElement) {
         bucketScoreElement.style.display = 'none';
     }
@@ -169,8 +167,6 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         lastThreeCorrectURL.push(playerName);
         cumulativeRarityScore += player.rarity_score;
 
-        console.log(`Current URL Streak: ${correctStreakURL}, Last Three Correct: ${lastThreeCorrectURL}`);
-
         if (lastThreeCorrectURL.length > 3) {
             lastThreeCorrectURL.shift();
         }
@@ -179,7 +175,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
             resultElement.textContent = 'YES! MOOOOooooooKIE!!';
             resultElement.className = 'correct';
 
-            const shareText = generateShareText(true, correctStreakURL);
+            const shareText = generateShareText(true, correctStreakURL, totalPlayers);  // Pass totalPlayers to generateShareText
             showMookiePopup(shareText, true);
 
             correctSound.play();
@@ -199,12 +195,13 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         correctSound.play();
     } else {
         console.log('Answer was incorrect.');
+        const shareText = generateShareText(true, correctStreakURL, totalPlayers);  // Generate share text before resetting the score
         correctStreakURL = 0;
         lastThreeCorrectURL = [];
         cumulativeRarityScore = 0;
         resultElement.textContent = 'Wrong answer. Try again!';
         resultElement.className = 'incorrect';
-        showNopePopup();
+        showNopePopup(shareText);  // Pass the shareText to showNopePopup
         resetButtons();
         endURLChallenge(false);
     }
@@ -221,15 +218,7 @@ function resetGameForNextChallenge() {
     resetButtons();
 }
 
-function showNopePopup() {
-    const correctCount = lastThreeCorrectURL.length;
-    const incorrectCount = 3 - correctCount;
-    const score = Math.round(cumulativeRarityScore);
-
-    console.log(`Showing Nope Popup: Correct Count - ${correctCount}, Incorrect Count - ${incorrectCount}, Score - ${score}`);
-
-    const shareText = generateShareText(true, correctCount);
-
+function showNopePopup(shareText) {
     const popupProofButton = document.getElementById('proofButtonPopup');
     popupProofButton.setAttribute('data-snippet', shareText);
     popupProofButton.onclick = () => {
@@ -434,7 +423,9 @@ function endURLChallenge(success) {
 
     if (proofButton) {
         const correctCount = lastThreeCorrectURL.length;
-        const shareText = generateShareText(true, correctCount); // Challenge mode
+        const totalPlayers = getPlayersFromURL().length; // Get the actual number of players from the URL
+        const shareText = generateShareText(true, correctCount, totalPlayers); // Pass totalPlayers to generateShareText
+
         proofButton.setAttribute('data-snippet', shareText);
         proofButton.style.display = 'inline-block';
         proofButton.onclick = () => {
@@ -619,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (popupProofButton) {
         popupProofButton.addEventListener('click', () => {
             const correctCount = lastThreeCorrectURL.length;
-            const proofText = generateShareText(true, correctCount);
+            const proofText = generateShareText(true, correctCount, lastThreeCorrectURL.length); // Correct totalPlayers calculation
             navigator.clipboard.writeText(proofText).then(() => {
                 popupProofButton.textContent = 'Receipt Copied!';
                 setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
@@ -746,7 +737,7 @@ function showMookiePopup(shareText, isChallengeMode) {
                 popupProofButton.style.marginRight = '0'; // Remove margin
                 popupProofButton.onclick = () => {
                     const correctCount = lastThreeCorrectURL.length;
-                    const proofText = generateShareText(true, correctCount); // Challenge mode share text
+                    const proofText = generateShareText(true, correctCount, lastThreeCorrectURL.length); // Correct totalPlayers calculation
                     navigator.clipboard.writeText(proofText).then(() => {
                         popupProofButton.textContent = 'Receipt Copied!';
                         setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
