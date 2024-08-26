@@ -48,27 +48,24 @@ function isCloseMatch(guess, answer) {
 function generateShareText(isChallengeMode, correctCount) {
     const score = Math.round(cumulativeRarityScore);
 
-    // Calculate the correct and incorrect counts based on actual answers in challenge mode
-    const incorrectCount = 3 - correctCount; // Assuming a total of 3 answers are required
+    // Calculate the correct and incorrect counts based on actual answers
+    const incorrectCount = 3 - correctCount;
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(incorrectCount).fill('🔴').join(' ');
 
-    console.log('Correct count:', correctCount, 'Incorrect count:', incorrectCount); // Debugging
-
+    console.log(`Correct Count: ${correctCount}, Incorrect Count: ${incorrectCount}`);
+    
     let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
     if (isChallengeMode) {
-        // Generate URL with player names encoded for challenge mode
         const encodedPlayers = encodeURIComponent(lastThreeCorrectURL.join(','));
         shareText += `🔗 Try it here: ${window.location.href.split('?')[0]}?players=${encodedPlayers}`;
     } else {
-        // Generate URL with player names encoded for standard mode
         const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
         shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
     }
 
-    console.log('Generated Share Text:', shareText); // Debugging
-
+    console.log(`Generated Share Text: ${shareText}`);
     return shareText;
 }
 
@@ -165,49 +162,35 @@ function increaseDifficulty() {
 }
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
-    const bucketScoreElement = document.getElementById('plunkosCounter');
-
-    if (bucketScoreElement && bucketScoreElement.style.display !== 'none') {
-        bucketScoreElement.style.display = 'none';
-    }
-
     const player = playersData.find(p => p.name === playerName);
 
     if (isCorrect && player) {
         correctStreakURL++;
-        lastThreeCorrectURL.push(playerName); // Ensure player names are added to the array
+        lastThreeCorrectURL.push(playerName);
         cumulativeRarityScore += player.rarity_score;
 
+        console.log(`Current URL Streak: ${correctStreakURL}, Last Three Correct: ${lastThreeCorrectURL}`);
+
         if (lastThreeCorrectURL.length > 3) {
-            lastThreeCorrectURL.shift(); // Keep only the last three
+            lastThreeCorrectURL.shift();
         }
-        console.log('Correct Streak URL:', correctStreakURL, 'Player Names:', lastThreeCorrectURL); // Debugging
 
         if (correctStreakURL === totalPlayers) {
-            resultElement.textContent = '';
-            const messageElement = document.createElement('span');
-            messageElement.className = 'kaboom';
-            messageElement.innerHTML = 'YES! MOOOOooooooKIE!!';
-            resultElement.appendChild(messageElement);
+            resultElement.textContent = 'YES! MOOOOooooooKIE!!';
             resultElement.className = 'correct';
 
-            const shareText = generateShareText(true, correctStreakURL);  // Challenge mode
-
-            showMookiePopup(shareText, true);  // Pass true to indicate challenge mode
+            const shareText = generateShareText(true, correctStreakURL);
+            showMookiePopup(shareText, true);
 
             correctSound.play();
-            increaseDifficulty();
-            correctStreakURL = 0;
-            lastThreeCorrectURL = [];
-            resetButtons();
-            endURLChallenge(true);
+            resetGameForNextChallenge();
 
             if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore;
                 document.getElementById('highScore').textContent = `🏆=${highScore}`;
             }
         } else {
-            resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Keep going!";
+            resultElement.innerHTML = "That's correct! Keep going!";
             resultElement.className = 'correct';
             setTimeout(() => {
                 nextPlayerCallback(playerIndex + 1);
@@ -215,13 +198,13 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
         }
         correctSound.play();
     } else {
+        console.log('Answer was incorrect.');
         correctStreakURL = 0;
-        lastThreeCorrectURL = []; // Reset array on incorrect
+        lastThreeCorrectURL = [];
         cumulativeRarityScore = 0;
-        document.getElementById('plunkosCount').textContent = '0';
         resultElement.textContent = 'Wrong answer. Try again!';
         resultElement.className = 'incorrect';
-        showNopePopup();  // Show the nope popup here
+        showNopePopup();
         resetButtons();
         endURLChallenge(false);
     }
@@ -229,6 +212,35 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
     setTimeout(() => {
         nextPlayerCallback(playerIndex + 1);
     }, 3000);
+}
+
+function resetGameForNextChallenge() {
+    correctStreakURL = 0;
+    lastThreeCorrectURL = [];
+    cumulativeRarityScore = 0;
+    resetButtons();
+}
+
+function showNopePopup() {
+    const correctCount = lastThreeCorrectURL.length;
+    const incorrectCount = 3 - correctCount;
+    const score = Math.round(cumulativeRarityScore);
+
+    console.log(`Showing Nope Popup: Correct Count - ${correctCount}, Incorrect Count - ${incorrectCount}, Score - ${score}`);
+
+    const shareText = generateShareText(true, correctCount);
+
+    const popupProofButton = document.getElementById('proofButtonPopup');
+    popupProofButton.setAttribute('data-snippet', shareText);
+    popupProofButton.onclick = () => {
+        navigator.clipboard.writeText(shareText).then(() => {
+            popupProofButton.textContent = 'Receipt Copied!';
+            setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+        });
+    };
+
+    const popup = document.getElementById('mookiePopup');
+    popup.style.display = 'block';
 }
 
 function copyToClipboard(event) {
