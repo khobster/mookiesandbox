@@ -48,7 +48,6 @@ function isCloseMatch(guess, answer) {
 function generateShareText(isChallengeMode) {
     const score = Math.round(cumulativeRarityScore);
 
-    // Fix: Correctly calculate the number of correct and incorrect answers
     const correctCount = isChallengeMode ? lastThreeCorrectURL.length : lastThreeCorrectStandard.length;
     const incorrectCount = 3 - correctCount;
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
@@ -59,7 +58,6 @@ function generateShareText(isChallengeMode) {
     if (isChallengeMode) {
         shareText += `🔗 Try it here: ${window.location.href}`;
     } else {
-        // Fix: Ensure the player names are correctly joined and encoded
         const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
         shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
     }
@@ -712,23 +710,19 @@ function showMookiePopup(shareText, isChallengeMode) {
         const popupContinueButton = document.getElementById('popupContinueButton');
         const popupProofButton = document.getElementById('proofButtonPopup');
 
-        if (popupCopyButton) {
-            popupCopyButton.setAttribute('data-snippet', shareText);
-            popupCopyButton.onclick = () => {
-                navigator.clipboard.writeText(shareText).then(() => {
-                    popupCopyButton.textContent = 'Copied!';
-                    setTimeout(() => popupCopyButton.textContent = 'Copy the URL', 2000);
-                });
-            };
-        }
-
         if (isChallengeMode) {
+            // Hide the "Copy the URL" button in challenge mode
+            if (popupCopyButton) {
+                popupCopyButton.style.display = 'none';
+            }
+
+            // Use the red "Receipt" button to copy the share text
             if (popupProofButton) {
                 popupProofButton.style.display = 'inline-block';
-                popupProofButton.style.width = '45%';
-                popupProofButton.style.marginRight = '10px';
+                popupProofButton.style.width = '100%'; // Full width since we're removing the "Copy the URL" button
+                popupProofButton.style.marginRight = '0'; // Remove margin
                 popupProofButton.onclick = () => {
-                    const proofText = generateShareText(true);
+                    const proofText = generateShareText(true); // Challenge mode share text
                     navigator.clipboard.writeText(proofText).then(() => {
                         popupProofButton.textContent = 'Receipt Copied!';
                         setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
@@ -736,17 +730,28 @@ function showMookiePopup(shareText, isChallengeMode) {
                 };
             }
 
-            popupContinueButton.style.width = '45%';
+            popupContinueButton.style.width = '100%'; // Full width for better alignment
             popupContinueButton.style.fontSize = '1.5em';
             popupContinueButton.style.padding = '1em';
 
             popupContinueButton.classList.remove('standard-mode');
-            popupContinueButton.onclick = function() {
+            popupContinueButton.onclick = function () {
                 window.location.href = 'https://www.mookie.click';
             };
         } else {
+            // Standard mode adjustments (no red "Receipt" button)
             if (popupProofButton) {
-                popupProofButton.style.display = 'none';
+                popupProofButton.style.display = 'none'; // Hide red "Receipt" button in standard mode
+            }
+
+            if (popupCopyButton) {
+                popupCopyButton.setAttribute('data-snippet', shareText);
+                popupCopyButton.onclick = () => {
+                    navigator.clipboard.writeText(shareText).then(() => {
+                        popupCopyButton.textContent = 'Copied!';
+                        setTimeout(() => popupCopyButton.textContent = 'Copy the URL', 2000);
+                    });
+                };
             }
 
             popupContinueButton.style.width = '100%';
@@ -754,7 +759,7 @@ function showMookiePopup(shareText, isChallengeMode) {
             popupContinueButton.style.padding = '1em';
 
             popupContinueButton.classList.add('standard-mode');
-            popupContinueButton.onclick = function() {
+            popupContinueButton.onclick = function () {
                 closeMookiePopup();
                 correctStreakStandard = 0;
                 lastThreeCorrectStandard = [];
@@ -781,11 +786,11 @@ function showNopePopup() {
         const popupCopyButton = document.getElementById('popupCopyButton');
 
         if (popupCopyButton) {
-            popupCopyButton.style.display = 'none';
+            popupCopyButton.style.display = 'none'; // Hide the copy button in challenge mode
         }
 
         if (popupProofButton) {
-            const shareText = generateShareText(true); // Challenge mode
+            const shareText = generateShareText(true); // Challenge mode share text
             popupProofButton.setAttribute('data-snippet', shareText);
             popupProofButton.style.display = 'inline-block';
             popupProofButton.onclick = () => {
@@ -797,7 +802,7 @@ function showNopePopup() {
         }
 
         popupContinueButton.textContent = 'Start a New Game';
-        popupContinueButton.onclick = function() {
+        popupContinueButton.onclick = function () {
             window.location.href = 'https://www.mookie.click';
         };
 
