@@ -56,9 +56,8 @@ function generateShareText(isChallengeMode, correctCount, totalPlayers) {
     let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
     if (isChallengeMode) {
-        const encodedPlayers = encodeURIComponent(lastThreeCorrectURL.join(','));
-        console.log(`Encoded players for challenge mode: ${encodedPlayers}`);
-        shareText += `🔗 Try it here: ${window.location.href.split('?')[0]}?players=${encodedPlayers}`;
+        // Always use the current page URL for challenge mode
+        shareText += `🔗 Try it here: ${window.location.href}`;
     } else {
         const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
         console.log(`Encoded players for standard mode: ${encodedPlayers}`);
