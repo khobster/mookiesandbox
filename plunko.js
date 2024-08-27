@@ -202,6 +202,21 @@ function resetGameForNextChallenge() {
     resetButtons();
 }
 
+function resetButtons() {
+    const goFishBtn = document.getElementById('goFishBtn');
+    const splitItBtn = document.getElementById('splitItBtn');
+
+    if (goFishBtn) {
+        goFishBtn.disabled = false;
+        goFishBtn.classList.remove('disabled');
+    }
+
+    if (splitItBtn) {
+        splitItBtn.disabled = false;
+        splitItBtn.classList.remove('disabled');
+    }
+}
+
 function showNopePopup(shareText) {
     console.log(`Showing Nope popup with share text: ${shareText}`);
     const overlay = document.createElement('div');
