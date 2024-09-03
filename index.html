@@ -62,6 +62,30 @@
       <span class="tooltip">🔍 how it works<span class="tooltiptext">🏀 3 correct in a row creates a challenge.<br>✅ copy the url.<br>📱 text it to your friends.<br>👀 see if they can nail it.<br>🤔 think the player didn’t go to college?<br>enter “no college”<br>🪣 = your current score<br>♣️ = stuck? skip for a 2 for 1<br>🐟 = another skip (pick a decade)<br>🏆 = your high score</span></span>
       <span id="highScore">🏆=0</span>
    </div>
+
+   <!-- Firebase SDKs -->
+   <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
+
+   <!-- Initialize Firebase -->
+   <script>
+     // Your web app's Firebase configuration
+     const firebaseConfig = {
+       apiKey: "AIzaSyDCvPKcVRf-sUdRMpZl9nIPpXkwEKHhwbs",
+       authDomain: "mookie-scoreboard.firebaseapp.com",
+       projectId: "mookie-scoreboard",
+       storageBucket: "mookie-scoreboard.appspot.com",
+       messagingSenderId: "23675127586",
+       appId: "1:23675127586:web:bb351ea7e24237d4be877b",
+       measurementId: "G-17R0CBYV3C"
+     };
+
+     // Initialize Firebase
+     firebase.initializeApp(firebaseConfig);
+     const db = firebase.firestore();
+   </script>
+
+   <!-- Your existing game script -->
    <script src="plunko.js"></script>
 
    <!-- Popup for MOOKIE challenge -->
