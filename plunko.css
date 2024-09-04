@@ -3,6 +3,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
 
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* Prevent scrolling when the keyboard is active */
+}
+
 #app {
     text-align: center;
     max-width: 400px;
@@ -10,6 +17,8 @@
     padding: 20px;
     position: relative;
     padding-bottom: 100px; /* Add padding at the bottom to avoid overlap */
+    height: calc(100vh - 100px); /* Adjust height to leave space for fixed bottom container */
+    overflow-y: auto; /* Allow scrolling for the main content */
 }
 
 .title-container {
@@ -51,13 +60,16 @@
 
 .bottom-container {
     position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 0;
+    left: 0;
+    right: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
+    background-color: white; /* Make sure background is consistent */
+    padding: 10px;
+    z-index: 1000; /* Make sure it's above other elements */
 }
 
 .tooltip {
@@ -219,13 +231,7 @@
     background-color: #1C86EE; /* Darker shade on hover */
 }
 
-#goFishBtn.disabled {
-    background-color: #d3d3d3; /* Light gray to indicate the button is disabled */
-    color: #808080; /* Gray text color */
-    cursor: not-allowed; /* Change cursor to indicate it's not clickable */
-}
-
-#splitItBtn.disabled {
+#goFishBtn.disabled, #splitItBtn.disabled {
     background-color: #d3d3d3; /* Light gray to indicate the button is disabled */
     color: #808080; /* Gray text color */
     cursor: not-allowed; /* Change cursor to indicate it's not clickable */
