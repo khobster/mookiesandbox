@@ -12,13 +12,6 @@ let highScore = 0; // High score variable
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
-// Function to Increase Difficulty
-function increaseDifficulty() {
-    currentDifficultyLevel++; // Increase the difficulty level
-    console.log("Difficulty increased to level: " + currentDifficultyLevel);
-    // Additional logic for difficulty adjustment
-}
-
 // Firebase: Submit Score Function
 async function submitScore(player, score) {
     try {
@@ -38,7 +31,7 @@ async function getTopScores() {
     try {
         const querySnapshot = await db.collection("scores")
             .orderBy("score", "desc")
-            .limit(10)
+            .limit(50) // Increased limit for better accuracy in ranking
             .get();
 
         const scores = [];
@@ -74,10 +67,8 @@ async function updateRankDisplay(playerScore) {
         }
     }
 
-    // Update the rankText with the rank
-    rankTextElement.textContent = ` =${Math.round(highScore)} (#${rank} best today)`;
-
-    // Optionally, shake or flash the rankText to draw attention
+    // Update the rankText with the rank and trophy emoji
+    rankTextElement.textContent = `🏆 =${Math.round(highScore)} (#${rank} best today)`;
     rankTextElement.classList.add('animated-rank');
 }
 
@@ -301,8 +292,8 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             cumulativeRarityScore += player.rarity_score;
 
             if (cumulativeRarityScore > highScore) {
-                highScore = cumulativeRarityScore; // Update high score
-                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
+                highScore = cumulativeRarityScore;  // Update high score
+                document.getElementById('highScore').textContent = `🏆 =${Math.round(highScore)}`;
             }
 
             if (lastThreeCorrectStandard.length > 3) {
@@ -318,8 +309,6 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
                 const shareText = generateShareText(false, correctStreakStandard, 3); // Standard mode
 
                 showMookiePopup(shareText, false); // Pass false to indicate standard mode
-
-                increaseDifficulty(); // Call the function to increase difficulty
 
                 correctStreakStandard = 0;
                 lastThreeCorrectStandard = [];
@@ -337,7 +326,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
         if (!isTwoForOneActive || !isCorrect) {
             correctStreakStandard = 0;
             lastThreeCorrectStandard = [];
-            cumulativeRarityScore = 0; // Reset only the cumulative rarity score
+            cumulativeRarityScore = 0;  // Reset only the cumulative rarity score
             document.getElementById('plunkosCount').textContent = '0';
             resultElement.textContent = 'Wrong answer. Try again!';
             resultElement.className = 'incorrect';
@@ -363,6 +352,8 @@ function resetGameForNextChallenge() {
     cumulativeRarityScore = 0; // Reset only cumulative score
     resetButtons();
 }
+
+// The rest of your game code...
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
     const player = playersData.find(p => p.name === playerName);
@@ -390,7 +381,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
 
             if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore; // Update high score
-                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
+                document.getElementById('highScore').textContent = `🏆 =${Math.round(highScore)}`;
             }
         } else {
             resultElement.innerHTML = "That's correct! Keep going!";
