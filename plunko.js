@@ -49,8 +49,6 @@ async function getTopScores() {
 // Function to Update Rank Display
 async function updateRankDisplay(playerScore) {
     const rankTextElement = document.getElementById('highScore');
-
-    // Show a loading message while fetching the rank
     rankTextElement.textContent = 'Loading rank...';
 
     // Submit the current score
@@ -77,6 +75,35 @@ async function updateRankDisplay(playerScore) {
 
     // Optionally, shake or flash the rankText to draw attention
     rankTextElement.classList.add('animated-rank');
+}
+
+// Polling for Rank Updates
+setInterval(() => {
+    updateRankDisplay(highScore);
+}, 30000); // Poll every 30 seconds
+
+// Function to load players data
+function loadPlayersData() {
+    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_rarity.json')
+        .then(response => response.json())
+        .then(data => {
+            playersData = data;
+            playersData.sort((a, b) => a.rarity_score - b.rarity_score);
+            playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
+            const urlPlayers = getPlayersFromURL();
+            if (urlPlayers.length > 0) {
+                startURLChallenge(urlPlayers);
+            } else {
+                startStandardPlay();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading JSON:', error);
+            const playerQuestionElement = document.getElementById('playerQuestion');
+            if (playerQuestionElement) {
+                playerQuestionElement.textContent = 'Error loading player data.';
+            }
+        });
 }
 
 // Existing game functions...
@@ -182,9 +209,6 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             document.getElementById('plunkosCount').textContent = `${Math.round(cumulativeRarityScore)}`;
             resultElement.className = 'correct';
             correctSound.play();
-
-            // Update the rank display only after updating the score
-            updateRankDisplay(highScore); // Update using the high score
         }
     } else {
         if (isTwoForOneActive) {
@@ -200,9 +224,6 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             resultElement.className = 'incorrect';
             wrongSound.play();
             resetButtons();
-
-            // Update the rank display even after a wrong answer
-            updateRankDisplay(highScore);
         }
     }
 
@@ -222,17 +243,211 @@ function resetGameForNextChallenge() {
     resetButtons();
 }
 
-// Function to poll for rank updates
-function startPollingForRankUpdates() {
-    setInterval(async () => {
-        await updateRankDisplay(highScore);
-    }, 30000); // Poll every 30 seconds
+// The rest of your game functions...
+
+function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
+    const player = playersData.find(p => p.name === playerName);
+
+    if (isCorrect && player) {
+        correctStreakURL++;
+        lastThreeCorrectURL.push(playerName);
+        cumulativeRarityScore += player.rarity_score;
+
+        console.log(`Challenge mode: cumulativeRarityScore updated to ${cumulativeRarityScore}, correctStreakURL: ${correctStreakURL}, totalPlayers: ${totalPlayers}`);
+
+        if (lastThreeCorrectURL.length > totalPlayers) {
+            lastThreeCorrectURL.shift();
+        }
+
+        if (correctStreakURL === totalPlayers) {
+            resultElement.textContent = 'YES! MOOOOooooooKIE!!';
+            resultElement.className = 'correct';
+
+            const shareText = generateShareText(true, correctStreakURL, totalPlayers);
+            showMookiePopup(shareText, true);
+
+            correctSound.play();
+            resetGameForNextChallenge();
+
+            if (cumulativeRarityScore > highScore) {
+                highScore = cumulativeRarityScore; // Update high score
+                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
+            }
+        } else {
+            resultElement.innerHTML = "That's correct! Keep going!";
+            resultElement.className = 'correct';
+            setTimeout(() => {
+                nextPlayerCallback(playerIndex + 1);
+            }, 1000);
+        }
+        correctSound.play();
+    } else {
+        console.log('Incorrect answer detected.');
+        const shareText = generateShareText(true, correctStreakURL, totalPlayers);
+        resultElement.textContent = 'Wrong answer. Try again!';
+        resultElement.className = 'incorrect';
+        showNopePopup(shareText);
+        correctStreakURL = 0;
+        lastThreeCorrectURL = [];
+        cumulativeRarityScore = 0;
+        resetButtons();
+        endURLChallenge(false);
+    }
+
+    setTimeout(() => {
+        nextPlayerCallback(playerIndex + 1);
+    }, 3000);
 }
 
-// Start polling when the document is loaded
+function resetButtons() {
+    const goFishBtn = document.getElementById('goFishBtn');
+    const splitItBtn = document.getElementById('splitItBtn');
+
+    if (goFishBtn) {
+        goFishBtn.disabled = false;
+        goFishBtn.classList.remove('disabled');
+    }
+
+    if (splitItBtn) {
+        splitItBtn.disabled = false;
+        splitItBtn.classList.remove('disabled');
+    }
+}
+
+function showNopePopup(shareText) {
+    console.log(`Showing Nope popup with share text: ${shareText}`);
+    const overlay = document.createElement('div');
+    overlay.id = 'popupOverlay';
+    document.body.appendChild(overlay);
+
+    const popup = document.getElementById('mookiePopup');
+    if (popup) {
+        const popupLogo = document.querySelector('.popup-logo');
+        popupLogo.src = 'nopewordlogo.png';
+
+        const popupProofButton = document.getElementById('proofButtonPopup');
+        const popupContinueButton = document.getElementById('popupContinueButton');
+        const popupCopyButton = document.getElementById('popupCopyButton');
+
+        if (popupCopyButton) {
+            popupCopyButton.style.display = 'none';
+        }
+
+        if (popupProofButton) {
+            popupProofButton.setAttribute('data-snippet', shareText);
+            popupProofButton.style.display = 'inline-block';
+            popupProofButton.onclick = () => {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    popupProofButton.textContent = 'Receipt Copied!';
+                    setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+                });
+            };
+        }
+
+        popupContinueButton.textContent = 'Start a New Game';
+        popupContinueButton.onclick = function () {
+            window.location.href = 'https://www.mookie.click';
+        };
+
+        popup.style.display = 'block';
+    }
+}
+
+function showMookiePopup(shareText, isChallengeMode) {
+    console.log(`Showing Mookie popup with share text: ${shareText}`);
+    const overlay = document.createElement('div');
+    overlay.id = 'popupOverlay';
+    document.body.appendChild(overlay);
+
+    const popup = document.getElementById('mookiePopup');
+    if (popup) {
+        const popupCopyButton = document.getElementById('popupCopyButton');
+        const popupContinueButton = document.getElementById('popupContinueButton');
+        const popupProofButton = document.getElementById('proofButtonPopup');
+
+        if (isChallengeMode) {
+            if (popupCopyButton) {
+                popupCopyButton.style.display = 'none';
+            }
+
+            if (popupProofButton) {
+                popupProofButton.style.display = 'inline-block';
+                popupProofButton.style.width = '100%';
+                popupProofButton.style.marginRight = '0';
+                popupProofButton.onclick = () => {
+                    navigator.clipboard.writeText(shareText).then(() => {
+                        popupProofButton.textContent = 'Receipt Copied!';
+                        setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+                    });
+                };
+            }
+
+            popupContinueButton.style.width = '100%';
+            popupContinueButton.style.fontSize = '1.5em';
+            popupContinueButton.style.padding = '1em';
+
+            popupContinueButton.classList.remove('standard-mode');
+            popupContinueButton.onclick = function () {
+                window.location.href = 'https://www.mookie.click';
+            };
+        } else {
+            if (popupProofButton) {
+                popupProofButton.style.display = 'none';
+            }
+
+            if (popupCopyButton) {
+                popupCopyButton.setAttribute('data-snippet', shareText);
+                popupCopyButton.onclick = () => {
+                    navigator.clipboard.writeText(shareText).then(() => {
+                        popupCopyButton.textContent = 'Copied!';
+                        setTimeout(() => popupCopyButton.textContent = 'Copy the URL', 2000);
+                    });
+                };
+            }
+
+            popupContinueButton.style.width = '100%';
+            popupContinueButton.style.fontSize = '1.5em';
+            popupContinueButton.style.padding = '1em';
+
+            popupContinueButton.classList.add('standard-mode');
+            popupContinueButton.onclick = function () {
+                closeMookiePopup();
+                correctStreakStandard = 0;
+                lastThreeCorrectStandard = [];
+                startStandardPlay();
+            };
+        }
+
+        popup.style.display = 'block';
+    }
+}
+
+function closeMookiePopup() {
+    const popup = document.getElementById('mookiePopup');
+    const overlay = document.getElementById('popupOverlay');
+    if (popup) {
+        popup.style.display = 'none';
+    }
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function copyToClipboard(event) {
+    const button = event.target;
+    const snippetText = button.getAttribute('data-snippet');
+    const textToCopy = snippetText || window.location.href;
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        setTimeout(() => button.textContent = originalText, 2000);
+    });
+}
+
+// Event listeners for game interactions
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayersData();
-    startPollingForRankUpdates(); // Start the polling mechanism
 
     const collegeGuess = document.getElementById('collegeGuess');
     if (collegeGuess) {
@@ -364,7 +579,99 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Remaining game functions...
+function displayPlayerFromDecade(decade) {
+    const playersFromDecade = playersData.filter(player => {
+        let playerYear = player.retirement_year;
+
+        let playerDecade;
+        if (playerYear >= 50 && playerYear <= 59) {
+            playerDecade = '1950s';
+        } else if (playerYear >= 60 && playerYear <= 69) {
+            playerDecade = '1960s';
+        } else if (playerYear >= 70 && playerYear <= 79) {
+            playerDecade = '1970s';
+        } else if (playerYear >= 80 && playerYear <= 89) {
+            playerDecade = '1980s';
+        } else if (playerYear >= 90 && playerYear <= 99) {
+            playerDecade = '1990s';
+        } else if (playerYear >= 0 && playerYear <= 9) {
+            playerDecade = '2000s';
+        } else if (playerYear >= 10 && playerYear <= 19) {
+            playerDecade = '2010s';
+        } else if (playerYear >= 20 && playerYear <= 29) {
+            playerDecade = '2020s';
+        }
+
+        return playerDecade === decade;
+    });
+
+    if (playersFromDecade.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
+        const player = playersFromDecade[randomIndex];
+        displayPlayer(player);
+    } else {
+        const playerQuestionElement = document.getElementById('playerQuestion');
+        if (playerQuestionElement) {
+            playerQuestionElement.textContent = `No players found for the ${decade}`;
+        }
+    }
+}
+
+function handleTwoForOne(isCorrect) {
+    if (isCorrect) {
+        twoForOneCounter++;
+        if (twoForOneCounter === 1) {
+            const resultElement = document.getElementById('result');
+            if (resultElement) {
+                resultElement.textContent = "Got it!";
+                resultElement.className = 'correct';
+            }
+            correctSound.play();
+            setTimeout(() => {
+                if (resultElement) {
+                    resultElement.textContent = '';
+                }
+                displayRandomPlayer();
+            }, 2000);
+            return false;
+        } else if (twoForOneCounter >= 2) {
+            isTwoForOneActive = false;
+            const playingTwoForOne = document.getElementById('playingTwoForOne');
+            if (playingTwoForOne) {
+                playingTwoForOne.style.display = 'none';
+            }
+            const splitItBtn = document.getElementById('splitItBtn');
+            if (splitItBtn) {
+                splitItBtn.disabled = false;
+                splitItBtn.classList.remove('disabled');
+            }
+            const goFishBtn = document.getElementById('goFishBtn');
+            if (goFishBtn) {
+                goFishBtn.disabled = false;
+                goFishBtn.classList.remove('disabled');
+            }
+            return true;
+        }
+    } else {
+        isTwoForOneActive = false;
+        twoForOneCounter = 0;
+        const playingTwoForOne = document.getElementById('playingTwoForOne');
+        if (playingTwoForOne) {
+            playingTwoForOne.style.display = 'none';
+        }
+        const splitItBtn = document.getElementById('splitItBtn');
+        if (splitItBtn) {
+            splitItBtn.disabled = false;
+            splitItBtn.classList.remove('disabled');
+        }
+        const goFishBtn = document.getElementById('goFishBtn');
+        if (goFishBtn) {
+            goFishBtn.disabled = false;
+            goFishBtn.classList.remove('disabled');
+        }
+    }
+    return false;
+}
 
 function displayRandomPlayer() {
     if (playersData.length > 0) {
@@ -399,52 +706,6 @@ function displayPlayer(player) {
         document.getElementById('result').className = '';
     } else {
         console.error("Player name or image element not found");
-    }
-}
-
-function startStandardPlay() {
-    displayRandomPlayer();
-
-    const returnButton = document.getElementById('returnButton');
-    const bottomContainer = document.querySelector('.bottom-container');
-    const plunkosCounter = document.getElementById('plunkosCounter');
-    const buttonRow = document.getElementById('buttonRow');
-
-    if (returnButton) {
-        returnButton.style.display = 'none';
-    }
-
-    if (bottomContainer) {
-        bottomContainer.style.display = 'flex';
-    }
-
-    if (plunkosCounter) {
-        plunkosCounter.style.display = 'block';
-    }
-
-    if (buttonRow) {
-        buttonRow.style.display = 'flex';
-    }
-
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.onclick = function () {
-            const snippetContainer = document.getElementById('snippetContainer');
-            const proofButton = document.getElementById('proofButton');
-
-            if (snippetContainer) {
-                snippetContainer.classList.remove('show');
-            }
-            if (proofButton) {
-                proofButton.style.display = 'none';
-            }
-
-            const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
-            const playerName = document.getElementById('playerName').textContent;
-            const player = playersData.find(p => p.name === playerName);
-            let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
-            updateStreakAndGenerateSnippetStandard(isCorrect, playerName, document.getElementById('result'), displayRandomPlayer);
-        };
     }
 }
 
@@ -583,98 +844,4 @@ function showSuggestions(input) {
             suggestionsContainer.appendChild(suggestionItem);
         });
     }
-}
-
-function displayPlayerFromDecade(decade) {
-    const playersFromDecade = playersData.filter(player => {
-        let playerYear = player.retirement_year;
-
-        let playerDecade;
-        if (playerYear >= 50 && playerYear <= 59) {
-            playerDecade = '1950s';
-        } else if (playerYear >= 60 && playerYear <= 69) {
-            playerDecade = '1960s';
-        } else if (playerYear >= 70 && playerYear <= 79) {
-            playerDecade = '1970s';
-        } else if (playerYear >= 80 && playerYear <= 89) {
-            playerDecade = '1980s';
-        } else if (playerYear >= 90 && playerYear <= 99) {
-            playerDecade = '1990s';
-        } else if (playerYear >= 0 && playerYear <= 9) {
-            playerDecade = '2000s';
-        } else if (playerYear >= 10 && playerYear <= 19) {
-            playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
-            playerDecade = '2020s';
-        }
-
-        return playerDecade === decade;
-    });
-
-    if (playersFromDecade.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
-        const player = playersFromDecade[randomIndex];
-        displayPlayer(player);
-    } else {
-        const playerQuestionElement = document.getElementById('playerQuestion');
-        if (playerQuestionElement) {
-            playerQuestionElement.textContent = `No players found for the ${decade}`;
-        }
-    }
-}
-
-function handleTwoForOne(isCorrect) {
-    if (isCorrect) {
-        twoForOneCounter++;
-        if (twoForOneCounter === 1) {
-            const resultElement = document.getElementById('result');
-            if (resultElement) {
-                resultElement.textContent = "Got it!";
-                resultElement.className = 'correct';
-            }
-            correctSound.play();
-            setTimeout(() => {
-                if (resultElement) {
-                    resultElement.textContent = '';
-                }
-                displayRandomPlayer();
-            }, 2000);
-            return false;
-        } else if (twoForOneCounter >= 2) {
-            isTwoForOneActive = false;
-            const playingTwoForOne = document.getElementById('playingTwoForOne');
-            if (playingTwoForOne) {
-                playingTwoForOne.style.display = 'none';
-            }
-            const splitItBtn = document.getElementById('splitItBtn');
-            if (splitItBtn) {
-                splitItBtn.disabled = false;
-                splitItBtn.classList.remove('disabled');
-            }
-            const goFishBtn = document.getElementById('goFishBtn');
-            if (goFishBtn) {
-                goFishBtn.disabled = false;
-                goFishBtn.classList.remove('disabled');
-            }
-            return true;
-        }
-    } else {
-        isTwoForOneActive = false;
-        twoForOneCounter = 0;
-        const playingTwoForOne = document.getElementById('playingTwoForOne');
-        if (playingTwoForOne) {
-            playingTwoForOne.style.display = 'none';
-        }
-        const splitItBtn = document.getElementById('splitItBtn');
-        if (splitItBtn) {
-            splitItBtn.disabled = false;
-            splitItBtn.classList.remove('disabled');
-        }
-        const goFishBtn = document.getElementById('goFishBtn');
-        if (goFishBtn) {
-            goFishBtn.disabled = false;
-            goFishBtn.classList.remove('disabled');
-        }
-    }
-    return false;
 }
