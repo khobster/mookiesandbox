@@ -51,9 +51,6 @@ async function updateRankDisplay(playerScore) {
     const rankTextElement = document.getElementById('highScore');
     rankTextElement.textContent = 'Loading rank...';
 
-    // Submit the current score
-    await submitScore('Player Name', playerScore);
-
     // Get the top scores and determine the rank
     const topScores = await getTopScores();
 
@@ -77,12 +74,150 @@ async function updateRankDisplay(playerScore) {
     rankTextElement.classList.add('animated-rank');
 }
 
-// Polling for Rank Updates
-setInterval(() => {
-    updateRankDisplay(highScore);
-}, 30000); // Poll every 30 seconds
+// Function to start polling for rank updates
+function startPollingForRankUpdates() {
+    setInterval(async () => {
+        await updateRankDisplay(highScore);
+    }, 30000); // Poll every 30 seconds
+}
 
-// Function to load players data
+// Function to initialize the game and start polling
+document.addEventListener('DOMContentLoaded', () => {
+    loadPlayersData(); // Load player data and initialize the game
+
+    startPollingForRankUpdates(); // Start polling for rank updates
+
+    // Other event listeners...
+    const collegeGuess = document.getElementById('collegeGuess');
+    if (collegeGuess) {
+        collegeGuess.addEventListener('input', (e) => {
+            showSuggestions(e.target.value);
+        });
+    }
+
+    const splitItBtn = document.getElementById('splitItBtn');
+    if (splitItBtn) {
+        splitItBtn.addEventListener('click', () => {
+            if (isTwoForOneActive) {
+                return;
+            }
+            const playingTwoForOne = document.getElementById('playingTwoForOne');
+            if (playingTwoForOne) {
+                playingTwoForOne.style.display = 'inline';
+                playingTwoForOne.textContent = 'playing 2 for 1 now';
+            }
+            isTwoForOneActive = true;
+            twoForOneCounter = 0;
+            splitItBtn.disabled = true;
+            splitItBtn.classList.add('disabled');
+            const goFishBtn = document.getElementById('goFishBtn');
+            if (goFishBtn) {
+                goFishBtn.disabled = true;
+                goFishBtn.classList.add('disabled');
+            }
+            displayRandomPlayer();
+        });
+    }
+
+    const goFishBtn = document.getElementById('goFishBtn');
+    if (goFishBtn) {
+        goFishBtn.addEventListener('click', () => {
+            if (isTwoForOneActive) {
+                return;
+            }
+            const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
+            if (decadeDropdownContainer) {
+                decadeDropdownContainer.style.display = 'block';
+            }
+            goFishBtn.disabled = true;
+            goFishBtn.classList.add('disabled');
+        });
+    }
+
+    const decadeDropdown = document.getElementById('decadeDropdown');
+    if (decadeDropdown) {
+        decadeDropdown.addEventListener('change', (e) => {
+            const selectedDecade = e.target.value;
+            if (selectedDecade) {
+                displayPlayerFromDecade(selectedDecade);
+                const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
+                if (decadeDropdownContainer) {
+                    decadeDropdownContainer.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    const copyButton = document.getElementById('copyButton');
+    if (copyButton) {
+        copyButton.addEventListener('click', copyToClipboard);
+    }
+
+    const popupCopyButton = document.getElementById('popupCopyButton');
+    if (popupCopyButton) {
+        popupCopyButton.addEventListener('click', copyToClipboard);
+    }
+
+    const proofButton = document.getElementById('proofButton');
+    if (proofButton) {
+        proofButton.addEventListener('click', copyToClipboard);
+    }
+
+    const returnButton = document.getElementById('returnButton');
+    if (returnButton) {
+        returnButton.addEventListener('click', () => {
+            window.location.href = 'https://www.mookie.click';
+        });
+    }
+
+    const tooltip = document.querySelector('.tooltip');
+    if (tooltip) {
+        tooltip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tooltip.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!tooltip.contains(e.target)) {
+                tooltip.classList.remove('active');
+            }
+        });
+    }
+
+    const popupContinueButton = document.getElementById('popupContinueButton');
+    if (popupContinueButton) {
+        popupContinueButton.addEventListener('click', function () {
+            closeMookiePopup();
+            if (popupContinueButton.classList.contains('standard-mode')) {
+                correctStreakStandard = 0;
+                lastThreeCorrectStandard = [];
+                startStandardPlay();
+            } else {
+                window.location.href = 'https://www.mookie.click';
+            }
+        });
+    }
+
+    const closePopup = document.getElementById('closePopup');
+    if (closePopup) {
+        closePopup.addEventListener('click', function () {
+            closeMookiePopup();
+        });
+    }
+
+    const popupProofButton = document.getElementById('proofButtonPopup');
+    if (popupProofButton) {
+        popupProofButton.addEventListener('click', () => {
+            const correctCount = lastThreeCorrectURL.length;
+            const proofText = generateShareText(true, correctCount, lastThreeCorrectURL.length);
+            navigator.clipboard.writeText(proofText).then(() => {
+                popupProofButton.textContent = 'Receipt Copied!';
+                setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+            });
+        });
+    }
+});
+
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_rarity.json')
         .then(response => response.json())
@@ -106,62 +241,141 @@ function loadPlayersData() {
         });
 }
 
-// Existing game functions...
+function startStandardPlay() {
+    displayRandomPlayer();
 
-function simplifyString(str) {
-    return str.trim().toLowerCase().replace(/university|college|the| /g, '');
+    const returnButton = document.getElementById('returnButton');
+    const bottomContainer = document.querySelector('.bottom-container');
+    const plunkosCounter = document.getElementById('plunkosCounter');
+    const buttonRow = document.getElementById('buttonRow');
+
+    if (returnButton) {
+        returnButton.style.display = 'none';
+    }
+
+    if (bottomContainer) {
+        bottomContainer.style.display = 'flex';
+    }
+
+    if (plunkosCounter) {
+        plunkosCounter.style.display = 'block';
+    }
+
+    if (buttonRow) {
+        buttonRow.style.display = 'flex';
+    }
+
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.onclick = function () {
+            const snippetContainer = document.getElementById('snippetContainer');
+            const proofButton = document.getElementById('proofButton');
+
+            if (snippetContainer) {
+                snippetContainer.classList.remove('show');
+            }
+            if (proofButton) {
+                proofButton.style.display = 'none';
+            }
+
+            const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
+            const playerName = document.getElementById('playerName').textContent;
+            const player = playersData.find(p => p.name === playerName);
+            let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
+            updateStreakAndGenerateSnippetStandard(isCorrect, playerName, document.getElementById('result'), displayRandomPlayer);
+        };
+    }
 }
 
-function isCloseMatch(guess, answer) {
-    if (!guess.trim()) {
-        return false;
-    }
-
-    let simpleGuess = guess.trim().toLowerCase();
-    let simpleAnswer = answer.trim().toLowerCase();
-
-    let normalizedGuess = simpleGuess.replace(/[^a-zA-Z0-9]/g, '');
-
-    const noCollegePhrases = [
-        "didntgotocollege",
-        "didnotgotocollege",
-        "hedidntgotocollege",
-        "hedidnotgotocollege",
-        "nocollege",
-    ];
-
-    if (noCollegePhrases.includes(normalizedGuess) && simpleAnswer === '') {
-        return true;
-    }
-
-    if (simpleAnswer === 'unc' && (simpleGuess === 'north carolina' || simpleGuess === 'carolina')) {
-        return true;
-    }
-
-    return simpleAnswer.includes(simpleGuess);
-}
-
-function generateShareText(isChallengeMode, correctCount, totalPlayers) {
-    const score = Math.round(cumulativeRarityScore);
-    console.log(`Generating share text. Score: ${score}, Correct: ${correctCount}, Total: ${totalPlayers}`);
-
-    // Correct and incorrect emojis based on the current game state
-    const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
-    const incorrectEmojis = new Array(totalPlayers - correctCount).fill('🔴').join(' ');
-
-    let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
-
-    if (isChallengeMode) {
-        // Always use the current page URL for challenge mode
-        shareText += `🔗 Try it here: ${window.location.href}`;
+function displayRandomPlayer() {
+    if (playersData.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersData.length);
+        const player = playersData[randomIndex];
+        displayPlayer(player);
     } else {
-        const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
-        console.log(`Encoded players for standard mode: ${encodedPlayers}`);
-        shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
+        console.log("No data available");
+    }
+}
+
+function displayPlayer(player) {
+    const playerNameElement = document.getElementById('playerName');
+    const playerImageElement = document.getElementById('playerImage');
+
+    if (playerNameElement && playerImageElement) {
+        playerNameElement.textContent = player.name;
+
+        playerImageElement.src = 'stilllife.png';
+
+        if (player.image_url) {
+            playerImageElement.src = player.image_url;
+
+            playerImageElement.onerror = function () {
+                this.onerror = null;
+                this.src = 'stilllife.png';
+            };
+        }
+
+        document.getElementById('collegeGuess').value = '';
+        document.getElementById('result').textContent = '';
+        document.getElementById('result').className = '';
+    } else {
+        console.error("Player name or image element not found");
+    }
+}
+
+function startURLChallenge(playerNames) {
+    let playerIndex = 0;
+    correctStreakURL = 0;
+    lastThreeCorrectURL = [];
+
+    const buttonRow = document.getElementById('buttonRow');
+    const bottomContainer = document.querySelector('.bottom-container');
+    const plunkosCounter = document.getElementById('plunkosCounter');
+
+    if (buttonRow) {
+        buttonRow.style.display = 'none';
     }
 
-    console.log(`Generated share text: ${shareText}`);
-    return shareText;
+    if (bottomContainer) {
+        bottomContainer.style.display = 'none';
+    }
+
+    if (plunkosCounter) {
+        plunkosCounter.style.display = 'none';
+    }
+
+    function nextPlayer(index) {
+        if (index < playerNames.length) {
+            const playerName = playerNames[index];
+            const player = playersData.find(p => p.name === playerName);
+            if (player) {
+                displayPlayer(player);
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.onclick = function () {
+                        const snippetContainer = document.getElementById('snippetContainer');
+                        const proofButton = document.getElementById('proofButton');
+
+                        if (snippetContainer) {
+                            snippetContainer.classList.remove('show');
+                        }
+                        if (proofButton) {
+                            proofButton.style.display = 'none';
+                        }
+
+                        const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
+                        let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
+                        updateStreakAndGenerateSnippetURL(isCorrect, player.name, document.getElementById('result'), nextPlayer, index, playerNames.length);
+                    };
+                }
+            } else {
+                nextPlayer(index + 1);
+            }
+        } else {
+            endURLChallenge(true);
+        }
+    }
+    nextPlayer(playerIndex);
 }
 
 function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
@@ -224,6 +438,9 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             resultElement.className = 'incorrect';
             wrongSound.play();
             resetButtons();
+
+            // Ensure rank display remains after a wrong answer
+            updateRankDisplay(highScore);
         }
     }
 
@@ -234,16 +451,6 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
         nextPlayerCallback();
     }, 3000);
 }
-
-// Function to reset high score display correctly
-function resetGameForNextChallenge() {
-    correctStreakURL = 0;
-    lastThreeCorrectURL = [];
-    cumulativeRarityScore = 0; // Reset only cumulative score
-    resetButtons();
-}
-
-// The rest of your game functions...
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
     const player = playersData.find(p => p.name === playerName);
@@ -297,6 +504,13 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
     setTimeout(() => {
         nextPlayerCallback(playerIndex + 1);
     }, 3000);
+}
+
+function resetGameForNextChallenge() {
+    correctStreakURL = 0;
+    lastThreeCorrectURL = [];
+    cumulativeRarityScore = 0; // Reset only cumulative score
+    resetButtons();
 }
 
 function resetButtons() {
@@ -445,139 +659,143 @@ function copyToClipboard(event) {
     });
 }
 
-// Event listeners for game interactions
-document.addEventListener('DOMContentLoaded', () => {
-    loadPlayersData();
+function simplifyString(str) {
+    return str.trim().toLowerCase().replace(/university|college|the| /g, '');
+}
 
-    const collegeGuess = document.getElementById('collegeGuess');
-    if (collegeGuess) {
-        collegeGuess.addEventListener('input', (e) => {
-            showSuggestions(e.target.value);
-        });
+function isCloseMatch(guess, answer) {
+    if (!guess.trim()) {
+        return false;
     }
 
-    const splitItBtn = document.getElementById('splitItBtn');
-    if (splitItBtn) {
-        splitItBtn.addEventListener('click', () => {
-            if (isTwoForOneActive) {
-                return;
-            }
-            const playingTwoForOne = document.getElementById('playingTwoForOne');
-            if (playingTwoForOne) {
-                playingTwoForOne.style.display = 'inline';
-                playingTwoForOne.textContent = 'playing 2 for 1 now';
-            }
-            isTwoForOneActive = true;
-            twoForOneCounter = 0;
-            splitItBtn.disabled = true;
-            splitItBtn.classList.add('disabled');
-            const goFishBtn = document.getElementById('goFishBtn');
-            if (goFishBtn) {
-                goFishBtn.disabled = true;
-                goFishBtn.classList.add('disabled');
-            }
-            displayRandomPlayer();
-        });
+    let simpleGuess = guess.trim().toLowerCase();
+    let simpleAnswer = answer.trim().toLowerCase();
+
+    let normalizedGuess = simpleGuess.replace(/[^a-zA-Z0-9]/g, '');
+
+    const noCollegePhrases = [
+        "didntgotocollege",
+        "didnotgotocollege",
+        "hedidntgotocollege",
+        "hedidnotgotocollege",
+        "nocollege",
+    ];
+
+    if (noCollegePhrases.includes(normalizedGuess) && simpleAnswer === '') {
+        return true;
     }
 
-    const goFishBtn = document.getElementById('goFishBtn');
-    if (goFishBtn) {
-        goFishBtn.addEventListener('click', () => {
-            if (isTwoForOneActive) {
-                return;
-            }
-            const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
-            if (decadeDropdownContainer) {
-                decadeDropdownContainer.style.display = 'block';
-            }
-            goFishBtn.disabled = true;
-            goFishBtn.classList.add('disabled');
-        });
+    if (simpleAnswer === 'unc' && (simpleGuess === 'north carolina' || simpleGuess === 'carolina')) {
+        return true;
     }
 
-    const decadeDropdown = document.getElementById('decadeDropdown');
-    if (decadeDropdown) {
-        decadeDropdown.addEventListener('change', (e) => {
-            const selectedDecade = e.target.value;
-            if (selectedDecade) {
-                displayPlayerFromDecade(selectedDecade);
-                const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
-                if (decadeDropdownContainer) {
-                    decadeDropdownContainer.style.display = 'none';
-                }
-            }
-        });
+    return simpleAnswer.includes(simpleGuess);
+}
+
+function generateShareText(isChallengeMode, correctCount, totalPlayers) {
+    const score = Math.round(cumulativeRarityScore);
+    console.log(`Generating share text. Score: ${score}, Correct: ${correctCount}, Total: ${totalPlayers}`);
+
+    // Correct and incorrect emojis based on the current game state
+    const correctEmojis = new Array(correctCount).fill(' ').join(' ');
+    const incorrectEmojis = new Array(totalPlayers - correctCount).fill(' ').join(' ');
+
+    let shareText = `MOOKIE! \n${correctEmojis} ${incorrectEmojis}\n${score}\n`;
+
+    if (isChallengeMode) {
+        // Always use the current page URL for challenge mode
+        shareText += ` Try it here: ${window.location.href}`;
+    } else {
+        const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
+        console.log(`Encoded players for standard mode: ${encodedPlayers}`);
+        shareText += ` Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
     }
 
+    console.log(`Generated share text: ${shareText}`);
+    return shareText;
+}
+
+function endURLChallenge(success) {
+    const resultElement = document.getElementById('result');
     const copyButton = document.getElementById('copyButton');
-    if (copyButton) {
-        copyButton.addEventListener('click', copyToClipboard);
-    }
-
-    const popupCopyButton = document.getElementById('popupCopyButton');
-    if (popupCopyButton) {
-        popupCopyButton.addEventListener('click', copyToClipboard);
-    }
-
     const proofButton = document.getElementById('proofButton');
+
+    if (success) {
+        resultElement.innerHTML += "<span class='kaboom'><br>Hit Copy & Challenge a Pal!<br>Or Grab Your Receipt!</span>";
+        resultElement.className = 'correct';
+    } else {
+        resultElement.innerHTML = "You didn't get all correct. Better luck next time!";
+        resultElement.className = 'incorrect';
+    }
+
+    if (copyButton) {
+        copyButton.style.display = 'none'; // Remove in challenge mode
+    }
+
     if (proofButton) {
-        proofButton.addEventListener('click', copyToClipboard);
+        const correctCount = lastThreeCorrectURL.length;
+        const totalPlayers = getPlayersFromURL().length; // Get the actual number of players from the URL
+        const shareText = generateShareText(true, correctCount, totalPlayers); // Pass totalPlayers to generateShareText
+
+        proofButton.setAttribute('data-snippet', shareText);
+        proofButton.style.display = 'inline-block';
+        proofButton.onclick = () => {
+            navigator.clipboard.writeText(shareText).then(() => {
+                proofButton.textContent = 'Receipt Copied!';
+                setTimeout(() => proofButton.textContent = 'Grab Your Receipt!', 2000);
+            });
+        };
     }
 
     const returnButton = document.getElementById('returnButton');
     if (returnButton) {
-        returnButton.addEventListener('click', () => {
-            window.location.href = 'https://www.mookie.click';
-        });
+        returnButton.style.display = 'inline-block';
+        returnButton.textContent = 'Play again';
     }
 
-    const tooltip = document.querySelector('.tooltip');
-    if (tooltip) {
-        tooltip.addEventListener('click', (e) => {
-            e.stopPropagation();
-            tooltip.classList.toggle('active');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!tooltip.contains(e.target)) {
-                tooltip.classList.remove('active');
-            }
-        });
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.style.display = 'none';
     }
 
-    const popupContinueButton = document.getElementById('popupContinueButton');
-    if (popupContinueButton) {
-        popupContinueButton.addEventListener('click', function () {
-            closeMookiePopup();
-            if (popupContinueButton.classList.contains('standard-mode')) {
-                correctStreakStandard = 0;
-                lastThreeCorrectStandard = [];
-                startStandardPlay();
-            } else {
-                window.location.href = 'https://www.mookie.click';
-            }
-        });
-    }
+    resetButtons();
+}
 
-    const closePopup = document.getElementById('closePopup');
-    if (closePopup) {
-        closePopup.addEventListener('click', function () {
-            closeMookiePopup();
-        });
+function getPlayersFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const playersParam = urlParams.get('players');
+    if (playersParam) {
+        return playersParam.split(',');
     }
+    return [];
+}
 
-    const popupProofButton = document.getElementById('proofButtonPopup');
-    if (popupProofButton) {
-        popupProofButton.addEventListener('click', () => {
-            const correctCount = lastThreeCorrectURL.length;
-            const proofText = generateShareText(true, correctCount, lastThreeCorrectURL.length); // Correct totalPlayers calculation
-            navigator.clipboard.writeText(proofText).then(() => {
-                popupProofButton.textContent = 'Receipt Copied!';
-                setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+function showSuggestions(input) {
+    const suggestionsContainer = document.getElementById('suggestions');
+    if (suggestionsContainer) {
+        suggestionsContainer.innerHTML = '';
+        if (input.length === 0) {
+            return;
+        }
+        const suggestions = Array.from(new Set(playersData
+            .map(player => player.college)
+            .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
+            .slice(0, 5);
+        suggestions.forEach(suggestion => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.textContent = suggestion;
+            suggestionItem.classList.add('suggestion-item');
+            suggestionItem.addEventListener('click', () => {
+                const collegeGuess = document.getElementById('collegeGuess');
+                if (collegeGuess) {
+                    collegeGuess.value = suggestion;
+                }
+                suggestionsContainer.innerHTML = '';
             });
+            suggestionsContainer.appendChild(suggestionItem);
         });
     }
-});
+}
 
 function displayPlayerFromDecade(decade) {
     const playersFromDecade = playersData.filter(player => {
@@ -671,177 +889,4 @@ function handleTwoForOne(isCorrect) {
         }
     }
     return false;
-}
-
-function displayRandomPlayer() {
-    if (playersData.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersData.length);
-        const player = playersData[randomIndex];
-        displayPlayer(player);
-    } else {
-        console.log("No data available");
-    }
-}
-
-function displayPlayer(player) {
-    const playerNameElement = document.getElementById('playerName');
-    const playerImageElement = document.getElementById('playerImage');
-
-    if (playerNameElement && playerImageElement) {
-        playerNameElement.textContent = player.name;
-
-        playerImageElement.src = 'stilllife.png';
-
-        if (player.image_url) {
-            playerImageElement.src = player.image_url;
-
-            playerImageElement.onerror = function () {
-                this.onerror = null;
-                this.src = 'stilllife.png';
-            };
-        }
-
-        document.getElementById('collegeGuess').value = '';
-        document.getElementById('result').textContent = '';
-        document.getElementById('result').className = '';
-    } else {
-        console.error("Player name or image element not found");
-    }
-}
-
-function startURLChallenge(playerNames) {
-    let playerIndex = 0;
-    correctStreakURL = 0;
-    lastThreeCorrectURL = [];
-
-    const buttonRow = document.getElementById('buttonRow');
-    const bottomContainer = document.querySelector('.bottom-container');
-    const plunkosCounter = document.getElementById('plunkosCounter');
-
-    if (buttonRow) {
-        buttonRow.style.display = 'none';
-    }
-
-    if (bottomContainer) {
-        bottomContainer.style.display = 'none';
-    }
-
-    if (plunkosCounter) {
-        plunkosCounter.style.display = 'none';
-    }
-
-    function nextPlayer(index) {
-        if (index < playerNames.length) {
-            const playerName = playerNames[index];
-            const player = playersData.find(p => p.name === playerName);
-            if (player) {
-                displayPlayer(player);
-                const submitBtn = document.getElementById('submitBtn');
-                if (submitBtn) {
-                    submitBtn.onclick = function () {
-                        const snippetContainer = document.getElementById('snippetContainer');
-                        const proofButton = document.getElementById('proofButton');
-
-                        if (snippetContainer) {
-                            snippetContainer.classList.remove('show');
-                        }
-                        if (proofButton) {
-                            proofButton.style.display = 'none';
-                        }
-
-                        const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
-                        let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
-                        updateStreakAndGenerateSnippetURL(isCorrect, player.name, document.getElementById('result'), nextPlayer, index, playerNames.length);
-                    };
-                }
-            } else {
-                nextPlayer(index + 1);
-            }
-        } else {
-            endURLChallenge(true);
-        }
-    }
-    nextPlayer(playerIndex);
-}
-
-function endURLChallenge(success) {
-    const resultElement = document.getElementById('result');
-    const copyButton = document.getElementById('copyButton');
-    const proofButton = document.getElementById('proofButton');
-
-    if (success) {
-        resultElement.innerHTML += "<span class='kaboom'><br>Hit Copy & Challenge a Pal!<br>Or Grab Your Receipt!</span>";
-        resultElement.className = 'correct';
-    } else {
-        resultElement.innerHTML = "You didn't get all correct. Better luck next time!";
-        resultElement.className = 'incorrect';
-    }
-
-    if (copyButton) {
-        copyButton.style.display = 'none'; // Remove in challenge mode
-    }
-
-    if (proofButton) {
-        const correctCount = lastThreeCorrectURL.length;
-        const totalPlayers = getPlayersFromURL().length; // Get the actual number of players from the URL
-        const shareText = generateShareText(true, correctCount, totalPlayers); // Pass totalPlayers to generateShareText
-
-        proofButton.setAttribute('data-snippet', shareText);
-        proofButton.style.display = 'inline-block';
-        proofButton.onclick = () => {
-            navigator.clipboard.writeText(shareText).then(() => {
-                proofButton.textContent = 'Receipt Copied!';
-                setTimeout(() => proofButton.textContent = 'Grab Your Receipt!', 2000);
-            });
-        };
-    }
-
-    const returnButton = document.getElementById('returnButton');
-    if (returnButton) {
-        returnButton.style.display = 'inline-block';
-        returnButton.textContent = 'Play again';
-    }
-
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.style.display = 'none';
-    }
-
-    resetButtons();
-}
-
-function getPlayersFromURL() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const playersParam = urlParams.get('players');
-    if (playersParam) {
-        return playersParam.split(',');
-    }
-    return [];
-}
-
-function showSuggestions(input) {
-    const suggestionsContainer = document.getElementById('suggestions');
-    if (suggestionsContainer) {
-        suggestionsContainer.innerHTML = '';
-        if (input.length === 0) {
-            return;
-        }
-        const suggestions = Array.from(new Set(playersData
-            .map(player => player.college)
-            .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
-            .slice(0, 5);
-        suggestions.forEach(suggestion => {
-            const suggestionItem = document.createElement('div');
-            suggestionItem.textContent = suggestion;
-            suggestionItem.classList.add('suggestion-item');
-            suggestionItem.addEventListener('click', () => {
-                const collegeGuess = document.getElementById('collegeGuess');
-                if (collegeGuess) {
-                    collegeGuess.value = suggestion;
-                }
-                suggestionsContainer.innerHTML = '';
-            });
-            suggestionsContainer.appendChild(suggestionItem);
-        });
-    }
 }
