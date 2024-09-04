@@ -7,216 +7,345 @@ let currentDifficultyLevel = 1;
 let cumulativeRarityScore = 0;
 let isTwoForOneActive = false;
 let twoForOneCounter = 0;
-let highScore = 0; // High score variable
+let highScore = 0;
 
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
-// Firebase: Submit Score Function
-async function submitScore(player, score) {
-    try {
-        await db.collection("scores").add({
-            player: player,
-            score: score,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log("Score submitted successfully!");
-    } catch (error) {
-        console.error("Error submitting score: ", error);
-    }
+function simplifyString(str) {
+    return str.trim().toLowerCase().replace(/university|college|the| /g, '');
 }
 
-// Firebase: Get Top Scores Function
-async function getTopScores() {
-    try {
-        const querySnapshot = await db.collection("scores")
-            .orderBy("score", "desc")
-            .limit(10)
-            .get();
-
-        const scores = [];
-        querySnapshot.forEach((doc) => {
-            scores.push(doc.data());
-        });
-
-        return scores;
-    } catch (error) {
-        console.error("Error retrieving scores: ", error);
-        return [];
+function isCloseMatch(guess, answer) {
+    if (!guess.trim()) {
+        return false;
     }
+
+    let simpleGuess = guess.trim().toLowerCase();
+    let simpleAnswer = answer.trim().toLowerCase();
+
+    let normalizedGuess = simpleGuess.replace(/[^a-zA-Z0-9]/g, '');
+
+    const noCollegePhrases = [
+        "didntgotocollege",
+        "didnotgotocollege",
+        "hedidntgotocollege",
+        "hedidnotgotocollege",
+        "nocollege",
+    ];
+
+    if (noCollegePhrases.includes(normalizedGuess) && simpleAnswer === '') {
+        return true;
+    }
+
+    if (simpleAnswer === 'unc' && (simpleGuess === 'north carolina' || simpleGuess === 'carolina')) {
+        return true;
+    }
+
+    return simpleAnswer.includes(simpleGuess);
 }
 
-// Function to Update Rank Display
-async function updateRankDisplay(playerScore) {
-    const rankTextElement = document.getElementById('highScore');
-    rankTextElement.textContent = 'Loading rank...';
+function generateShareText(isChallengeMode, correctCount, totalPlayers) {
+    const score = Math.round(cumulativeRarityScore);
+    console.log(`Generating share text. Score: ${score}, Correct: ${correctCount}, Total: ${totalPlayers}`);
 
-    // Get the top scores and determine the rank
-    const topScores = await getTopScores();
+    // Correct and incorrect emojis based on the current game state
+    const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
+    const incorrectEmojis = new Array(totalPlayers - correctCount).fill('🔴').join(' ');
 
-    // Sort the scores in descending order
-    topScores.sort((a, b) => b.score - a.score);
+    let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
-    // Find the rank of the user's score
-    let rank = 1;
-    for (let i = 0; i < topScores.length; i++) {
-        if (topScores[i].score > playerScore) {
-            rank++;
-        } else {
-            break;
+    if (isChallengeMode) {
+        // Always use the current page URL for challenge mode
+        shareText += `🔗 Try it here: ${window.location.href}`;
+    } else {
+        const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
+        console.log(`Encoded players for standard mode: ${encodedPlayers}`);
+        shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
+    }
+
+    console.log(`Generated share text: ${shareText}`);
+    return shareText;
+}
+
+function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
+    const bucketScoreElement = document.getElementById('plunkosCounter');
+
+    if (bucketScoreElement) {
+        bucketScoreElement.style.display = 'none';
+    }
+
+    const player = playersData.find(p => p.name === playerName);
+
+    if (isCorrect && player) {
+        if (isTwoForOneActive) {
+            isCorrect = handleTwoForOne(true);
+        }
+
+        if (!isTwoForOneActive || isCorrect) {
+            correctStreakStandard++;
+            lastThreeCorrectStandard.push(playerName);
+            cumulativeRarityScore += player.rarity_score;
+
+            if (cumulativeRarityScore > highScore) {
+                highScore = cumulativeRarityScore;
+                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
+            }
+
+            if (lastThreeCorrectStandard.length > 3) {
+                lastThreeCorrectStandard.shift();
+            }
+
+            if (correctStreakStandard === 1) {
+                resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just two more to get this <span class='kaboom'>MOOoooOOKIE!</span>";
+            } else if (correctStreakStandard === 2) {
+                resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just one more to get a <span class='kaboom'>MOOoooOOKIE!</span>";
+            } else if (correctStreakStandard === 3) {
+                resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
+                const shareText = generateShareText(false, correctStreakStandard, 3); // Standard mode
+
+                showMookiePopup(shareText, false); // Pass false to indicate standard mode
+
+                increaseDifficulty();
+                correctStreakStandard = 0;
+                lastThreeCorrectStandard = [];
+                resetButtons();
+            }
+            document.getElementById('plunkosCount').textContent = `${Math.round(cumulativeRarityScore)}`;
+            resultElement.className = 'correct';
+            correctSound.play();
+        }
+    } else {
+        if (isTwoForOneActive) {
+            isCorrect = handleTwoForOne(false);
+        }
+
+        if (!isTwoForOneActive || !isCorrect) {
+            correctStreakStandard = 0;
+            lastThreeCorrectStandard = [];
+            cumulativeRarityScore = 0;
+            document.getElementById('plunkosCount').textContent = '0';
+            resultElement.textContent = 'Wrong answer. Try again!';
+            resultElement.className = 'incorrect';
+            wrongSound.play();
+            resetButtons();
         }
     }
 
-    // Update the rankText with the rank
-    rankTextElement.textContent = `🏆=${Math.round(highScore)} (#${rank} best today)`;
-
-    // Optionally, shake or flash the rankText to draw attention
-    rankTextElement.classList.add('animated-rank');
+    setTimeout(() => {
+        if (bucketScoreElement) {
+            bucketScoreElement.style.display = 'block';
+        }
+        nextPlayerCallback();
+    }, 3000);
 }
 
-// Function to start polling for rank updates
-function startPollingForRankUpdates() {
-    setInterval(async () => {
-        await updateRankDisplay(highScore);
-    }, 30000); // Poll every 30 seconds
+function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
+    const player = playersData.find(p => p.name === playerName);
+
+    if (isCorrect && player) {
+        correctStreakURL++;
+        lastThreeCorrectURL.push(playerName);
+        cumulativeRarityScore += player.rarity_score;
+
+        console.log(`Challenge mode: cumulativeRarityScore updated to ${cumulativeRarityScore}, correctStreakURL: ${correctStreakURL}, totalPlayers: ${totalPlayers}`);
+
+        if (lastThreeCorrectURL.length > totalPlayers) {
+            lastThreeCorrectURL.shift();
+        }
+
+        if (correctStreakURL === totalPlayers) {
+            resultElement.textContent = 'YES! MOOOOooooooKIE!!';
+            resultElement.className = 'correct';
+
+            const shareText = generateShareText(true, correctStreakURL, totalPlayers);
+            showMookiePopup(shareText, true);
+
+            correctSound.play();
+            resetGameForNextChallenge();
+
+            if (cumulativeRarityScore > highScore) {
+                highScore = cumulativeRarityScore;
+                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
+            }
+        } else {
+            resultElement.innerHTML = "That's correct! Keep going!";
+            resultElement.className = 'correct';
+            setTimeout(() => {
+                nextPlayerCallback(playerIndex + 1);
+            }, 1000);
+        }
+        correctSound.play();
+    } else {
+        console.log('Incorrect answer detected.');
+        const shareText = generateShareText(true, correctStreakURL, totalPlayers);
+        resultElement.textContent = 'Wrong answer. Try again!';
+        resultElement.className = 'incorrect';
+        showNopePopup(shareText);
+        correctStreakURL = 0;
+        lastThreeCorrectURL = [];
+        cumulativeRarityScore = 0;
+        resetButtons();
+        endURLChallenge(false);
+    }
+
+    setTimeout(() => {
+        nextPlayerCallback(playerIndex + 1);
+    }, 3000);
 }
 
-// Function to initialize the game and start polling
-document.addEventListener('DOMContentLoaded', () => {
-    loadPlayersData(); // Load player data and initialize the game
+function resetGameForNextChallenge() {
+    correctStreakURL = 0;
+    lastThreeCorrectURL = [];
+    cumulativeRarityScore = 0;
+    resetButtons();
+}
 
-    startPollingForRankUpdates(); // Start polling for rank updates
-
-    // Other event listeners...
-    const collegeGuess = document.getElementById('collegeGuess');
-    if (collegeGuess) {
-        collegeGuess.addEventListener('input', (e) => {
-            showSuggestions(e.target.value);
-        });
-    }
-
-    const splitItBtn = document.getElementById('splitItBtn');
-    if (splitItBtn) {
-        splitItBtn.addEventListener('click', () => {
-            if (isTwoForOneActive) {
-                return;
-            }
-            const playingTwoForOne = document.getElementById('playingTwoForOne');
-            if (playingTwoForOne) {
-                playingTwoForOne.style.display = 'inline';
-                playingTwoForOne.textContent = 'playing 2 for 1 now';
-            }
-            isTwoForOneActive = true;
-            twoForOneCounter = 0;
-            splitItBtn.disabled = true;
-            splitItBtn.classList.add('disabled');
-            const goFishBtn = document.getElementById('goFishBtn');
-            if (goFishBtn) {
-                goFishBtn.disabled = true;
-                goFishBtn.classList.add('disabled');
-            }
-            displayRandomPlayer();
-        });
-    }
-
+function resetButtons() {
     const goFishBtn = document.getElementById('goFishBtn');
+    const splitItBtn = document.getElementById('splitItBtn');
+
     if (goFishBtn) {
-        goFishBtn.addEventListener('click', () => {
-            if (isTwoForOneActive) {
-                return;
-            }
-            const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
-            if (decadeDropdownContainer) {
-                decadeDropdownContainer.style.display = 'block';
-            }
-            goFishBtn.disabled = true;
-            goFishBtn.classList.add('disabled');
-        });
+        goFishBtn.disabled = false;
+        goFishBtn.classList.remove('disabled');
     }
 
-    const decadeDropdown = document.getElementById('decadeDropdown');
-    if (decadeDropdown) {
-        decadeDropdown.addEventListener('change', (e) => {
-            const selectedDecade = e.target.value;
-            if (selectedDecade) {
-                displayPlayerFromDecade(selectedDecade);
-                const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
-                if (decadeDropdownContainer) {
-                    decadeDropdownContainer.style.display = 'none';
-                }
-            }
-        });
+    if (splitItBtn) {
+        splitItBtn.disabled = false;
+        splitItBtn.classList.remove('disabled');
     }
+}
 
-    const copyButton = document.getElementById('copyButton');
-    if (copyButton) {
-        copyButton.addEventListener('click', copyToClipboard);
-    }
+function showNopePopup(shareText) {
+    console.log(`Showing Nope popup with share text: ${shareText}`);
+    const overlay = document.createElement('div');
+    overlay.id = 'popupOverlay';
+    document.body.appendChild(overlay);
 
-    const popupCopyButton = document.getElementById('popupCopyButton');
-    if (popupCopyButton) {
-        popupCopyButton.addEventListener('click', copyToClipboard);
-    }
+    const popup = document.getElementById('mookiePopup');
+    if (popup) {
+        const popupLogo = document.querySelector('.popup-logo');
+        popupLogo.src = 'nopewordlogo.png';
 
-    const proofButton = document.getElementById('proofButton');
-    if (proofButton) {
-        proofButton.addEventListener('click', copyToClipboard);
-    }
+        const popupProofButton = document.getElementById('proofButtonPopup');
+        const popupContinueButton = document.getElementById('popupContinueButton');
+        const popupCopyButton = document.getElementById('popupCopyButton');
 
-    const returnButton = document.getElementById('returnButton');
-    if (returnButton) {
-        returnButton.addEventListener('click', () => {
+        if (popupCopyButton) {
+            popupCopyButton.style.display = 'none';
+        }
+
+        if (popupProofButton) {
+            popupProofButton.setAttribute('data-snippet', shareText);
+            popupProofButton.style.display = 'inline-block';
+            popupProofButton.onclick = () => {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    popupProofButton.textContent = 'Receipt Copied!';
+                    setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+                });
+            };
+        }
+
+        popupContinueButton.textContent = 'Start a New Game';
+        popupContinueButton.onclick = function () {
             window.location.href = 'https://www.mookie.click';
-        });
+        };
+
+        popup.style.display = 'block';
     }
+}
 
-    const tooltip = document.querySelector('.tooltip');
-    if (tooltip) {
-        tooltip.addEventListener('click', (e) => {
-            e.stopPropagation();
-            tooltip.classList.toggle('active');
-        });
+function showMookiePopup(shareText, isChallengeMode) {
+    console.log(`Showing Mookie popup with share text: ${shareText}`);
+    const overlay = document.createElement('div');
+    overlay.id = 'popupOverlay';
+    document.body.appendChild(overlay);
 
-        document.addEventListener('click', (e) => {
-            if (!tooltip.contains(e.target)) {
-                tooltip.classList.remove('active');
+    const popup = document.getElementById('mookiePopup');
+    if (popup) {
+        const popupCopyButton = document.getElementById('popupCopyButton');
+        const popupContinueButton = document.getElementById('popupContinueButton');
+        const popupProofButton = document.getElementById('proofButtonPopup');
+
+        if (isChallengeMode) {
+            if (popupCopyButton) {
+                popupCopyButton.style.display = 'none';
             }
-        });
-    }
 
-    const popupContinueButton = document.getElementById('popupContinueButton');
-    if (popupContinueButton) {
-        popupContinueButton.addEventListener('click', function () {
-            closeMookiePopup();
-            if (popupContinueButton.classList.contains('standard-mode')) {
+            if (popupProofButton) {
+                popupProofButton.style.display = 'inline-block';
+                popupProofButton.style.width = '100%';
+                popupProofButton.style.marginRight = '0';
+                popupProofButton.onclick = () => {
+                    navigator.clipboard.writeText(shareText).then(() => {
+                        popupProofButton.textContent = 'Receipt Copied!';
+                        setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+                    });
+                };
+            }
+
+            popupContinueButton.style.width = '100%';
+            popupContinueButton.style.fontSize = '1.5em';
+            popupContinueButton.style.padding = '1em';
+
+            popupContinueButton.classList.remove('standard-mode');
+            popupContinueButton.onclick = function () {
+                window.location.href = 'https://www.mookie.click';
+            };
+        } else {
+            if (popupProofButton) {
+                popupProofButton.style.display = 'none';
+            }
+
+            if (popupCopyButton) {
+                popupCopyButton.setAttribute('data-snippet', shareText);
+                popupCopyButton.onclick = () => {
+                    navigator.clipboard.writeText(shareText).then(() => {
+                        popupCopyButton.textContent = 'Copied!';
+                        setTimeout(() => popupCopyButton.textContent = 'Copy the URL', 2000);
+                    });
+                };
+            }
+
+            popupContinueButton.style.width = '100%';
+            popupContinueButton.style.fontSize = '1.5em';
+            popupContinueButton.style.padding = '1em';
+
+            popupContinueButton.classList.add('standard-mode');
+            popupContinueButton.onclick = function () {
+                closeMookiePopup();
                 correctStreakStandard = 0;
                 lastThreeCorrectStandard = [];
                 startStandardPlay();
-            } else {
-                window.location.href = 'https://www.mookie.click';
-            }
-        });
-    }
+            };
+        }
 
-    const closePopup = document.getElementById('closePopup');
-    if (closePopup) {
-        closePopup.addEventListener('click', function () {
-            closeMookiePopup();
-        });
+        popup.style.display = 'block';
     }
+}
 
-    const popupProofButton = document.getElementById('proofButtonPopup');
-    if (popupProofButton) {
-        popupProofButton.addEventListener('click', () => {
-            const correctCount = lastThreeCorrectURL.length;
-            const proofText = generateShareText(true, correctCount, lastThreeCorrectURL.length);
-            navigator.clipboard.writeText(proofText).then(() => {
-                popupProofButton.textContent = 'Receipt Copied!';
-                setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
-            });
-        });
+function closeMookiePopup() {
+    const popup = document.getElementById('mookiePopup');
+    const overlay = document.getElementById('popupOverlay');
+    if (popup) {
+        popup.style.display = 'none';
     }
-});
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function copyToClipboard(event) {
+    const button = event.target;
+    const snippetText = button.getAttribute('data-snippet');
+    const textToCopy = snippetText || window.location.href;
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        setTimeout(() => button.textContent = originalText, 2000);
+    });
+}
 
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_rarity.json')
@@ -378,343 +507,6 @@ function startURLChallenge(playerNames) {
     nextPlayer(playerIndex);
 }
 
-function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
-    const bucketScoreElement = document.getElementById('plunkosCounter');
-
-    if (bucketScoreElement) {
-        bucketScoreElement.style.display = 'none';
-    }
-
-    const player = playersData.find(p => p.name === playerName);
-
-    if (isCorrect && player) {
-        if (isTwoForOneActive) {
-            isCorrect = handleTwoForOne(true);
-        }
-
-        if (!isTwoForOneActive || isCorrect) {
-            correctStreakStandard++;
-            lastThreeCorrectStandard.push(playerName);
-            cumulativeRarityScore += player.rarity_score;
-
-            if (cumulativeRarityScore > highScore) {
-                highScore = cumulativeRarityScore;  // Update high score
-                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
-            }
-
-            if (lastThreeCorrectStandard.length > 3) {
-                lastThreeCorrectStandard.shift();
-            }
-
-            if (correctStreakStandard === 1) {
-                resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just two more to get this <span class='kaboom'>MOOoooOOKIE!</span>";
-            } else if (correctStreakStandard === 2) {
-                resultElement.innerHTML = "That's <span style='color: yellow;'>CORRECT!</span> Now you need to get just one more to get a <span class='kaboom'>MOOoooOOKIE!</span>";
-            } else if (correctStreakStandard === 3) {
-                resultElement.innerHTML = "<span class='kaboom'>MOOoooooOOOOKIE!</span>";
-                const shareText = generateShareText(false, correctStreakStandard, 3); // Standard mode
-
-                showMookiePopup(shareText, false); // Pass false to indicate standard mode
-
-                correctStreakStandard = 0;
-                lastThreeCorrectStandard = [];
-                resetButtons();
-            }
-            document.getElementById('plunkosCount').textContent = `${Math.round(cumulativeRarityScore)}`;
-            resultElement.className = 'correct';
-            correctSound.play();
-        }
-    } else {
-        if (isTwoForOneActive) {
-            isCorrect = handleTwoForOne(false);
-        }
-
-        if (!isTwoForOneActive || !isCorrect) {
-            correctStreakStandard = 0;
-            lastThreeCorrectStandard = [];
-            cumulativeRarityScore = 0;  // Reset only the cumulative rarity score
-            document.getElementById('plunkosCount').textContent = '0';
-            resultElement.textContent = 'Wrong answer. Try again!';
-            resultElement.className = 'incorrect';
-            wrongSound.play();
-            resetButtons();
-
-            // Ensure rank display remains after a wrong answer
-            updateRankDisplay(highScore);
-        }
-    }
-
-    setTimeout(() => {
-        if (bucketScoreElement) {
-            bucketScoreElement.style.display = 'block';
-        }
-        nextPlayerCallback();
-    }, 3000);
-}
-
-function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
-    const player = playersData.find(p => p.name === playerName);
-
-    if (isCorrect && player) {
-        correctStreakURL++;
-        lastThreeCorrectURL.push(playerName);
-        cumulativeRarityScore += player.rarity_score;
-
-        console.log(`Challenge mode: cumulativeRarityScore updated to ${cumulativeRarityScore}, correctStreakURL: ${correctStreakURL}, totalPlayers: ${totalPlayers}`);
-
-        if (lastThreeCorrectURL.length > totalPlayers) {
-            lastThreeCorrectURL.shift();
-        }
-
-        if (correctStreakURL === totalPlayers) {
-            resultElement.textContent = 'YES! MOOOOooooooKIE!!';
-            resultElement.className = 'correct';
-
-            const shareText = generateShareText(true, correctStreakURL, totalPlayers);
-            showMookiePopup(shareText, true);
-
-            correctSound.play();
-            resetGameForNextChallenge();
-
-            if (cumulativeRarityScore > highScore) {
-                highScore = cumulativeRarityScore; // Update high score
-                document.getElementById('highScore').textContent = `🏆=${Math.round(highScore)}`;
-            }
-        } else {
-            resultElement.innerHTML = "That's correct! Keep going!";
-            resultElement.className = 'correct';
-            setTimeout(() => {
-                nextPlayerCallback(playerIndex + 1);
-            }, 1000);
-        }
-        correctSound.play();
-    } else {
-        console.log('Incorrect answer detected.');
-        const shareText = generateShareText(true, correctStreakURL, totalPlayers);
-        resultElement.textContent = 'Wrong answer. Try again!';
-        resultElement.className = 'incorrect';
-        showNopePopup(shareText);
-        correctStreakURL = 0;
-        lastThreeCorrectURL = [];
-        cumulativeRarityScore = 0;
-        resetButtons();
-        endURLChallenge(false);
-    }
-
-    setTimeout(() => {
-        nextPlayerCallback(playerIndex + 1);
-    }, 3000);
-}
-
-function resetGameForNextChallenge() {
-    correctStreakURL = 0;
-    lastThreeCorrectURL = [];
-    cumulativeRarityScore = 0; // Reset only cumulative score
-    resetButtons();
-}
-
-function resetButtons() {
-    const goFishBtn = document.getElementById('goFishBtn');
-    const splitItBtn = document.getElementById('splitItBtn');
-
-    if (goFishBtn) {
-        goFishBtn.disabled = false;
-        goFishBtn.classList.remove('disabled');
-    }
-
-    if (splitItBtn) {
-        splitItBtn.disabled = false;
-        splitItBtn.classList.remove('disabled');
-    }
-}
-
-function showNopePopup(shareText) {
-    console.log(`Showing Nope popup with share text: ${shareText}`);
-    const overlay = document.createElement('div');
-    overlay.id = 'popupOverlay';
-    document.body.appendChild(overlay);
-
-    const popup = document.getElementById('mookiePopup');
-    if (popup) {
-        const popupLogo = document.querySelector('.popup-logo');
-        popupLogo.src = 'nopewordlogo.png';
-
-        const popupProofButton = document.getElementById('proofButtonPopup');
-        const popupContinueButton = document.getElementById('popupContinueButton');
-        const popupCopyButton = document.getElementById('popupCopyButton');
-
-        if (popupCopyButton) {
-            popupCopyButton.style.display = 'none';
-        }
-
-        if (popupProofButton) {
-            popupProofButton.setAttribute('data-snippet', shareText);
-            popupProofButton.style.display = 'inline-block';
-            popupProofButton.onclick = () => {
-                navigator.clipboard.writeText(shareText).then(() => {
-                    popupProofButton.textContent = 'Receipt Copied!';
-                    setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
-                });
-            };
-        }
-
-        popupContinueButton.textContent = 'Start a New Game';
-        popupContinueButton.onclick = function () {
-            window.location.href = 'https://www.mookie.click';
-        };
-
-        popup.style.display = 'block';
-    }
-}
-
-function showMookiePopup(shareText, isChallengeMode) {
-    console.log(`Showing Mookie popup with share text: ${shareText}`);
-    const overlay = document.createElement('div');
-    overlay.id = 'popupOverlay';
-    document.body.appendChild(overlay);
-
-    const popup = document.getElementById('mookiePopup');
-    if (popup) {
-        const popupCopyButton = document.getElementById('popupCopyButton');
-        const popupContinueButton = document.getElementById('popupContinueButton');
-        const popupProofButton = document.getElementById('proofButtonPopup');
-
-        if (isChallengeMode) {
-            if (popupCopyButton) {
-                popupCopyButton.style.display = 'none';
-            }
-
-            if (popupProofButton) {
-                popupProofButton.style.display = 'inline-block';
-                popupProofButton.style.width = '100%';
-                popupProofButton.style.marginRight = '0';
-                popupProofButton.onclick = () => {
-                    navigator.clipboard.writeText(shareText).then(() => {
-                        popupProofButton.textContent = 'Receipt Copied!';
-                        setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
-                    });
-                };
-            }
-
-            popupContinueButton.style.width = '100%';
-            popupContinueButton.style.fontSize = '1.5em';
-            popupContinueButton.style.padding = '1em';
-
-            popupContinueButton.classList.remove('standard-mode');
-            popupContinueButton.onclick = function () {
-                window.location.href = 'https://www.mookie.click';
-            };
-        } else {
-            if (popupProofButton) {
-                popupProofButton.style.display = 'none';
-            }
-
-            if (popupCopyButton) {
-                popupCopyButton.setAttribute('data-snippet', shareText);
-                popupCopyButton.onclick = () => {
-                    navigator.clipboard.writeText(shareText).then(() => {
-                        popupCopyButton.textContent = 'Copied!';
-                        setTimeout(() => popupCopyButton.textContent = 'Copy the URL', 2000);
-                    });
-                };
-            }
-
-            popupContinueButton.style.width = '100%';
-            popupContinueButton.style.fontSize = '1.5em';
-            popupContinueButton.style.padding = '1em';
-
-            popupContinueButton.classList.add('standard-mode');
-            popupContinueButton.onclick = function () {
-                closeMookiePopup();
-                correctStreakStandard = 0;
-                lastThreeCorrectStandard = [];
-                startStandardPlay();
-            };
-        }
-
-        popup.style.display = 'block';
-    }
-}
-
-function closeMookiePopup() {
-    const popup = document.getElementById('mookiePopup');
-    const overlay = document.getElementById('popupOverlay');
-    if (popup) {
-        popup.style.display = 'none';
-    }
-    if (overlay) {
-        overlay.remove();
-    }
-}
-
-function copyToClipboard(event) {
-    const button = event.target;
-    const snippetText = button.getAttribute('data-snippet');
-    const textToCopy = snippetText || window.location.href;
-
-    navigator.clipboard.writeText(textToCopy).then(() => {
-        const originalText = button.textContent;
-        button.textContent = 'Copied!';
-        setTimeout(() => button.textContent = originalText, 2000);
-    });
-}
-
-function simplifyString(str) {
-    return str.trim().toLowerCase().replace(/university|college|the| /g, '');
-}
-
-function isCloseMatch(guess, answer) {
-    if (!guess.trim()) {
-        return false;
-    }
-
-    let simpleGuess = guess.trim().toLowerCase();
-    let simpleAnswer = answer.trim().toLowerCase();
-
-    let normalizedGuess = simpleGuess.replace(/[^a-zA-Z0-9]/g, '');
-
-    const noCollegePhrases = [
-        "didntgotocollege",
-        "didnotgotocollege",
-        "hedidntgotocollege",
-        "hedidnotgotocollege",
-        "nocollege",
-    ];
-
-    if (noCollegePhrases.includes(normalizedGuess) && simpleAnswer === '') {
-        return true;
-    }
-
-    if (simpleAnswer === 'unc' && (simpleGuess === 'north carolina' || simpleGuess === 'carolina')) {
-        return true;
-    }
-
-    return simpleAnswer.includes(simpleGuess);
-}
-
-function generateShareText(isChallengeMode, correctCount, totalPlayers) {
-    const score = Math.round(cumulativeRarityScore);
-    console.log(`Generating share text. Score: ${score}, Correct: ${correctCount}, Total: ${totalPlayers}`);
-
-    // Correct and incorrect emojis based on the current game state
-    const correctEmojis = new Array(correctCount).fill(' ').join(' ');
-    const incorrectEmojis = new Array(totalPlayers - correctCount).fill(' ').join(' ');
-
-    let shareText = `MOOKIE! \n${correctEmojis} ${incorrectEmojis}\n${score}\n`;
-
-    if (isChallengeMode) {
-        // Always use the current page URL for challenge mode
-        shareText += ` Try it here: ${window.location.href}`;
-    } else {
-        const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
-        console.log(`Encoded players for standard mode: ${encodedPlayers}`);
-        shareText += ` Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
-    }
-
-    console.log(`Generated share text: ${shareText}`);
-    return shareText;
-}
-
 function endURLChallenge(success) {
     const resultElement = document.getElementById('result');
     const copyButton = document.getElementById('copyButton');
@@ -796,6 +588,139 @@ function showSuggestions(input) {
         });
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadPlayersData();
+
+    const collegeGuess = document.getElementById('collegeGuess');
+    if (collegeGuess) {
+        collegeGuess.addEventListener('input', (e) => {
+            showSuggestions(e.target.value);
+        });
+    }
+
+    const splitItBtn = document.getElementById('splitItBtn');
+    if (splitItBtn) {
+        splitItBtn.addEventListener('click', () => {
+            if (isTwoForOneActive) {
+                return;
+            }
+            const playingTwoForOne = document.getElementById('playingTwoForOne');
+            if (playingTwoForOne) {
+                playingTwoForOne.style.display = 'inline';
+                playingTwoForOne.textContent = 'playing 2 for 1 now';
+            }
+            isTwoForOneActive = true;
+            twoForOneCounter = 0;
+            splitItBtn.disabled = true;
+            splitItBtn.classList.add('disabled');
+            const goFishBtn = document.getElementById('goFishBtn');
+            if (goFishBtn) {
+                goFishBtn.disabled = true;
+                goFishBtn.classList.add('disabled');
+            }
+            displayRandomPlayer();
+        });
+    }
+
+    const goFishBtn = document.getElementById('goFishBtn');
+    if (goFishBtn) {
+        goFishBtn.addEventListener('click', () => {
+            if (isTwoForOneActive) {
+                return;
+            }
+            const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
+            if (decadeDropdownContainer) {
+                decadeDropdownContainer.style.display = 'block';
+            }
+            goFishBtn.disabled = true;
+            goFishBtn.classList.add('disabled');
+        });
+    }
+
+    const decadeDropdown = document.getElementById('decadeDropdown');
+    if (decadeDropdown) {
+        decadeDropdown.addEventListener('change', (e) => {
+            const selectedDecade = e.target.value;
+            if (selectedDecade) {
+                displayPlayerFromDecade(selectedDecade);
+                const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
+                if (decadeDropdownContainer) {
+                    decadeDropdownContainer.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    const copyButton = document.getElementById('copyButton');
+    if (copyButton) {
+        copyButton.addEventListener('click', copyToClipboard);
+    }
+
+    const popupCopyButton = document.getElementById('popupCopyButton');
+    if (popupCopyButton) {
+        popupCopyButton.addEventListener('click', copyToClipboard);
+    }
+
+    const proofButton = document.getElementById('proofButton');
+    if (proofButton) {
+        proofButton.addEventListener('click', copyToClipboard);
+    }
+
+    const returnButton = document.getElementById('returnButton');
+    if (returnButton) {
+        returnButton.addEventListener('click', () => {
+            window.location.href = 'https://www.mookie.click';
+        });
+    }
+
+    const tooltip = document.querySelector('.tooltip');
+    if (tooltip) {
+        tooltip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tooltip.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!tooltip.contains(e.target)) {
+                tooltip.classList.remove('active');
+            }
+        });
+    }
+
+    const popupContinueButton = document.getElementById('popupContinueButton');
+    if (popupContinueButton) {
+        popupContinueButton.addEventListener('click', function () {
+            closeMookiePopup();
+            if (popupContinueButton.classList.contains('standard-mode')) {
+                correctStreakStandard = 0;
+                lastThreeCorrectStandard = [];
+                startStandardPlay();
+            } else {
+                window.location.href = 'https://www.mookie.click';
+            }
+        });
+    }
+
+    const closePopup = document.getElementById('closePopup');
+    if (closePopup) {
+        closePopup.addEventListener('click', function () {
+            closeMookiePopup();
+        });
+    }
+
+    const popupProofButton = document.getElementById('proofButtonPopup');
+    if (popupProofButton) {
+        popupProofButton.addEventListener('click', () => {
+            const correctCount = lastThreeCorrectURL.length;
+            const proofText = generateShareText(true, correctCount, lastThreeCorrectURL.length); // Correct totalPlayers calculation
+            navigator.clipboard.writeText(proofText).then(() => {
+                popupProofButton.textContent = 'Receipt Copied!';
+                setTimeout(() => popupProofButton.textContent = 'Grab Your Receipt!', 2000);
+            });
+        });
+    }
+});
 
 function displayPlayerFromDecade(decade) {
     const playersFromDecade = playersData.filter(player => {
