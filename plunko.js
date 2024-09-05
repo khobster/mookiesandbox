@@ -49,7 +49,10 @@ async function getTopScores() {
 // Function to Update Rank Display
 async function updateRankDisplay(playerScore) {
     const rankTextElement = document.getElementById('highScore');
-    rankTextElement.textContent = 'Loading rank...';
+    const loadingElement = document.getElementById('loadingRank');
+
+    // Show loading animation
+    loadingElement.style.display = 'inline';
 
     // Get the top scores and determine the rank
     const topScores = await getTopScores();
@@ -66,6 +69,9 @@ async function updateRankDisplay(playerScore) {
             break;
         }
     }
+
+    // Hide loading animation
+    loadingElement.style.display = 'none';
 
     // Update the rankText with the rank and trophy emoji
     rankTextElement.textContent = `🏆 =${Math.round(highScore)} (#${rank} best today)`;
@@ -352,8 +358,6 @@ function resetGameForNextChallenge() {
     cumulativeRarityScore = 0; // Reset only cumulative score
     resetButtons();
 }
-
-// The rest of your game code...
 
 function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement, nextPlayerCallback, playerIndex, totalPlayers) {
     const player = playersData.find(p => p.name === playerName);
@@ -890,3 +894,14 @@ function handleTwoForOne(isCorrect) {
     }
     return false;
 }
+
+// Add basketball bouncing animation while fetching rank
+document.addEventListener('DOMContentLoaded', () => {
+    const highScoreContainer = document.querySelector('.bottom-container');
+    const loadingElement = document.createElement('span');
+    loadingElement.id = 'loadingRank';
+    loadingElement.textContent = '🏀';
+    loadingElement.style.display = 'none';
+    loadingElement.classList.add('bounce');
+    highScoreContainer.insertBefore(loadingElement, highScoreContainer.firstChild);
+});
