@@ -12,28 +12,35 @@ let highScore = 0; // High score variable
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
+// Firebase: Submit Score Function
+async function submitScore(player, score) {
+    try {
+        await db.collection("scores").add({
+            player: player,
+            score: score,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp() // Ensure this is used to store the correct Firestore timestamp
+        });
+        console.log("Score submitted successfully!");
+    } catch (error) {
+        console.error("Error submitting score: ", error);
+    }
+}
+
 // Firebase: Get Today's Top Scores Function
 async function getTodaysTopScores() {
     try {
         const now = new Date();
 
-        // Get the local timezone offset in milliseconds
-        const timezoneOffset = now.getTimezoneOffset() * 60000;
+        // Set the start and end of the current day in UTC using Firestore Timestamp
+        const startOfDay = firebase.firestore.Timestamp.fromDate(new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+        const endOfDay = firebase.firestore.Timestamp.fromDate(new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59));
 
-        // Convert the current date to UTC
-        const localStartOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const startOfDayUTC = new Date(localStartOfDay.getTime() - timezoneOffset);
+        console.log("Querying scores between", startOfDay.toDate(), "and", endOfDay.toDate(), "in UTC");
 
-        // Set the end of the day (just before midnight) in UTC
-        const localEndOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-        const endOfDayUTC = new Date(localEndOfDay.getTime() - timezoneOffset);
-
-        console.log(`Querying scores between ${startOfDayUTC} and ${endOfDayUTC} in UTC`);
-
-        // Query the database filtering by today's timestamp in UTC
+        // Query the database filtering by today's UTC timestamp
         const querySnapshot = await db.collection("scores")
-            .where("timestamp", ">=", startOfDayUTC)
-            .where("timestamp", "<=", endOfDayUTC)
+            .where("timestamp", ">=", startOfDay)
+            .where("timestamp", "<=", endOfDay)
             .get();
 
         const scores = [];
@@ -80,12 +87,7 @@ async function updateRankDisplay(playerScore) {
     loadingElement.style.display = 'none';
 
     // Update the rankText with the rank and trophy emoji
-    if (topScores.length === 0) {
-        rankTextElement.textContent = "No scores for today yet. Be the first!";
-    } else {
-        rankTextElement.textContent = `🏆 =${Math.round(playerScore)} (#${rank} best today)`;
-    }
-
+    rankTextElement.textContent = `🏆 =${Math.round(highScore)} (#${rank} best today)`;
     rankTextElement.classList.add('animated-rank');
 }
 
@@ -831,7 +833,7 @@ function displayPlayerFromDecade(decade) {
             playerDecade = '2000s';
         } else if (playerYear >= 10 && playerYear <= 19) {
             playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
+        } else if (playerYear >= 20 and playerYear <= 29) {
             playerDecade = '2020s';
         }
 
