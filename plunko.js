@@ -26,12 +26,22 @@ async function submitScore(player, score) {
     }
 }
 
-// Firebase: Get Top Scores Function
-async function getTopScores() {
+// Firebase: Get Today's Top Scores Function
+async function getTodaysTopScores() {
     try {
+        const now = new Date();
+
+        // Set the start of the day (midnight)
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+       
+        // Set the end of the day (just before midnight)
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
         const querySnapshot = await db.collection("scores")
+            .where("timestamp", ">=", startOfDay)
+            .where("timestamp", "<=", endOfDay)
             .orderBy("score", "desc")
-            .limit(50) // Increased limit for better accuracy in ranking
+            .limit(50) // Limit for ranking purposes
             .get();
 
         const scores = [];
@@ -41,7 +51,7 @@ async function getTopScores() {
 
         return scores;
     } catch (error) {
-        console.error("Error retrieving scores: ", error);
+        console.error("Error retrieving today's scores: ", error);
         return [];
     }
 }
@@ -54,8 +64,8 @@ async function updateRankDisplay(playerScore) {
     // Show loading animation
     loadingElement.style.display = 'inline';
 
-    // Get the top scores and determine the rank
-    const topScores = await getTopScores();
+    // Get today's top scores and determine the rank
+    const topScores = await getTodaysTopScores();
 
     // Sort the scores in descending order
     topScores.sort((a, b) => b.score - a.score);
