@@ -12,20 +12,6 @@ let highScore = 0; // High score variable
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
-// Firebase: Submit Score Function
-async function submitScore(player, score) {
-    try {
-        await db.collection("scores").add({
-            player: player,
-            score: score,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log("Score submitted successfully!");
-    } catch (error) {
-        console.error("Error submitting score: ", error);
-    }
-}
-
 // Firebase: Get Today's Top Scores Function
 async function getTodaysTopScores() {
     try {
@@ -37,17 +23,22 @@ async function getTodaysTopScores() {
         // Set the end of the day (just before midnight)
         const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
+        // Query the database filtering by today's timestamp
         const querySnapshot = await db.collection("scores")
             .where("timestamp", ">=", startOfDay)
             .where("timestamp", "<=", endOfDay)
-            .orderBy("score", "desc")
-            .limit(50) // Limit for ranking purposes
-            .get();
+            .get(); // No orderBy for 'score' due to the Firebase query restriction.
 
         const scores = [];
         querySnapshot.forEach((doc) => {
-            scores.push(doc.data());
+            const scoreData = doc.data();
+            if (scoreData.score > 0) { // Ignore scores of 0
+                scores.push(scoreData);
+            }
         });
+
+        // Manually sort the results by score in descending order
+        scores.sort((a, b) => b.score - a.score);
 
         return scores;
     } catch (error) {
@@ -83,15 +74,22 @@ async function updateRankDisplay(playerScore) {
     // Hide loading animation
     loadingElement.style.display = 'none';
 
-    // Update the rankText with the rank and trophy emoji
-    rankTextElement.textContent = `🏆 =${Math.round(highScore)} (#${rank} best today)`;
-    rankTextElement.classList.add('animated-rank');
+    // Only display the rank if there are valid scores
+    if (topScores.length > 0) {
+        // Update the rankText with the rank and trophy emoji
+        rankTextElement.textContent = `🏆 =${Math.round(playerScore)} (#${rank} best today)`;
+        rankTextElement.classList.add('animated-rank');
+    } else {
+        // No scores yet, display encouragement
+        rankTextElement.textContent = `No scores for today yet. Be the first!`;
+        rankTextElement.classList.add('animated-rank');
+    }
 }
 
 // Function to start polling for rank updates
 function startPollingForRankUpdates() {
     setInterval(async () => {
-        await updateRankDisplay(highScore);
+        await updateRankDisplay(highScore); // Use highScore or playerScore here based on your scoring system
     }, 30000); // Poll every 30 seconds
 }
 
@@ -830,7 +828,7 @@ function displayPlayerFromDecade(decade) {
             playerDecade = '2000s';
         } else if (playerYear >= 10 && playerYear <= 19) {
             playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
+        } else if (playerYear >= 20 and playerYear <= 29) {
             playerDecade = '2020s';
         }
 
