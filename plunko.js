@@ -12,22 +12,36 @@ let highScore = 0; // High score variable
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
+// Firebase: Submit Score Function
+async function submitScore(player, score) {
+    try {
+        await db.collection("scores").add({
+            player: player,
+            score: score,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log(`Score of ${score} for player ${player} submitted successfully!`);
+    } catch (error) {
+        console.error("Error submitting score: ", error);
+    }
+}
+
 // Firebase: Get Today's Top Scores Function
 async function getTodaysTopScores() {
     try {
         const now = new Date();
+        
+        // Convert local time to UTC by using Date.UTC
+        const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+        
+        console.log(`Querying scores between ${startOfDayUTC} and ${endOfDayUTC} in UTC`);
 
-        // Set the start of the day (midnight)
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-       
-        // Set the end of the day (just before midnight)
-        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-
-        // Query the database filtering by today's timestamp
+        // Query the database filtering by today's UTC timestamp
         const querySnapshot = await db.collection("scores")
-            .where("timestamp", ">=", startOfDay)
-            .where("timestamp", "<=", endOfDay)
-            .get(); // No orderBy for 'score' due to the Firebase query restriction.
+            .where("timestamp", ">=", startOfDayUTC)
+            .where("timestamp", "<=", endOfDayUTC)
+            .get();
 
         const scores = [];
         querySnapshot.forEach((doc) => {
@@ -37,6 +51,7 @@ async function getTodaysTopScores() {
             }
         });
 
+        console.log(`Retrieved ${scores.length} scores for today.`);
         // Manually sort the results by score in descending order
         scores.sort((a, b) => b.score - a.score);
 
@@ -74,14 +89,9 @@ async function updateRankDisplay(playerScore) {
     // Hide loading animation
     loadingElement.style.display = 'none';
 
-    // Only display the rank if there are valid scores
-    if (topScores.length > 0) {
-        // Update the rankText with the rank and trophy emoji
-        rankTextElement.textContent = `🏆 =${Math.round(playerScore)} (#${rank} best today)`;
-        rankTextElement.classList.add('animated-rank');
-    } else {
-        // No scores yet, display encouragement
-        rankTextElement.textContent = `No scores for today yet. Be the first!`;
+    // Update the rankText with the rank and trophy emoji
+    if (rankTextElement) {
+        rankTextElement.textContent = `🏆 =${Math.round(highScore)} (#${rank} best today)`;
         rankTextElement.classList.add('animated-rank');
     }
 }
@@ -89,7 +99,7 @@ async function updateRankDisplay(playerScore) {
 // Function to start polling for rank updates
 function startPollingForRankUpdates() {
     setInterval(async () => {
-        await updateRankDisplay(highScore); // Use highScore or playerScore here based on your scoring system
+        await updateRankDisplay(highScore);
     }, 30000); // Poll every 30 seconds
 }
 
