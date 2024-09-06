@@ -12,20 +12,6 @@ let highScore = 0; // High score variable
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
-// Firebase: Submit Score Function
-async function submitScore(player, score) {
-    try {
-        await db.collection("scores").add({
-            player: player,
-            score: score,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log(`Score of ${score} for player ${player} submitted successfully!`);
-    } catch (error) {
-        console.error("Error submitting score: ", error);
-    }
-}
-
 // Firebase: Get Today's Top Scores Function
 async function getTodaysTopScores() {
     try {
