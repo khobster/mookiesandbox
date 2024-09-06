@@ -30,14 +30,21 @@ async function submitScore(player, score) {
 async function getTodaysTopScores() {
     try {
         const now = new Date();
-        
-        // Convert local time to UTC by using Date.UTC
-        const startOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-        const endOfDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
-        
+
+        // Get the local timezone offset in milliseconds
+        const timezoneOffset = now.getTimezoneOffset() * 60000;
+
+        // Convert the current date to UTC
+        const localStartOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfDayUTC = new Date(localStartOfDay.getTime() - timezoneOffset);
+
+        // Set the end of the day (just before midnight) in UTC
+        const localEndOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+        const endOfDayUTC = new Date(localEndOfDay.getTime() - timezoneOffset);
+
         console.log(`Querying scores between ${startOfDayUTC} and ${endOfDayUTC} in UTC`);
 
-        // Query the database filtering by today's UTC timestamp
+        // Query the database filtering by today's timestamp in UTC
         const querySnapshot = await db.collection("scores")
             .where("timestamp", ">=", startOfDayUTC)
             .where("timestamp", "<=", endOfDayUTC)
@@ -52,9 +59,6 @@ async function getTodaysTopScores() {
         });
 
         console.log(`Retrieved ${scores.length} scores for today.`);
-        // Manually sort the results by score in descending order
-        scores.sort((a, b) => b.score - a.score);
-
         return scores;
     } catch (error) {
         console.error("Error retrieving today's scores: ", error);
@@ -90,10 +94,13 @@ async function updateRankDisplay(playerScore) {
     loadingElement.style.display = 'none';
 
     // Update the rankText with the rank and trophy emoji
-    if (rankTextElement) {
-        rankTextElement.textContent = `🏆 =${Math.round(highScore)} (#${rank} best today)`;
-        rankTextElement.classList.add('animated-rank');
+    if (topScores.length === 0) {
+        rankTextElement.textContent = "No scores for today yet. Be the first!";
+    } else {
+        rankTextElement.textContent = `🏆 =${Math.round(playerScore)} (#${rank} best today)`;
     }
+
+    rankTextElement.classList.add('animated-rank');
 }
 
 // Function to start polling for rank updates
