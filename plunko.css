@@ -283,11 +283,16 @@ body, html {
 }
 
 #plunkosCounter {
-    font-size: 36px; /* Increase the font size */
+    position: relative; /* Ensure it's in the document flow */
+    margin-top: 20px; /* Add margin to push it away from the buttons */
+    padding: 10px; /* Optional padding for better appearance */
+    font-size: 36px; /* Maintain larger font size */
     font-family: 'Lilita One', cursive;
     color: #4CAF50;
     animation: rainbow 2s infinite;
-    margin-top: 1px; /* Add space above */
+    text-align: center; /* Center align the bucket score */
+    border-radius: 8px; /* Optional: Rounded corners */
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle shadow */
 }
 
 @keyframes rainbow {
@@ -382,16 +387,6 @@ body, html {
 
 .suggestion-item:hover {
     background-color: #f0f0f0;
-}
-
-@media only screen and (max-width: 600px) {
-    #app {
-        font-size: 16px;
-    }
-    .game-image {
-        width: 100%;
-        max-width: 400px;
-    }
 }
 
 @keyframes blinkRainbow {
