@@ -553,29 +553,25 @@ body, html {
 }
 
 #challengeModeMessage {
-    display: none; /* Initially hidden, will be shown in challenge mode */
-    font-size: 24px; /* Adjust the size as per your preference */
-    font-family: 'Anton', sans-serif;
-    text-transform: uppercase;
-    background: linear-gradient(90deg, red, orange, yellow, green, blue, violet); /* Multicolored text */
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 24px;
+    font-weight: bold;
+    background: linear-gradient(45deg, red, orange, yellow, green, blue, violet);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: transparent;
+    text-align: center;
     position: fixed;
-    bottom: 10px; /* Adjust the bottom position */
+    bottom: 15px;
     left: 50%;
     transform: translateX(-50%);
+    text-shadow: 8px 8px 0px rgba(0, 0, 0, 0.6); /* Long solid shadow */
+    animation: cometTrail 2s ease-in-out infinite;
     z-index: 1000;
-    animation: cometTrail 1s infinite ease-in-out;
 }
 
+/* Comet trail animation (already in use) */
 @keyframes cometTrail {
-    0% {
-        text-shadow: -1px -1px 5px rgba(255, 0, 0, 0.7), -2px -2px 10px rgba(255, 0, 0, 0.6), -3px -3px 15px rgba(255, 0, 0, 0.5);
-    }
-    50% {
-        text-shadow: -1px -1px 5px rgba(0, 255, 255, 0.7), -2px -2px 10px rgba(0, 255, 255, 0.6), -3px -3px 15px rgba(0, 255, 255, 0.5);
-    }
-    100% {
-        text-shadow: -1px -1px 5px rgba(0, 0, 255, 0.7), -2px -2px 10px rgba(0, 0, 255, 0.6), -3px -3px 15px rgba(0, 0, 255, 0.5);
-    }
+    0% { opacity: 0.7; transform: translateX(-50%) translateY(0px); }
+    50% { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+    100% { opacity: 0.7; transform: translateX(-50%) translateY(0px); }
 }
