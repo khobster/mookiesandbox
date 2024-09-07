@@ -1,17 +1,3 @@
-if (!firebase.apps.length) {
-    const firebaseConfig = {
-    apiKey: "AIzaSyDCvPKcVRf-sUdRMpZl9nIPpXkwEKHhwbs",
-    authDomain: "mookie-scoreboard.firebaseapp.com",
-    projectId: "mookie-scoreboard",
-    storageBucket: "mookie-scoreboard.appspot.com",
-    messagingSenderId: "23675127586",
-    appId: "1:23675127586:web:bb351ea7e24237d4be877b"
-};
-
-// Initialize Firebase
-const firebaseApp = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore(firebaseApp);
-
 let playersData = [];
 let correctStreakStandard = 0;
 let lastThreeCorrectStandard = [];
@@ -44,13 +30,13 @@ async function submitScore(player, score) {
 async function getTodaysTopScores() {
     try {
         const now = new Date();
-        
+
         // Get the start and end of the day in UTC, but as Firestore Timestamp objects
         const startOfDay = firebase.firestore.Timestamp.fromDate(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0));
         const endOfDay = firebase.firestore.Timestamp.fromDate(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999));
-        
+
         console.log(`Querying scores between ${startOfDay.toDate()} and ${endOfDay.toDate()} in UTC`);
-        
+
         // Query the database filtering by today's timestamp
         const querySnapshot = await db.collection("scores")
             .where("timestamp", ">=", startOfDay)
@@ -251,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Utility functions and more...
+// Utility functions and game logic...
 
 function simplifyString(str) {
     return str.trim().toLowerCase().replace(/university|college|the| /g, '');
@@ -290,14 +276,12 @@ function generateShareText(isChallengeMode, correctCount, totalPlayers) {
     const score = Math.round(cumulativeRarityScore);
     console.log(`Generating share text. Score: ${score}, Correct: ${correctCount}, Total: ${totalPlayers}`);
 
-    // Correct and incorrect emojis based on the current game state
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(totalPlayers - correctCount).fill('🔴').join(' ');
 
     let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
 
     if (isChallengeMode) {
-        // Always use the current page URL for challenge mode
         shareText += `🔗 Try it here: ${window.location.href}`;
     } else {
         const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
