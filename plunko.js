@@ -279,7 +279,7 @@ function generateShareText(isChallengeMode, correctCount, totalPlayers) {
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(totalPlayers - correctCount).fill('🔴').join(' ');
 
-    let shareText = `🔌 MOOKIE! 🔌\n${correctEmojis} ${incorrectEmojis}\n🏆 ${score}\n`;
+    let shareText = `🔌 MOOKIE! 🔌\n\n${correctEmojis} ${incorrectEmojis}\n\n🏆 ${score}\n\n`;
 
     if (isChallengeMode) {
         shareText += `🔗 Try it here: ${window.location.href}`;
