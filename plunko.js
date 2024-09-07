@@ -1,3 +1,17 @@
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyDCvPKcVRf-sUdRMpZl9nIPpXkwEKHhwbs",
+    authDomain: "mookie-scoreboard.firebaseapp.com",
+    projectId: "mookie-scoreboard",
+    storageBucket: "mookie-scoreboard.appspot.com",
+    messagingSenderId: "23675127586",
+    appId: "1:23675127586:web:bb351ea7e24237d4be877b"
+};
+
+// Initialize Firebase
+const firebaseApp = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore(firebaseApp);
+
 let playersData = [];
 let correctStreakStandard = 0;
 let lastThreeCorrectStandard = [];
@@ -237,6 +251,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Utility functions and more...
+
 function simplifyString(str) {
     return str.trim().toLowerCase().replace(/university|college|the| /g, '');
 }
@@ -315,6 +331,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
             if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore;  // Update high score
                 document.getElementById('highScore').textContent = `🏆 =${Math.round(highScore)}`;
+                submitScore('PlayerName', highScore); // Submit the score
             }
 
             if (lastThreeCorrectStandard.length > 3) {
@@ -401,6 +418,7 @@ function updateStreakAndGenerateSnippetURL(isCorrect, playerName, resultElement,
             if (cumulativeRarityScore > highScore) {
                 highScore = cumulativeRarityScore; // Update high score
                 document.getElementById('highScore').textContent = `🏆 =${Math.round(highScore)}`;
+                submitScore('PlayerName', highScore); // Submit the score
             }
         } else {
             resultElement.innerHTML = "That's correct! Keep going!";
