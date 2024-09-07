@@ -164,15 +164,18 @@ body, html {
 }
 
 #collegeGuess {
-    width: 90%;
-    padding: 8px;
-    margin-top: 10px;
-    margin-bottom: 0;
-    border: 2px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
+    width: 100%; /* Expand the input to take full width of its container */
+    padding: 15px 20px; /* Increase padding for a larger input area */
+    margin-top: 15px; /* Add more space above the input */
+    margin-bottom: 15px; /* Add space below the input for better spacing */
+    border: 2px solid #000; /* Make the border more prominent */
+    border-radius: 8px; /* Increase border radius for more rounded corners */
+    font-size: 18px; /* Larger font size for better readability */
     font-family: 'Archivo Narrow', sans-serif;
-    position: relative;
+    box-sizing: border-box; /* Ensure padding is included within the width */
+    background-color: #f9f9f9; /* Optional: Light background color for better visibility */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Add subtle shadow for depth */
+    transition: all 0.3s ease; /* Optional: Smooth transition for interactive effects */
 }
 
 #submitBtn {
