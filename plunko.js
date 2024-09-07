@@ -700,6 +700,12 @@ function startURLChallenge(playerNames) {
 
     if (plunkosCounter) {
         plunkosCounter.style.display = 'none';
+        
+    }
+    // Show the "CHALLENGE MODE" message
+    const challengeModeMessage = document.getElementById('challengeModeMessage');
+    if (challengeModeMessage) {
+        challengeModeMessage.style.display = 'block'; // Show the message
     }
 
     function nextPlayer(index) {
@@ -737,6 +743,12 @@ function startURLChallenge(playerNames) {
 }
 
 function endURLChallenge(success) {
+    // Hide the "CHALLENGE MODE" message when challenge ends
+    const challengeModeMessage = document.getElementById('challengeModeMessage');
+    if (challengeModeMessage) {
+        challengeModeMessage.style.display = 'none'; // Hide the message
+    }
+    
     const resultElement = document.getElementById('result');
     const copyButton = document.getElementById('copyButton');
     const proofButton = document.getElementById('proofButton');
