@@ -554,7 +554,7 @@ body, html {
 
 #challengeModeMessage {
     display: none; /* Initially hidden, will be shown in challenge mode */
-    font-size: 50px; /* Adjust the size as per your preference */
+    font-size: 70px; /* Adjust the size as per your preference */
     font-family: 'Anton', sans-serif;
     text-transform: uppercase;
     background: linear-gradient(90deg, red, orange, yellow, green, blue, violet); /* Multicolored text */
