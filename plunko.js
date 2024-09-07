@@ -1,5 +1,5 @@
-// Firebase configuration
-const firebaseConfig = {
+if (!firebase.apps.length) {
+    const firebaseConfig = {
     apiKey: "AIzaSyDCvPKcVRf-sUdRMpZl9nIPpXkwEKHhwbs",
     authDomain: "mookie-scoreboard.firebaseapp.com",
     projectId: "mookie-scoreboard",
