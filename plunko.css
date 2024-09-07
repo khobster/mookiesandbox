@@ -287,7 +287,7 @@ body, html {
     font-family: 'Lilita One', cursive;
     color: #4CAF50;
     animation: rainbow 2s infinite;
-    margin-top: -40px; /* Move it closer to the buttons */
+    margin-top: -55px; /* Move it closer to the buttons */
     text-align: center;
     z-index: 1000; /* Ensure it's above other elements */
 }
