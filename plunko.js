@@ -277,10 +277,19 @@ function generateShareText(isChallengeMode, correctCount, totalPlayers) {
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(totalPlayers - correctCount).fill('🔴').join(' ');
 
-    // Format the message just like Immaculate Grid's example
-    let shareText = `🔌 MOOKIE! 🔌\n\n${correctEmojis} ${incorrectEmojis}\n\n🏆 ${score}\nPlay at:\nhttps://www.mookie.click/?players=Mark%20Eaton%2CAaron%20McKie%2CMiles%20Bridges`;
+    // Format the basic share text
+    let shareText = `🔌 MOOKIE! 🔌\n\n${correctEmojis} ${incorrectEmojis}\n\n🏆 ${score}\nPlay at:\n`;
 
-    // Add any extra tagging if needed (optional)
+    // Dynamically get the current players for the challenge
+    let currentPlayers = isChallengeMode ? lastThreeCorrectURL : lastThreeCorrectStandard;
+    
+    // Encode the players into the URL
+    const encodedPlayers = encodeURIComponent(currentPlayers.join(','));
+
+    // Update the URL to use the dynamically encoded players
+    shareText += `https://www.mookie.click/?players=${encodedPlayers}`;
+
+    // Optional: Add any extra social tagging if needed
     shareText += `\nBluesky: @mookieGame`;
 
     return shareText;
