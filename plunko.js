@@ -274,23 +274,19 @@ function isCloseMatch(guess, answer) {
 
 function generateShareText(isChallengeMode, correctCount, totalPlayers) {
     const score = Math.round(cumulativeRarityScore);
-    console.log(`Generating share text. Score: ${score}, Correct: ${correctCount}, Total: ${totalPlayers}`);
-
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(totalPlayers - correctCount).fill('🔴').join(' ');
 
     let shareText = `🔌 MOOKIE! 🔌\n\n${correctEmojis} ${incorrectEmojis}\n\n🏆 ${score}\n\n`;
 
-    // Embed the link in the same text instead of appending separately
     if (isChallengeMode) {
+        // Embed the link as plain text, no additional tags
         shareText += `🔗 Try it here: ${window.location.href}`;
     } else {
         const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
-        console.log(`Encoded players for standard mode: ${encodedPlayers}`);
         shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
     }
 
-    console.log(`Generated share text: ${shareText}`);
     return shareText;
 }
 
