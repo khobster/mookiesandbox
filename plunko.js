@@ -277,15 +277,11 @@ function generateShareText(isChallengeMode, correctCount, totalPlayers) {
     const correctEmojis = new Array(correctCount).fill('🟢').join(' ');
     const incorrectEmojis = new Array(totalPlayers - correctCount).fill('🔴').join(' ');
 
-    let shareText = `🔌 MOOKIE! 🔌\n\n${correctEmojis} ${incorrectEmojis}\n\n🏆 ${score}\n\n`;
+    // Format the message just like Immaculate Grid's example
+    let shareText = `🔌 MOOKIE! 🔌\n\n${correctEmojis} ${incorrectEmojis}\n\n🏆 ${score}\nPlay at:\nhttps://www.mookie.click/?players=Mark%20Eaton%2CAaron%20McKie%2CMiles%20Bridges`;
 
-    if (isChallengeMode) {
-        // Embed the link as plain text, no additional tags
-        shareText += `🔗 Try it here: ${window.location.href}`;
-    } else {
-        const encodedPlayers = encodeURIComponent(lastThreeCorrectStandard.join(','));
-        shareText += `🔗 Try it here: https://www.mookie.click/?players=${encodedPlayers}`;
-    }
+    // Add any extra tagging if needed (optional)
+    shareText += `\n@mookieGame`;
 
     return shareText;
 }
