@@ -282,12 +282,18 @@ function generateShareText(isChallengeMode, correctCount, totalPlayers) {
 
     // Dynamically get the current players for the challenge
     let currentPlayers = isChallengeMode ? lastThreeCorrectURL : lastThreeCorrectStandard;
-    
-    // Encode the players into the URL
-    const encodedPlayers = encodeURIComponent(currentPlayers.join(','));
 
-    // Update the URL to use the dynamically encoded players
-    shareText += `https://www.mookie.click/?players=${encodedPlayers}`;
+    // Fetch player IDs based on names
+    const playerIDs = currentPlayers.map(playerName => {
+        const player = playersData.find(p => p.name === playerName);
+        return player ? player.id : null;
+    }).filter(id => id !== null);  // Filter out nulls in case of missing player
+
+    // Encode the player IDs into the URL
+    const encodedPlayerIDs = encodeURIComponent(playerIDs.join(','));
+
+    // Update the URL to use the dynamically encoded player IDs
+    shareText += `https://www.mookie.click/?players=${encodedPlayerIDs}`;
 
     // Optional: Add any extra social tagging if needed
     shareText += `\nBluesky: @mookieGame`;
@@ -579,7 +585,7 @@ function copyToClipboard(event) {
 }
 
 function loadPlayersData() {
-    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_rarity.json')
+    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
         .then(response => response.json())
         .then(data => {
             playersData = data;
@@ -800,7 +806,11 @@ function getPlayersFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
     const playersParam = urlParams.get('players');
     if (playersParam) {
-        return playersParam.split(',');
+        const playerIDs = playersParam.split(',').map(id => parseInt(id, 10));
+        return playerIDs.map(id => {
+            const player = playersData.find(p => p.id === id);
+            return player ? player.name : null;
+        }).filter(name => name !== null);  // Filter out nulls in case of missing player
     }
     return [];
 }
