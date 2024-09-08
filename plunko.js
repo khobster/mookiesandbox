@@ -281,6 +281,7 @@ function generateShareText(isChallengeMode, correctCount, totalPlayers) {
 
     let shareText = `🔌 MOOKIE! 🔌\n\n${correctEmojis} ${incorrectEmojis}\n\n🏆 ${score}\n\n`;
 
+    // Embed the link in the same text instead of appending separately
     if (isChallengeMode) {
         shareText += `🔗 Try it here: ${window.location.href}`;
     } else {
