@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setupAutoComplete(); // Setup autocomplete for college names
+    updateWaitingStatus(); // Call the new function to manage waiting status
 });
 
 // Function to generate or get gameId from URL
@@ -76,6 +77,8 @@ function listenToGameUpdates() {
             if (currentQuestion) {
                 displayPlayer(currentQuestion);
             }
+
+            updateWaitingStatus(); // Manage waiting status
         }
     });
 }
@@ -207,22 +210,14 @@ function handlePlayer2Guess(player, guess) {
             switchTurn(); // Player 1 has to answer a fresh question
         } else {
             resultDisplay("WRONG", "incorrect");
-            displayRandomPlayer(); // Player 1 gets a new question
+            switchTurn(); // No letter yet, Player 1 gets a fresh question
         }
     }
-    updateFirestoreState();
+
+    updateFirestoreState(); // Sync Firestore
 }
 
-function resultDisplay(message, className) {
-    const resultElement = document.getElementById('result');
-    resultElement.textContent = `That's ${message}!`;
-    resultElement.className = className;
-}
-
-function isCloseMatch(guess, answer) {
-    return guess === answer.toLowerCase().trim();
-}
-
+// Add a letter to the current player
 function addLetterToPlayer(playerNum) {
     const currentProgress = playerProgress[playerNum];
     if (currentProgress.length < maxLetters) {
@@ -236,24 +231,42 @@ function addLetterToPlayer(playerNum) {
     }
 }
 
+// Update the progress display for both players
 function updatePlayerProgressDisplay() {
     document.getElementById('player1Progress').textContent = `Player 1: ${playerProgress[1]}`;
     document.getElementById('player2Progress').textContent = `Player 2: ${playerProgress[2]}`;
 }
 
-function switchToNewQuestionForPlayer2() {
-    displayRandomPlayer(); // Fresh question for Player 2
-    updateFirestoreState();
+// Function to manage the "waiting" status and disable inputs
+function updateWaitingStatus() {
+    const collegeGuess = document.getElementById('collegeGuess');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (playerTurn === 1) {
+        if (gameId && playerTurn !== 1) {
+            submitBtn.disabled = true;
+            collegeGuess.disabled = true;
+            document.getElementById('result').textContent = "Waiting for Player 2...";
+        }
+    } else {
+        if (gameId && playerTurn !== 2) {
+            submitBtn.disabled = true;
+            collegeGuess.disabled = true;
+            document.getElementById('result').textContent = "Waiting for Player 1...";
+        }
+    }
 }
 
+// Switch turn and sync Firestore
 function switchTurn() {
     playerTurn = playerTurn === 1 ? 2 : 1;
     document.getElementById('turnIndicator').textContent = `Player ${playerTurn}'s turn`;
-    updateFirestoreState();
+    updateFirestoreState(); // Sync Firestore
 }
 
+// Function to update Firestore state
 function updateFirestoreState() {
-    db.collection('games').doc(gameId).update({
+    db.collection('games').doc(gameId).set({
         playerProgress: playerProgress,
         playerTurn: playerTurn,
         firstPlayerCorrect: firstPlayerCorrect,
@@ -261,11 +274,13 @@ function updateFirestoreState() {
     });
 }
 
+// End the game when a player spells "P-I-G"
 function endGame(losingPlayer) {
     alert(`Player ${losingPlayer} has spelled P-I-G and lost the game!`);
     resetGameState();
 }
 
+// Reset the game state
 function resetGameState() {
     playerProgress = { 1: "", 2: "" };
     playerTurn = 1;
@@ -273,4 +288,36 @@ function resetGameState() {
     updatePlayerProgressDisplay();
     switchTurn();
     updateFirestoreState();
+}
+
+// Utility function to display the result
+function resultDisplay(message, className) {
+    const resultElement = document.getElementById('result');
+    resultElement.textContent = message;
+    resultElement.className = className;
+}
+
+// Set up autocomplete for college names
+function setupAutoComplete() {
+    const collegeGuess = document.getElementById('collegeGuess');
+    const suggestionsContainer = document.getElementById('suggestions');
+
+    collegeGuess.addEventListener('input', () => {
+        const inputValue = collegeGuess.value.toLowerCase();
+        const suggestions = Array.from(new Set(playersData
+            .map(player => player.college)
+            .filter(college => college && college.toLowerCase().includes(inputValue))))
+            .slice(0, 5); // Show up to 5 suggestions
+        suggestionsContainer.innerHTML = '';
+        suggestions.forEach(suggestion => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.textContent = suggestion;
+            suggestionItem.classList.add('suggestion-item');
+            suggestionItem.addEventListener('click', () => {
+                collegeGuess.value = suggestion;
+                suggestionsContainer.innerHTML = ''; // Clear suggestions once selected
+            });
+            suggestionsContainer.appendChild(suggestionItem);
+        });
+    });
 }
