@@ -5,20 +5,22 @@ let correctStreak2 = 0;
 let player1HasGuessed = false;
 let player2HasGuessed = false;
 
-const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
-const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
-
 // Firebase reference to the game data
 const gameRef = db.collection("games").doc("currentGame");
 
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayersData();
-
     const submitBtn1 = document.getElementById('submitBtn1');
     const submitBtn2 = document.getElementById('submitBtn2');
 
     submitBtn1.addEventListener('click', () => handlePlayerGuess(1));
     submitBtn2.addEventListener('click', () => handlePlayerGuess(2));
+
+    const guessInput1 = document.getElementById('collegeGuess1');
+    const guessInput2 = document.getElementById('collegeGuess2');
+
+    guessInput1.addEventListener('input', (e) => showSuggestions(e.target.value, 1));
+    guessInput2.addEventListener('input', (e) => showSuggestions(e.target.value, 2));
 
     // Listen for changes in the game data in Firebase
     gameRef.onSnapshot((doc) => {
@@ -26,16 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = doc.data();
             if (data.currentPlayerID) {
                 const storedPlayerID = data.currentPlayerID;
+                currentPlayer = playersData.find(player => player.id === storedPlayerID);
 
-                // Ensure that playersData is loaded before trying to find the player
-                if (playersData.length > 0) {
-                    currentPlayer = playersData.find(player => player.id === storedPlayerID);
-                    if (currentPlayer) {
-                        displayPlayer(currentPlayer);
-                    } else {
-                        console.error("Player with stored ID not found. Starting a new round.");
-                        startNewRound();
-                    }
+                if (currentPlayer) {
+                    displayPlayer(currentPlayer);
+                    syncTurnDisplay(data.currentTurn);  // Sync turn
+                } else {
+                    console.error("Player with stored ID not found. Starting a new round.");
+                    startNewRound();
                 }
             }
         }
@@ -47,11 +47,7 @@ function loadPlayersData() {
         .then(response => response.json())
         .then(data => {
             playersData = data;
-
-            // Ensure playersData is sorted consistently
             playersData.sort((a, b) => a.id - b.id);
-
-            // Start a new round or sync with existing data
             startNewRound();  
         })
         .catch(error => {
@@ -63,21 +59,16 @@ function loadPlayersData() {
 function startNewRound() {
     player1HasGuessed = false;
     player2HasGuessed = false;
-
-    // Check if the current game in Firebase already has a player
     gameRef.get().then((doc) => {
         if (doc.exists && doc.data().currentPlayerID) {
             const storedPlayerID = doc.data().currentPlayerID;
             currentPlayer = playersData.find(player => player.id === storedPlayerID);
-
             if (currentPlayer) {
                 displayPlayer(currentPlayer);
             } else {
-                // If the player is not found, start a new round
                 displayRandomPlayer();
             }
         } else {
-            // If no player is stored, start a new round and save the new player to Firebase
             displayRandomPlayer();
         }
     }).catch((error) => {
@@ -89,10 +80,7 @@ function displayRandomPlayer() {
     if (playersData.length > 0) {
         const randomIndex = Math.floor(Math.random() * playersData.length);
         currentPlayer = playersData[randomIndex];
-
-        // Store the current player's ID in Firebase so both players get the same question
-        gameRef.set({ currentPlayerID: currentPlayer.id });
-
+        gameRef.set({ currentPlayerID: currentPlayer.id, currentTurn: 1 });
         displayPlayer(currentPlayer);
     } else {
         console.log("No data available");
@@ -105,18 +93,12 @@ function displayPlayer(player) {
 
     if (playerNameElement && playerImageElement) {
         playerNameElement.textContent = player.name;
-
-        playerImageElement.src = 'stilllife.png';
-        if (player.image_url) {
-            playerImageElement.src = player.image_url;
-            playerImageElement.onerror = function () {
-                this.onerror = null;
-                this.src = 'stilllife.png';
-            };
-        }
-
+        playerImageElement.src = player.image_url || 'stilllife.png';
+        playerImageElement.onerror = function () {
+            this.onerror = null;
+            this.src = 'stilllife.png';
+        };
         document.getElementById('result').textContent = '';
-        document.getElementById('result').className = '';
         document.getElementById('turnIndicator').textContent = "Player 1's turn";
     } else {
         console.error("Player name or image element not found");
@@ -134,23 +116,29 @@ function handlePlayerGuess(playerNumber) {
     }
 
     updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement);
+    guessInput.value = '';  // Clear the input field
 
-    // Clear the input field
-    guessInput.value = '';
-
-    // Mark the player's guess as completed
     if (playerNumber === 1) {
         player1HasGuessed = true;
-        document.getElementById('turnIndicator').textContent = "Player 2's turn";
+        gameRef.update({ currentTurn: 2 });  // Switch turn to Player 2
     } else {
         player2HasGuessed = true;
     }
 
-    // If both players have guessed, start a new round
     if (player1HasGuessed && player2HasGuessed) {
-        setTimeout(() => {
-            startNewRound();  // Start a new round after both players have guessed
-        }, 2000);  // Wait 2 seconds before showing the next player
+        if (!isCorrect) {
+            setTimeout(() => {
+                startNewRound();  // Start new question if both players are wrong
+            }, 2000);
+        }
+    }
+}
+
+function syncTurnDisplay(currentTurn) {
+    if (currentTurn === 1) {
+        document.getElementById('turnIndicator').textContent = "Player 1's turn";
+    } else {
+        document.getElementById('turnIndicator').textContent = "Player 2's turn";
     }
 }
 
@@ -171,6 +159,29 @@ function updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement) {
         resultElement.className = 'incorrect';
         wrongSound.play();
     }
+}
+
+function showSuggestions(input, playerNumber) {
+    const suggestionsContainer = document.getElementById('suggestions');
+    suggestionsContainer.innerHTML = '';
+    if (input.length === 0) return;
+
+    const suggestions = Array.from(new Set(playersData
+        .map(player => player.college)
+        .filter(college => college && college.toLowerCase().includes(input.toLowerCase()))))
+        .slice(0, 5);  // Limit to 5 suggestions
+
+    suggestions.forEach(suggestion => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.textContent = suggestion;
+        suggestionItem.classList.add('suggestion-item');
+        suggestionItem.addEventListener('click', () => {
+            const guessInput = document.getElementById(`collegeGuess${playerNumber}`);
+            guessInput.value = suggestion;
+            suggestionsContainer.innerHTML = '';  // Clear suggestions after selection
+        });
+        suggestionsContainer.appendChild(suggestionItem);
+    });
 }
 
 function isCloseMatch(guess, answer) {
