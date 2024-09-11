@@ -1,5 +1,5 @@
 let playersData = [];
-let currentPlayer = null; // Store the current player globally
+let currentPlayer = null;
 let correctStreak1 = 0;
 let correctStreak2 = 0;
 let player1HasGuessed = false;
@@ -8,28 +8,38 @@ let player2HasGuessed = false;
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
-// Generate a unique game ID
-function generateGameID() {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
-// Store or retrieve the game ID
-let gameID = localStorage.getItem('gameID') || new URLSearchParams(window.location.search).get('gameID');
-if (!gameID) {
-    gameID = generateGameID();
-    localStorage.setItem('gameID', gameID);
-    // Optionally add the gameID to the URL
-    window.history.replaceState({}, '', `?gameID=${gameID}`);
-}
+// Firebase reference to the game data
+const gameRef = db.collection("games").doc("currentGame");
 
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayersData();
-    
+
     const submitBtn1 = document.getElementById('submitBtn1');
     const submitBtn2 = document.getElementById('submitBtn2');
-    
+
     submitBtn1.addEventListener('click', () => handlePlayerGuess(1));
     submitBtn2.addEventListener('click', () => handlePlayerGuess(2));
+
+    // Listen for changes in the game data in Firebase
+    gameRef.onSnapshot((doc) => {
+        if (doc.exists) {
+            const data = doc.data();
+            if (data.currentPlayerID) {
+                const storedPlayerID = data.currentPlayerID;
+
+                // Ensure that playersData is loaded before trying to find the player
+                if (playersData.length > 0) {
+                    currentPlayer = playersData.find(player => player.id === storedPlayerID);
+                    if (currentPlayer) {
+                        displayPlayer(currentPlayer);
+                    } else {
+                        console.error("Player with stored ID not found. Starting a new round.");
+                        startNewRound();
+                    }
+                }
+            }
+        }
+    });
 });
 
 function loadPlayersData() {
@@ -37,20 +47,12 @@ function loadPlayersData() {
         .then(response => response.json())
         .then(data => {
             playersData = data;
-            
-            // Retrieve the current player ID from local storage
-            const currentPlayerID = localStorage.getItem(`currentPlayerID_${gameID}`);
-            if (currentPlayerID) {
-                currentPlayer = playersData.find(player => player.id === currentPlayerID);
-                if (currentPlayer) {
-                    displayPlayer(currentPlayer);
-                } else {
-                    console.error("Player with stored ID not found. Starting a new round.");
-                    startNewRound(); 
-                }
-            } else {
-                startNewRound();
-            }
+
+            // Ensure playersData is sorted consistently
+            playersData.sort((a, b) => a.id - b.id);
+
+            // Start a new round or sync with existing data
+            startNewRound();  
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
@@ -61,16 +63,36 @@ function loadPlayersData() {
 function startNewRound() {
     player1HasGuessed = false;
     player2HasGuessed = false;
-    displayRandomPlayer();
+
+    // Check if the current game in Firebase already has a player
+    gameRef.get().then((doc) => {
+        if (doc.exists && doc.data().currentPlayerID) {
+            const storedPlayerID = doc.data().currentPlayerID;
+            currentPlayer = playersData.find(player => player.id === storedPlayerID);
+
+            if (currentPlayer) {
+                displayPlayer(currentPlayer);
+            } else {
+                // If the player is not found, start a new round
+                displayRandomPlayer();
+            }
+        } else {
+            // If no player is stored, start a new round and save the new player to Firebase
+            displayRandomPlayer();
+        }
+    }).catch((error) => {
+        console.error("Error getting game data from Firebase: ", error);
+    });
 }
 
 function displayRandomPlayer() {
     if (playersData.length > 0) {
         const randomIndex = Math.floor(Math.random() * playersData.length);
         currentPlayer = playersData[randomIndex];
-        
-        // Store the current player ID in local storage
-        localStorage.setItem(`currentPlayerID_${gameID}`, currentPlayer.id);
+
+        // Store the current player's ID in Firebase so both players get the same question
+        gameRef.set({ currentPlayerID: currentPlayer.id });
+
         displayPlayer(currentPlayer);
     } else {
         console.log("No data available");
@@ -127,8 +149,8 @@ function handlePlayerGuess(playerNumber) {
     // If both players have guessed, start a new round
     if (player1HasGuessed && player2HasGuessed) {
         setTimeout(() => {
-            startNewRound(); // Start a new round after both players have guessed
-        }, 2000); // Wait 2 seconds before showing the next player
+            startNewRound();  // Start a new round after both players have guessed
+        }, 2000);  // Wait 2 seconds before showing the next player
     }
 }
 
