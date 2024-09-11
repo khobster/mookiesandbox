@@ -57,6 +57,29 @@ function generateGameId() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+// Function to listen to real-time updates in Firestore
+function listenToGameUpdates() {
+    db.collection('games').doc(gameId).onSnapshot((doc) => {
+        if (doc.exists) {
+            const gameData = doc.data();
+
+            // Sync game state from Firestore
+            playerProgress = gameData.playerProgress;
+            playerTurn = gameData.playerTurn;
+            firstPlayerCorrect = gameData.firstPlayerCorrect;
+            currentQuestion = gameData.currentQuestion;
+
+            updatePlayerProgressDisplay();
+            document.getElementById('turnIndicator').textContent = `Player ${playerTurn}'s turn`;
+
+            // Display the current question if available
+            if (currentQuestion) {
+                displayPlayer(currentQuestion);
+            }
+        }
+    });
+}
+
 // Load players data from JSON
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
