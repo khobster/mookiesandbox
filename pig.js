@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadGameData(gameID);
 
   const submitButton = document.getElementById('submitAnswer');
-  const guessInput = document.getElementById('guessInput');
+  const guessInput = document.getElementById('collegeGuess');
 
   submitButton.addEventListener('click', () => {
     const userGuess = guessInput.value.trim().toLowerCase();
@@ -76,10 +76,10 @@ async function processGuess(guess) {
   gameData.currentQuestion = getRandomPlayer(); // Get a new player for the next turn
 
   await db.collection("games").doc(gameID).set(gameData);
-  document.getElementById('guessInput').value = ''; // Clear input
+  document.getElementById('collegeGuess').value = ''; // Clear input
 }
 
-// Get a random player for the trivia question (replace with your actual logic)
+// Get a random player for the trivia question
 function getRandomPlayer() {
   return 'Grant Hill'; // Replace with real random player logic
 }
@@ -91,11 +91,8 @@ function updateGameUI(gameData) {
   document.getElementById('player2Progress').textContent = `Player 2: ${gameData.player2.progress}`;
   document.getElementById('currentQuestion').textContent = `Where did ${gameData.currentQuestion} go to college?`;
 
-  if (currentPlayer === 'player1') {
-    document.getElementById('turnIndicator').textContent = "Player 1's turn";
-  } else {
-    document.getElementById('turnIndicator').textContent = "Player 2's turn";
-  }
+  // Display turn indicator
+  document.getElementById('turnIndicator').textContent = currentPlayer === 'player1' ? "Player 1's turn" : "Player 2's turn";
 
   checkForWinner(gameData);
 }
