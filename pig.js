@@ -1,153 +1,73 @@
 let playersData = [];
-let currentDifficultyLevel = 1;
-let player1Answer = null;
-let player2Answer = null;
-let player1Ready = false;
-let player2Ready = false;
-let currentDecade = null;
-let player1Progress = ""; // Track P-I-G progress for player 1
-let player2Progress = ""; // Track P-I-G progress for player 2
-let currentPlayerPickingDecade = 1; // Player 1 picks the decade first
+let playerTurn = 1; // To alternate between Player 1 and Player 2
+let playerProgress = { 1: "", 2: "" }; // Track P-I-G progress for both players
+let maxLetters = 3; // For P-I-G game
 let gameId = 'unique_game_id'; // Replace this with a dynamic value for each game
 
 document.addEventListener('DOMContentLoaded', () => {
-    initializeGame();
+    initializeGame(); // Initialize the game, including Firestore syncing
 
-    const submitBtn1 = document.getElementById('submitBtn1');
-    const submitBtn2 = document.getElementById('submitBtn2');
-    
-    submitBtn1.addEventListener('click', () => handleGuess(1));
-    submitBtn2.addEventListener('click', () => handleGuess(2));
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', handleGuess);
+    }
 
     const goFishBtn = document.getElementById('goFishBtn');
-    goFishBtn.addEventListener('click', handleDecadeSelection);
+    if (goFishBtn) {
+        goFishBtn.addEventListener('click', () => {
+            document.getElementById('decadeDropdownContainer').style.display = 'block';
+        });
+    }
 
     const decadeDropdown = document.getElementById('decadeDropdown');
-    decadeDropdown.addEventListener('change', (e) => {
-        const selectedDecade = e.target.value;
-        if (selectedDecade) {
-            currentDecade = selectedDecade;
-            displayQuestionFromDecade(currentDecade);
-        }
-    });
+    if (decadeDropdown) {
+        decadeDropdown.addEventListener('change', (e) => {
+            const selectedDecade = e.target.value;
+            if (selectedDecade) {
+                displayPlayerFromDecade(selectedDecade);
+                document.getElementById('decadeDropdownContainer').style.display = 'none';
+            }
+        });
+    }
 
-    setupAutoComplete();
+    setupAutoComplete(); // Setup autocomplete for college names
 });
 
 function initializeGame() {
-    loadPlayersData();
-    listenToGameUpdates(); // Sync with Firestore if necessary
+    loadPlayersData(); // Load player data and start the game
+    listenToGameUpdates(); // Listen to Firestore updates for syncing players
 }
 
-function handleGuess(playerNumber) {
-    const userGuess = document.getElementById(`collegeGuess${playerNumber}`).value.trim().toLowerCase();
-    const playerName = document.getElementById('playerName').textContent;
-    const player = playersData.find(p => p.name === playerName);
-
-    let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
-    
-    if (playerNumber === 1) {
-        player1Answer = isCorrect;
-        player1Ready = true;
-    } else {
-        player2Answer = isCorrect;
-        player2Ready = true;
-    }
-
-    // Check if both players have submitted their answers
-    if (player1Ready && player2Ready) {
-        compareAnswers();
-    }
+// Load players data from JSON or an API and start the game
+function loadPlayersData() {
+    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
+        .then(response => response.json())
+        .then(data => {
+            playersData = data;
+            playersData.sort((a, b) => a.rarity_score - b.rarity_score); // Sort players by rarity
+            startStandardPlay(); // Begin the standard game once data is loaded
+        })
+        .catch(error => {
+            console.error('Error loading player data:', error);
+        });
 }
 
-function compareAnswers() {
-    if (player1Answer && !player2Answer) {
-        addLetterToPlayer(2); // Player 2 gets a letter
-    } else if (!player1Answer && player2Answer) {
-        addLetterToPlayer(1); // Player 1 gets a letter
-    }
-
-    // Reset answers and move to the next question
-    player1Ready = false;
-    player2Ready = false;
-    player1Answer = null;
-    player2Answer = null;
-
-    passTurnToNextDecadeSelection();
+function startStandardPlay() {
+    displayRandomPlayer(); // Show the first random player when the game starts
 }
 
-function addLetterToPlayer(playerNumber) {
-    let progress = playerNumber === 1 ? player1Progress : player2Progress;
-
-    if (progress.length < 3) {
-        const newProgress = progress + "PIG"[progress.length];
-        if (playerNumber === 1) {
-            player1Progress = newProgress;
-        } else {
-            player2Progress = newProgress;
-        }
-        updatePlayerProgressDisplay();
-
-        if (newProgress === "PIG") {
-            endGame(playerNumber); // End game if a player reaches "PIG"
-        }
-    }
-}
-
-function updatePlayerProgressDisplay() {
-    document.getElementById('player1Progress').textContent = `Player 1: ${player1Progress}`;
-    document.getElementById('player2Progress').textContent = `Player 2: ${player2Progress}`;
-}
-
-function handleDecadeSelection() {
-    const selectedDecade = document.getElementById('decadeDropdown').value;
-    if (selectedDecade) {
-        currentDecade = selectedDecade;
-        displayQuestionFromDecade(currentDecade);
-        passTurnToNextDecadeSelection();
-    }
-}
-
-function passTurnToNextDecadeSelection() {
-    currentPlayerPickingDecade = currentPlayerPickingDecade === 1 ? 2 : 1;
-    document.getElementById('turnIndicator').textContent = `Player ${currentPlayerPickingDecade} picks the decade for the next question.`;
-}
-
-function displayQuestionFromDecade(decade) {
-    const playersFromDecade = playersData.filter(player => {
-        let playerYear = player.retirement_year;
-
-        let playerDecade;
-        if (playerYear >= 1950 && playerYear <= 1959) {
-            playerDecade = '1950s';
-        } else if (playerYear >= 1960 && playerYear <= 1969) {
-            playerDecade = '1960s';
-        } else if (playerYear >= 1970 && playerYear <= 1979) {
-            playerDecade = '1970s';
-        } else if (playerYear >= 1980 && playerYear <= 1989) {
-            playerDecade = '1980s';
-        } else if (playerYear >= 1990 && playerYear <= 1999) {
-            playerDecade = '1990s';
-        } else if (playerYear >= 2000 && playerYear <= 2009) {
-            playerDecade = '2000s';
-        } else if (playerYear >= 2010 && playerYear <= 2019) {
-            playerDecade = '2010s';
-        } else if (playerYear >= 2020 && playerYear <= 2029) {
-            playerDecade = '2020s';
-        }
-
-        return playerDecade === decade;
-    });
-
-    if (playersFromDecade.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
-        const player = playersFromDecade[randomIndex];
+// Display a random player from the filtered player list
+function displayRandomPlayer() {
+    if (playersData.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersData.length);
+        const player = playersData[randomIndex];
         displayPlayer(player);
     } else {
-        document.getElementById('playerQuestion').textContent = `No players found for the ${decade}`;
+        console.log("No player data available.");
     }
 }
 
+// Display player info and their headshot
 function displayPlayer(player) {
     const playerNameElement = document.getElementById('playerName');
     const playerImageElement = document.getElementById('playerImage');
@@ -155,6 +75,7 @@ function displayPlayer(player) {
     if (playerNameElement && playerImageElement) {
         playerNameElement.textContent = player.name;
         playerImageElement.src = player.image_url || 'stilllife.png';
+
         playerImageElement.onerror = function () {
             this.onerror = null;
             this.src = 'stilllife.png';
@@ -163,5 +84,108 @@ function displayPlayer(player) {
         document.getElementById('collegeGuess1').value = '';
         document.getElementById('collegeGuess2').value = '';
         document.getElementById('result').textContent = '';
+        document.getElementById('result').className = '';
     }
+
+    // Update Firestore with the current player question for syncing
+    db.collection('games').doc(gameId).update({
+        currentPlayerQuestion: player
+    });
+}
+
+// Listen to Firestore updates to sync game state between players
+function listenToGameUpdates() {
+    db.collection('games').doc(gameId).onSnapshot((doc) => {
+        const gameData = doc.data();
+        
+        // Sync the current player progress and turn
+        playerProgress = gameData.playerProgress || { 1: "", 2: "" };
+        playerTurn = gameData.playerTurn || 1;
+        updatePlayerProgressDisplay();
+        updatePlayerTurn();
+
+        // Sync the current question
+        if (gameData.currentPlayerQuestion) {
+            displayPlayer(gameData.currentPlayerQuestion);
+        }
+    });
+}
+
+// Handle player guesses
+function handleGuess() {
+    const userGuess1 = document.getElementById('collegeGuess1').value.trim().toLowerCase();
+    const userGuess2 = document.getElementById('collegeGuess2').value.trim().toLowerCase();
+    const playerName = document.getElementById('playerName').textContent;
+    const player = playersData.find(p => p.name === playerName);
+
+    const isCorrect1 = player && isCloseMatch(userGuess1, player.college || 'No College');
+    const isCorrect2 = player && isCloseMatch(userGuess2, player.college || 'No College');
+    
+    updateGameLogic(isCorrect1, isCorrect2, playerName);
+}
+
+// Check if the guess is close enough to the correct answer
+function isCloseMatch(guess, answer) {
+    return guess === answer.toLowerCase().trim();
+}
+
+// Handle the game logic for correct/incorrect guesses
+function updateGameLogic(isCorrect1, isCorrect2, playerName) {
+    const resultElement = document.getElementById('result');
+
+    if (isCorrect1 !== isCorrect2) {
+        if (isCorrect1) {
+            playerProgress[2] += "PIG"[playerProgress[2].length];
+            resultElement.textContent = "Player 2 gets a letter!";
+            resultElement.className = 'incorrect';
+        } else {
+            playerProgress[1] += "PIG"[playerProgress[1].length];
+            resultElement.textContent = "Player 1 gets a letter!";
+            resultElement.className = 'incorrect';
+        }
+        updatePlayerProgressDisplay();
+    } else {
+        resultElement.textContent = "No letters given. Next question!";
+        resultElement.className = 'correct';
+    }
+
+    setTimeout(() => {
+        displayRandomPlayer();
+    }, 2000);
+}
+
+// Update the progress display for both players
+function updatePlayerProgressDisplay() {
+    document.getElementById('player1Progress').textContent = `Player 1: ${playerProgress[1]}`;
+    document.getElementById('player2Progress').textContent = `Player 2: ${playerProgress[2]}`;
+}
+
+// Set up autocomplete for college names
+function setupAutoComplete() {
+    const collegeGuess1 = document.getElementById('collegeGuess1');
+    const collegeGuess2 = document.getElementById('collegeGuess2');
+    const suggestionsContainer = document.getElementById('suggestions');
+
+    const handleAutoComplete = (inputElement) => {
+        const inputValue = inputElement.value.toLowerCase();
+        const suggestions = Array.from(new Set(playersData
+            .map(player => player.college)
+            .filter(college => college && college.toLowerCase().includes(inputValue))))
+            .slice(0, 5); // Show up to 5 suggestions
+
+        suggestionsContainer.innerHTML = '';
+        suggestions.forEach(suggestion => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.textContent = suggestion;
+            suggestionItem.classList.add('suggestion-item');
+            suggestionItem.addEventListener('click', () => {
+                inputElement.value = suggestion;
+                suggestionsContainer.innerHTML = ''; // Clear suggestions once selected
+            });
+            suggestionsContainer.appendChild(suggestionItem);
+        });
+    };
+
+    collegeGuess1.addEventListener('input', () => handleAutoComplete(collegeGuess1));
+    collegeGuess2.addEventListener('input', () => handleAutoComplete(collegeGuess2));
 }
