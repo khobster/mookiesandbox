@@ -3,11 +3,9 @@ let currentDifficultyLevel = 1;
 let playerTurn = 1; // To alternate between Player 1 and Player 2
 let playerProgress = { 1: "", 2: "" }; // Track P-I-G progress for both players
 let maxLetters = 3; // For P-I-G game
-let gameId; // Unique game session ID
-// Assuming Firebase is already initialized elsewhere, we'll avoid redeclaring db
+let gameId = 'unique_game_id'; // Replace this with a dynamic value if needed
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Firebase should be initialized already, so no need to redeclare `db`
     loadPlayersData();
 
     const submitBtn = document.getElementById('submitBtn');
@@ -165,8 +163,8 @@ function updatePlayerProgressDisplay() {
     document.getElementById('player1Progress').textContent = `Player 1: ${playerProgress[1]}`;
     document.getElementById('player2Progress').textContent = `Player 2: ${playerProgress[2]}`;
 
-    // Update Firebase
-    firebase.database().ref(`games/${gameId}`).update({
+    // Update Firestore
+    db.collection('games').doc(gameId).update({
         playerProgress: playerProgress
     });
 }
@@ -176,8 +174,8 @@ function updatePlayerTurn() {
     playerTurn = playerTurn === 1 ? 2 : 1;
     document.getElementById('turnIndicator').textContent = `Player ${playerTurn}'s turn`;
 
-    // Update Firebase
-    firebase.database().ref(`games/${gameId}`).update({
+    // Update Firestore
+    db.collection('games').doc(gameId).update({
         playerTurn: playerTurn
     });
 }
@@ -213,4 +211,10 @@ function endGame(player) {
     updatePlayerProgressDisplay();
     playerTurn = 1;  // Reset to Player 1's turn
     updatePlayerTurn();
+
+    // Reset Firestore game state
+    db.collection('games').doc(gameId).update({
+        playerProgress: playerProgress,
+        playerTurn: playerTurn
+    });
 }
