@@ -1,3 +1,4 @@
+let playersData = [];
 let player1Progress = '';
 let player2Progress = '';
 let currentPlayer = 'player1';
@@ -6,14 +7,13 @@ let gameID = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   gameID = getGameID(); // Either generate or get from URL
-  loadGameData(gameID);
+  loadPlayersData().then(() => loadGameData(gameID)); // Load players from JSON and then game data
 
   const submitButton = document.getElementById('submitBtn');
   const guessInput = document.getElementById('collegeGuess');
   const goFishButton = document.getElementById('goFishBtn');
   const decadeDropdown = document.getElementById('decadeDropdown');
 
-  // Ensure elements exist before adding event listeners
   if (submitButton && guessInput) {
     submitButton.addEventListener('click', () => {
       const userGuess = guessInput.value.trim().toLowerCase();
@@ -59,6 +59,16 @@ function generateGameID() {
   return Math.random().toString(36).substring(7);
 }
 
+// Load player data from JSON
+async function loadPlayersData() {
+  try {
+    const response = await fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json');
+    playersData = await response.json();
+  } catch (error) {
+    console.error('Error loading player data:', error);
+  }
+}
+
 // Load the game data from Firebase
 async function loadGameData(gameID) {
   const gameDoc = await db.collection("games").doc(gameID).get();
@@ -76,15 +86,16 @@ async function initializeNewGame(gameID) {
     player1: { progress: '', lastAnswer: '' },
     player2: { progress: '', lastAnswer: '' },
     currentTurn: 'player1',
-    currentQuestion: currentQuestion
+    currentQuestion: currentQuestion.name
   });
+  displayPlayer(currentQuestion); // Display the random player
 }
 
 // Process the current player's guess
 async function processGuess(guess) {
   const gameDoc = await db.collection("games").doc(gameID).get();
   const gameData = gameDoc.data();
-  const correctAnswer = 'duke'; // Example correct answer, replace with real player data
+  const correctAnswer = currentQuestion.college.toLowerCase(); // Get the correct answer from player data
 
   if (guess === correctAnswer) {
     gameData[currentPlayer].lastAnswer = 'correct';
@@ -94,29 +105,39 @@ async function processGuess(guess) {
   }
 
   gameData.currentTurn = currentPlayer === 'player1' ? 'player2' : 'player1';
-  gameData.currentQuestion = getRandomPlayer(); // Get a new player for the next turn
+  currentQuestion = getRandomPlayer(); // Get a new player for the next turn
+  gameData.currentQuestion = currentQuestion.name;
 
   await db.collection("games").doc(gameID).set(gameData);
   document.getElementById('collegeGuess').value = ''; // Clear input
+  displayPlayer(currentQuestion); // Display the new random player
 }
 
-// Get a random player for the trivia question (replace with your actual logic)
+// Get a random player from the JSON
 function getRandomPlayer() {
-  return 'Grant Hill'; // Replace with real random player logic
+  const randomIndex = Math.floor(Math.random() * playersData.length);
+  return playersData[randomIndex];
 }
 
-// Display a random player based on the selected decade
-function displayPlayerFromDecade(decade) {
-  const playersFromDecade = ['1950s', '1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'].filter(
-    (playerDecade) => playerDecade === decade
-  );
+// Display the player data including image and question
+function displayPlayer(player) {
+  document.getElementById('playerName').textContent = player.name;
+  document.getElementById('playerQuestion').textContent = `Where did ${player.name} go to college?`;
+  const playerImageElement = document.getElementById('playerImage');
+  playerImageElement.src = player.image_url || 'placeholder.png'; // Fallback to placeholder if no image available
+  playerImageElement.onerror = function() {
+    playerImageElement.src = 'placeholder.png'; // Set placeholder if image fails to load
+  };
+}
 
-  if (playersFromDecade.length > 0) {
-    const randomPlayer = playersFromDecade[Math.floor(Math.random() * playersFromDecade.length)];
-    currentQuestion = randomPlayer;
-    document.getElementById('playerQuestion').textContent = `Where did ${randomPlayer} go to college?`;
+// Display a player from a specific decade selected from dropdown
+function displayPlayerFromDecade(decade) {
+  const filteredPlayers = playersData.filter(player => player.decade === decade);
+  if (filteredPlayers.length > 0) {
+    const randomPlayer = filteredPlayers[Math.floor(Math.random() * filteredPlayers.length)];
+    displayPlayer(randomPlayer);
   } else {
-    document.getElementById('playerQuestion').textContent = 'No players found from this decade.';
+    document.getElementById('playerQuestion').textContent = `No players found from the ${decade}`;
   }
 }
 
@@ -147,7 +168,7 @@ function checkForWinner(gameData) {
   }
 }
 
-// Reset the game (optional logic here to reset)
+// Reset the game
 function resetGame() {
   db.collection("games").doc(gameID).delete().then(() => {
     window.location.reload();
