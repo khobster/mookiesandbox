@@ -5,24 +5,37 @@ let correctStreak2 = 0;
 let currentTurn = 1; // Player 1 starts
 let player1HasGuessed = false;
 let player2HasGuessed = false;
+let gameId = null;
 
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
-// Function to generate a unique game ID
-function generateGameID() {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
-// Store the game ID in local storage or as a URL parameter
-let gameID = localStorage.getItem('gameID') || new URLSearchParams(window.location.search).get('gameID');
-if (!gameID) {
-    gameID = generateGameID();
-    localStorage.setItem('gameID', gameID);
-}
-
+// Initialize Firebase and set gameId
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayersData();
+
+    // Generate gameId and store in Firebase
+    gameId = localStorage.getItem('gameId') || generateGameID();
+    localStorage.setItem('gameId', gameId);
+
+    const gameDocRef = db.collection('games').doc(gameId);
+
+    // Sync game state in real-time
+    gameDocRef.onSnapshot((doc) => {
+        if (doc.exists) {
+            const gameData = doc.data();
+            currentPlayer = gameData.currentPlayer;
+            currentTurn = gameData.currentTurn;
+            updateUI();
+        } else {
+            console.log('No game data found, creating a new game.');
+            startNewRound();
+        }
+    });
+
+    // Player input handling
+    document.getElementById('submitBtn1').addEventListener('click', () => handlePlayerGuess(1));
+    document.getElementById('submitBtn2').addEventListener('click', () => handlePlayerGuess(2));
 
     const collegeGuess1 = document.getElementById('collegeGuess1');
     const collegeGuess2 = document.getElementById('collegeGuess2');
@@ -38,10 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showSuggestions(e.target.value, 'suggestions2');
         });
     }
-
-    // Submit buttons for Player 1 and Player 2
-    document.getElementById('submitBtn1').addEventListener('click', () => handlePlayerGuess(1));
-    document.getElementById('submitBtn2').addEventListener('click', () => handlePlayerGuess(2));
 });
 
 function loadPlayersData() {
@@ -49,39 +58,33 @@ function loadPlayersData() {
         .then(response => response.json())
         .then(data => {
             playersData = data;
-            const currentPlayerID = localStorage.getItem(`currentPlayerID_${gameID}`);
-            if (currentPlayerID) {
-                currentPlayer = playersData.find(player => player.id === currentPlayerID);
-                if (currentPlayer) {
-                    displayPlayer(currentPlayer);
-                } else {
-                    console.error("Player with stored ID not found. Starting a new round.");
-                    startNewRound(); 
-                }
-            } else {
-                startNewRound();
-            }
         })
         .catch(error => {
-            console.error("Error loading player data:", error);
+            console.error('Error loading player data:', error);
         });
 }
 
+function generateGameID() {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+// Function to start a new round and sync in Firebase
 function startNewRound() {
     player1HasGuessed = false;
     player2HasGuessed = false;
-    displayRandomPlayer();
-}
 
-function displayRandomPlayer() {
-    if (playersData.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersData.length);
-        currentPlayer = playersData[randomIndex];
-        localStorage.setItem(`currentPlayerID_${gameID}`, currentPlayer.id);
+    const randomIndex = Math.floor(Math.random() * playersData.length);
+    currentPlayer = playersData[randomIndex];
+
+    db.collection('games').doc(gameId).set({
+        currentPlayer: currentPlayer,
+        currentTurn: 1 // Player 1 starts
+    }).then(() => {
+        console.log('New round started with player:', currentPlayer.name);
         displayPlayer(currentPlayer);
-    } else {
-        console.log("No data available");
-    }
+    }).catch((error) => {
+        console.error('Error starting a new round:', error);
+    });
 }
 
 function displayPlayer(player) {
@@ -107,6 +110,7 @@ function displayPlayer(player) {
     }
 }
 
+// Handle player guesses and switch turns
 function handlePlayerGuess(playerNumber) {
     const userGuess = document.getElementById(`collegeGuess${playerNumber}`).value.trim().toLowerCase();
     const resultElement = document.getElementById('result');
@@ -127,11 +131,20 @@ function handlePlayerGuess(playerNumber) {
     updateGameStateAfterGuess(playerNumber);
 }
 
+// Switch turns between players
 function switchTurns() {
     currentTurn = currentTurn === 1 ? 2 : 1;
-    document.getElementById('turnIndicator').textContent = `Player ${currentTurn}'s turn`;
+
+    db.collection('games').doc(gameId).update({
+        currentTurn: currentTurn
+    }).then(() => {
+        document.getElementById('turnIndicator').textContent = `Player ${currentTurn}'s turn`;
+    }).catch((error) => {
+        console.error('Error switching turns:', error);
+    });
 }
 
+// Check if both players have guessed and move to the next round
 function updateGameStateAfterGuess(playerNumber) {
     if (playerNumber === 1) {
         player1HasGuessed = true;
@@ -140,18 +153,10 @@ function updateGameStateAfterGuess(playerNumber) {
     }
 
     if (player1HasGuessed && player2HasGuessed) {
-        // Both players have guessed, move to the next round
         startNewRound();
     } else {
-        // Wait for the other player to guess
         switchTurns();
     }
-}
-
-function resetForNewRound() {
-    player1HasGuessed = false;
-    player2HasGuessed = false;
-    startNewRound();
 }
 
 // Utility function for string matching
