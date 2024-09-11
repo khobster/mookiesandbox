@@ -149,7 +149,7 @@ function pickRandomPlayerFromDecade(decade) {
             playerDecade = '1950s';
         } else if (playerYear >= 60 && playerYear <= 69) {
             playerDecade = '1960s';
-        } else if (playerYear >= 70 && playerYear <= 79) {
+        } else if (playerYear >= 70 and playerYear <= 79) {
             playerDecade = '1970s';
         } else if (playerYear >= 80 && playerYear <= 89) {
             playerDecade = '1980s';
