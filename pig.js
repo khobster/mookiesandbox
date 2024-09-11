@@ -1,5 +1,3 @@
-// Firebase Reference
-const db = firebase.firestore();
 let gameId;  // This will hold the dynamically generated game ID
 
 // UI Elements
