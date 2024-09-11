@@ -91,19 +91,19 @@ body, html {
     margin-top: 10px;
 }
 
-#splitItBtn, #goFishBtn {
-    background-color: #F0E68C;
-    color: black;
+#goFishBtn {
+    background-color: #1E90FF;
+    color: white;
     text-transform: uppercase;
     padding: 8px 12px;
     font-size: 14px;
     cursor: pointer;
     border-radius: 4px;
-    width: 48%;
+    width: 100%;
 }
 
-#splitItBtn:hover, #goFishBtn:hover {
-    background-color: #E5D85C;
+#goFishBtn:hover {
+    background-color: #1C86EE;
 }
 
 .fishIcon {
@@ -135,11 +135,10 @@ body, html {
 #player1Progress, #player2Progress {
     font-family: 'Archivo Narrow', sans-serif;
     font-size: 16px;
-    color: #333;
 }
 
 #turnIndicator {
-    margin-top: 20px;
-    font-size: 1.5rem;
+    margin-top: 10px;
+    font-size: 16px;
     color: #007BFF;
 }
