@@ -9,77 +9,124 @@ const player2Progress = document.getElementById('player2Progress');
 const questionElement = document.getElementById('playerQuestion');
 const turnIndicator = document.getElementById('turnIndicator');
 
-// Load players data from the JSON file (updated URL if needed)
+// Load players data from the JSON file
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
         .then(response => response.json())
         .then(data => {
             playersData = data;
             console.log('Players data loaded:', playersData.length, 'players');
-            displayRandomPlayer(); // Start with a random player question
+            displayRandomPlayer(); // Pick a random player on load
         })
         .catch(error => {
             console.error('Error loading players data:', error);
         });
 }
 
-// Function to display a random player and update the question
+// Initialize the game when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    loadPlayersData();
+});
+
+// Pick a random player and display it
 function displayRandomPlayer() {
     if (playersData.length > 0) {
         const randomIndex = Math.floor(Math.random() * playersData.length);
         const player = playersData[randomIndex];
         displayPlayer(player);
     } else {
-        console.error('No player data available');
+        console.error("No players data available");
     }
 }
 
-// Function to update the UI with the selected player
+// Display player details in the UI
 function displayPlayer(player) {
     const playerNameElement = document.getElementById('playerName');
     const playerImageElement = document.getElementById('playerImage');
-    
+
     if (playerNameElement && playerImageElement) {
-        playerNameElement.textContent = player.name;
-        playerImageElement.src = 'stilllife.png'; // Placeholder image
+        playerNameElement.textContent = player.name || 'Unknown Player';
+        playerImageElement.src = player.image_url || 'stilllife.png';
 
-        // If player has an image, update the image
-        if (player.image_url) {
-            playerImageElement.src = player.image_url;
-            playerImageElement.onerror = function () {
-                this.onerror = null;
-                this.src = 'stilllife.png'; // Fallback to placeholder image if not found
-            };
-        }
+        playerImageElement.onerror = function () {
+            this.onerror = null;
+            this.src = 'stilllife.png'; // Fallback to default image
+        };
 
-        // Update the question element to show the player's question
-        questionElement.textContent = `Where did ${player.name} go to college?`;
-
-        // Clear previous guesses and results
-        document.getElementById('collegeGuess').value = '';
+        document.getElementById('collegeGuess1').value = '';
+        document.getElementById('collegeGuess2').value = '';
         document.getElementById('result').textContent = '';
         document.getElementById('result').className = '';
+        turnIndicator.textContent = `${currentPlayer === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
+
     } else {
-        console.error('Player name or image element not found');
+        console.error("Player name or image element not found");
     }
 }
 
-// Handle answer submission
+// Player submits the answer
+document.getElementById('submitBtn1').addEventListener('click', () => {
+    const answer = document.getElementById('collegeGuess1').value.trim();
+    submitAnswer('player1', answer);
+});
+
+document.getElementById('submitBtn2').addEventListener('click', () => {
+    const answer = document.getElementById('collegeGuess2').value.trim();
+    submitAnswer('player2', answer);
+});
+
 function submitAnswer(player, answer) {
-    const isCorrect = player.college && simplifyString(answer) === simplifyString(player.college);
-    if (isCorrect) {
-        console.log(`${player.name} went to ${player.college}. Correct!`);
+    const playerGuess = simplifyString(answer);
+    const correctAnswer = simplifyString(document.getElementById('playerName').textContent);
+
+    if (isCloseMatch(playerGuess, correctAnswer)) {
+        updateProgress(player, 'correct');
     } else {
-        console.log(`Wrong! ${player.name} went to ${player.college}.`);
+        updateProgress(player, 'incorrect');
     }
 }
 
-// Simplify string for matching
+// Simplify string for comparison
 function simplifyString(str) {
     return str.trim().toLowerCase().replace(/university|college|the| /g, '');
 }
 
-// Initialize the game
-document.addEventListener('DOMContentLoaded', () => {
-    loadPlayersData(); // Load player data on page load
-});
+// Check if the guess is close to the correct answer
+function isCloseMatch(guess, answer) {
+    return answer.includes(guess);
+}
+
+// Update the player's progress
+function updateProgress(player, result) {
+    if (player === 'player1') {
+        player1Answer = result;
+        player1Progress.textContent = `Player 1: ${result}`;
+    } else {
+        player2Answer = result;
+        player2Progress.textContent = `Player 2: ${result}`;
+    }
+
+    if (player1Answer && player2Answer) {
+        handleRoundResults();
+    }
+}
+
+// Handle round results
+function handleRoundResults() {
+    if (player1Answer === 'correct' && player2Answer !== 'correct') {
+        alert('Player 1 wins this round!');
+    } else if (player2Answer === 'correct' && player1Answer !== 'correct') {
+        alert('Player 2 wins this round!');
+    } else {
+        alert('Both players were incorrect, try again!');
+    }
+    resetForNextRound();
+}
+
+// Reset for the next round
+function resetForNextRound() {
+    player1Answer = null;
+    player2Answer = null;
+    currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
+    displayRandomPlayer();
+}
