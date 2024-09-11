@@ -58,7 +58,7 @@
       <div id="plunkosCounter" style="display: none;">🪣 = <span id="plunkosCount">0</span></div>
    </div>
    <div class="bottom-container"> <!-- Always visible for better UX -->
-      <a href="pig.html" id="pigLink" class="pig-link">🐷</a>
+      <a href="javascript:void(0)" id="pigLink" class="pig-link">🐷</a>
       <span class="tooltip">🔍 how it works<span class="tooltiptext">🏀 3 correct in a row creates a challenge.<br>✅ copy the url.<br>📱 text it to your friends.<br>👀 see if they can nail it.<br>🤔 think the player didn’t go to college?<br>enter “no college”<br>🪣 = your current score<br>♣️ = stuck? skip for a 2 for 1<br>🐟 = another skip (pick a decade)<br>🏆 = your high score</span></span>
       <span id="highScore">🏆=0</span>
       <!-- Placeholder for the bouncing basketball emoji -->
@@ -91,30 +91,24 @@
    <script src="plunko.js"></script>
 
     <script>
-     // Add an event listener to the PIG button (🐷)
-     document.querySelector('#pigLink').addEventListener('click', (event) => {
-       event.preventDefault();  // Prevent the default action
-
-       // Create a new game in Firestore
-       const newGame = {
-           currentQuestion: '',
-           currentTurn: 'player1',
-           player1: { lastAnswer: '', progress: '' },
-           player2: { lastAnswer: '', progress: '' }
-       };
-
-       // Add the new game to Firestore and redirect the player to the PIG game with the new gameId
-       db.collection('games').add(newGame)
-           .then((docRef) => {
-               const gameId = docRef.id;
-               // Redirect the player to the PIG game with the gameId in the URL
-               window.location.href = `https://www.mookie.click/pig.html?gameId=${gameId}`;
-           })
-           .catch((error) => {
-               console.error('Error creating game:', error);
-           });
-     });
-   </script>
+  document.getElementById('pigLink').addEventListener('click', () => {
+    // Create a new game in Firestore
+    db.collection('games').add({
+      currentQuestion: '',
+      currentTurn: 'player1',  // Player 1 starts
+      player1: { lastAnswer: '', progress: '' },
+      player2: { lastAnswer: '', progress: '' }
+    })
+    .then((docRef) => {
+      // Game created successfully, now redirect to pig.html with gameId
+      const gameId = docRef.id;
+      window.location.href = `pig.html?gameId=${gameId}`;
+    })
+    .catch((error) => {
+      console.error('Error creating game:', error);
+    });
+  });
+</script>
 
    <!-- Popup for MOOKIE challenge -->
    <div id="mookiePopup" class="popup">
