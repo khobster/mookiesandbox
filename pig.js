@@ -2,23 +2,24 @@ let playersData = [];
 let currentPlayer = 'player1';
 let currentQuestion = '';
 let gameID = null;
-let isTwoForOneActive = false;
 let selectedDecade = '';
 
-// Load the players data and initialize the game
+// Load player data from JSON and initialize the game
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayersData(); // Load player data from JSON
     gameID = getGameID();
     loadGameData(gameID);
 
-    // Event listener for 'Let's See If You're Right' button
+    // Add event listener for submitting the guess
     const submitButton = document.getElementById('submitAnswer');
     const guessInput = document.getElementById('guessInput');
-
-    submitButton.addEventListener('click', () => {
-        const userGuess = guessInput.value.trim().toLowerCase();
-        processGuess(userGuess);
-    });
+    
+    if (submitButton && guessInput) {
+        submitButton.addEventListener('click', () => {
+            const userGuess = guessInput.value.trim().toLowerCase();
+            processGuess(userGuess);
+        });
+    }
 
     // Event listener for the 'Go Fish' button
     const goFishBtn = document.getElementById('goFishBtn');
@@ -33,18 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (decadeDropdown) {
         decadeDropdown.addEventListener('change', (e) => {
             selectedDecade = e.target.value;
-            displayPlayerFromDecade(selectedDecade); // Display player based on selected decade
+            displayPlayerFromDecade(selectedDecade); // Display player based on the selected decade
         });
     }
 
-    // Real-time game updates
+    // Real-time updates from Firebase
     db.collection("games").doc(gameID).onSnapshot((doc) => {
         const gameData = doc.data();
         updateGameUI(gameData);
     });
 });
 
-// Fetch player data from the external JSON and store it
+// Fetch player data from the external JSON
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
         .then(response => response.json())
@@ -57,7 +58,7 @@ function loadPlayersData() {
         });
 }
 
-// Get or generate the game ID
+// Get or generate the game ID from the URL
 function getGameID() {
     const urlParams = new URLSearchParams(window.location.search);
     let gameID = urlParams.get('gameID');
@@ -83,14 +84,14 @@ async function loadGameData(gameID) {
     }
 }
 
-// Initialize a new game
+// Initialize a new game and set the first question
 async function initializeNewGame(gameID) {
-    currentQuestion = getRandomPlayer(); // Set a random player question
+    currentQuestion = getRandomPlayer(); // Get a random player from JSON
     await db.collection("games").doc(gameID).set({
         player1: { progress: '', lastAnswer: '' },
         player2: { progress: '', lastAnswer: '' },
         currentTurn: 'player1',
-        currentQuestion: currentQuestion.name // Store the player name as the current question
+        currentQuestion: currentQuestion.name // Store the player's name as the question
     });
 }
 
@@ -112,17 +113,18 @@ async function processGuess(guess) {
         gameData[currentPlayer].lastAnswer = 'correct';
     } else {
         gameData[currentPlayer].lastAnswer = 'incorrect';
-        gameData[currentPlayer].progress += 'P'; // Add a letter for wrong answer
+        gameData[currentPlayer].progress += 'P'; // Add a letter for wrong answers
     }
 
+    // Switch turns and get a new player question
     gameData.currentTurn = currentPlayer === 'player1' ? 'player2' : 'player1';
-    gameData.currentQuestion = getRandomPlayer().name; // Get a new player for the next turn
+    gameData.currentQuestion = getRandomPlayer().name; // Get a new random player
 
     await db.collection("games").doc(gameID).set(gameData);
-    document.getElementById('guessInput').value = ''; // Clear input
+    document.getElementById('guessInput').value = ''; // Clear the input field
 }
 
-// Display a random player from the selected decade
+// Display a player from the selected decade
 function displayPlayerFromDecade(decade) {
     const playersFromDecade = playersData.filter(player => {
         const playerYear = player.retirement_year;
@@ -137,7 +139,7 @@ function displayPlayerFromDecade(decade) {
     }
 }
 
-// Get the decade for a player based on their retirement year
+// Get the decade based on player's retirement year
 function getPlayerDecade(year) {
     if (year >= 1950 && year <= 1959) return '1950s';
     if (year >= 1960 && year <= 1969) return '1960s';
@@ -147,31 +149,37 @@ function getPlayerDecade(year) {
     if (year >= 2000 && year <= 2009) return '2000s';
     if (year >= 2010 && year <= 2019) return '2010s';
     if (year >= 2020 && year <= 2029) return '2020s';
+    return 'Unknown';
 }
 
-// Display the player's details (name, image, etc.)
+// Display a player's details (e.g., name and image)
 function displayPlayer(player) {
-    document.getElementById('playerName').textContent = player.name;
-    document.getElementById('playerImage').src = player.image_url || 'default_image.png';
-    document.getElementById('playerQuestion').textContent = `Where did ${player.name} go to college?`;
+    const playerNameElement = document.getElementById('playerName');
+    const playerImageElement = document.getElementById('playerImage');
+    
+    if (playerNameElement && playerImageElement) {
+        playerNameElement.textContent = player.name;
+        playerImageElement.src = player.image_url || 'default-image-url.png';
+    }
 }
 
-// Update the game UI based on the current state
+// Update the game UI (turns, progress, etc.)
 function updateGameUI(gameData) {
     currentPlayer = gameData.currentTurn;
     document.getElementById('player1Progress').textContent = `Player 1: ${gameData.player1.progress}`;
     document.getElementById('player2Progress').textContent = `Player 2: ${gameData.player2.progress}`;
-    document.getElementById('turnIndicator').textContent = `${currentPlayer === 'player1' ? "Player 1's turn" : "Player 2's turn"}`;
+    document.getElementById('playerQuestion').textContent = `Where did ${gameData.currentQuestion} go to college?`;
 
-    const currentPlayerData = playersData.find(p => p.name === gameData.currentQuestion);
-    if (currentPlayerData) {
-        displayPlayer(currentPlayerData);
+    if (currentPlayer === 'player1') {
+        document.getElementById('turnIndicator').textContent = "Player 1's turn";
+    } else {
+        document.getElementById('turnIndicator').textContent = "Player 2's turn";
     }
 
     checkForWinner(gameData);
 }
 
-// Check if any player has spelled "PIG" and declare a winner
+// Check if any player has spelled "PIG"
 function checkForWinner(gameData) {
     if (gameData.player1.progress === 'PIG') {
         alert('Player 2 wins!');
@@ -182,7 +190,7 @@ function checkForWinner(gameData) {
     }
 }
 
-// Reset the game (optional logic here to reset)
+// Reset the game (optional logic)
 function resetGame() {
     db.collection("games").doc(gameID).delete().then(() => {
         window.location.reload();
