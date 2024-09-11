@@ -120,6 +120,35 @@ function showSuggestions(input) {
 
 // Utility functions and game logic...
 
+function isCloseMatch(guess, answer) {
+    if (!guess.trim()) {
+        return false;
+    }
+
+    let simpleGuess = guess.trim().toLowerCase();
+    let simpleAnswer = answer.trim().toLowerCase();
+
+    let normalizedGuess = simpleGuess.replace(/[^a-zA-Z0-9]/g, '');
+
+    const noCollegePhrases = [
+        "didntgotocollege",
+        "didnotgotocollege",
+        "hedidntgotocollege",
+        "hedidnotgotocollege",
+        "nocollege",
+    ];
+
+    if (noCollegePhrases.includes(normalizedGuess) && simpleAnswer === '') {
+        return true;
+    }
+
+    if (simpleAnswer === 'unc' && (simpleGuess === 'north carolina' || simpleGuess === 'carolina')) {
+        return true;
+    }
+
+    return simpleAnswer.includes(simpleGuess);
+}
+
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
         .then(response => response.json())
@@ -163,50 +192,22 @@ function displayPlayer(player) {
 
     if (playerNameElement && playerImageElement) {
         playerNameElement.textContent = player.name;
-        playerImageElement.src = player.image_url || 'stilllife.png';
+
+        playerImageElement.src = 'stilllife.png';
+
+        if (player.image_url) {
+            playerImageElement.src = player.image_url;
+
+            playerImageElement.onerror = function () {
+                this.onerror = null;
+                this.src = 'stilllife.png';
+            };
+        }
 
         document.getElementById('collegeGuess').value = '';
         document.getElementById('result').textContent = '';
         document.getElementById('result').className = '';
     } else {
         console.error("Player name or image element not found");
-    }
-}
-
-function displayPlayerFromDecade(decade) {
-    const playersFromDecade = playersData.filter(player => {
-        let playerYear = player.retirement_year;
-        let playerDecade = '';
-
-        if (playerYear >= 50 && playerYear <= 59) {
-            playerDecade = '1950s';
-        } else if (playerYear >= 60 && playerYear <= 69) {
-            playerDecade = '1960s';
-        } else if (playerYear >= 70 && playerYear <= 79) {
-            playerDecade = '1970s';
-        } else if (playerYear >= 80 && playerYear <= 89) {
-            playerDecade = '1980s';
-        } else if (playerYear >= 90 && playerYear <= 99) {
-            playerDecade = '1990s';
-        } else if (playerYear >= 0 && playerYear <= 9) {
-            playerDecade = '2000s';
-        } else if (playerYear >= 10 && playerYear <= 19) {
-            playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
-            playerDecade = '2020s';
-        }
-
-        return playerDecade === decade;
-    });
-
-    if (playersFromDecade.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
-        const player = playersFromDecade[randomIndex];
-        displayPlayer(player);
-    } else {
-        const playerQuestionElement = document.getElementById('playerQuestion');
-        if (playerQuestionElement) {
-            playerQuestionElement.textContent = `No players found for the ${decade}`;
-        }
     }
 }
