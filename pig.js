@@ -37,6 +37,11 @@ function createNewGame() {
         .then((docRef) => {
             gameId = docRef.id;
             console.log('Game created with ID:', gameId);
+
+            // Update the URL with the gameId
+            const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?gameId=${gameId}`;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+
             listenToGameUpdates();  // Start listening to game updates
         })
         .catch((error) => {
@@ -80,6 +85,12 @@ function listenToGameUpdates() {
     });
 }
 
+// Firebase: Load existing game by ID from URL
+function loadGameById(gameIdFromUrl) {
+    gameId = gameIdFromUrl;
+    listenToGameUpdates();
+}
+
 // Handle Decade Selection (by Player 1 or Player 2)
 decadeDropdown.addEventListener('change', (e) => {
     const selectedDecade = e.target.value;
@@ -97,93 +108,18 @@ decadeDropdown.addEventListener('change', (e) => {
     }
 });
 
-// Handle Player Answer Submission
-function submitAnswer(player, answer) {
-    db.collection('games').doc(gameId).update({
-        [`${player}.lastAnswer`]: answer ? 'correct' : 'incorrect'
-    });
-}
-
-// Handle Round Results
-function handleRoundResults() {
-    if (player1Answer === 'correct' && player2Answer !== 'correct') {
-        // Player 2 gets a letter
-        updateProgress('player2');
-    } else if (player2Answer === 'correct' && player1Answer !== 'correct') {
-        // Player 1 gets a letter
-        updateProgress('player1');
-    }
-
-    // Reset answers for the next round
-    resetForNextRound();
-}
-
-// Update Player Progress (P-I-G)
-function updateProgress(player) {
-    db.collection('games').doc(gameId).get().then((doc) => {
-        const progress = doc.data()[player].progress || '';
-        let newProgress = progress + 'PIG'[progress.length];  // Add the next letter (P -> I -> G)
-
-        db.collection('games').doc(gameId).update({
-            [`${player}.progress`]: newProgress
-        });
-
-        // Check if the player has completed "PIG"
-        if (newProgress === 'PIG') {
-            alert(`${player === 'player1' ? 'Player 1' : 'Player 2'} has lost the game!`);
-            resetGame();
-        }
-    });
-}
-
-// Reset for the Next Round
-function resetForNextRound() {
-    db.collection('games').doc(gameId).update({
-        'player1.lastAnswer': '',
-        'player2.lastAnswer': ''
-    });
-
-    // Switch the turn to the other player
-    currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
-}
-
-// Pick a Random Player from the Selected Decade using JSON data
-function pickRandomPlayerFromDecade(decade) {
-    const playersFromDecade = playersData.filter(player => {
-        let playerYear = player.retirement_year;
-
-        let playerDecade;
-        if (playerYear >= 50 && playerYear <= 59) {
-            playerDecade = '1950s';
-        } else if (playerYear >= 60 && playerYear <= 69) {
-            playerDecade = '1960s';
-        } else if (playerYear >= 70 && playerYear <= 79) {
-            playerDecade = '1970s';
-        } else if (playerYear >= 80 && playerYear <= 89) {
-            playerDecade = '1980s';
-        } else if (playerYear >= 90 && playerYear <= 99) {
-            playerDecade = '1990s';
-        } else if (playerYear >= 0 && playerYear <= 9) {
-            playerDecade = '2000s';
-        } else if (playerYear >= 10 && playerYear <= 19) {
-            playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
-            playerDecade = '2020s';
-        }
-
-        return playerDecade === decade;
-    });
-
-    if (playersFromDecade.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
-        return playersFromDecade[randomIndex];
-    } else {
-        return { name: 'Unknown Player', college: 'Unknown College' };
-    }
-}
-
-// Initialize Game and Load Players
+// On Page Load: Check if a `gameId` is present in the URL
 document.addEventListener('DOMContentLoaded', () => {
-    loadPlayersData();
-    createNewGame();
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameIdFromUrl = urlParams.get('gameId');
+
+    if (gameIdFromUrl) {
+        console.log('Loading existing game with ID:', gameIdFromUrl);
+        loadGameById(gameIdFromUrl);  // Load the existing game if the gameId is present in the URL
+    } else {
+        console.log('Creating a new game');
+        createNewGame();  // Create a new game if no gameId is present in the URL
+    }
+
+    loadPlayersData();  // Load player data from JSON
 });
