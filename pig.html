@@ -10,14 +10,14 @@
   <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
   <script>
     const firebaseConfig = {
-  apiKey: "AIzaSyDicI1nKcrMDaaYkL_8q70yj1mM05tW5Ak",
-  authDomain: "mookie-pig-challenge.firebaseapp.com",
-  projectId: "mookie-pig-challenge",
-  storageBucket: "mookie-pig-challenge.appspot.com",
-  messagingSenderId: "96530997300",
-  appId: "1:96530997300:web:96400cf87b98c8e19eaa61",
-  measurementId: "G-NJQ84VFPYK"
-};
+      apiKey: "AIzaSyDicI1nKcrMDaaYkL_8q70yj1mM05tW5Ak",
+      authDomain: "mookie-pig-challenge.firebaseapp.com",
+      projectId: "mookie-pig-challenge",
+      storageBucket: "mookie-pig-challenge.appspot.com",
+      messagingSenderId: "96530997300",
+      appId: "1:96530997300:web:96400cf87b98c8e19eaa61",
+      measurementId: "G-NJQ84VFPYK"
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
   </script>
@@ -29,7 +29,7 @@
         <img id="playerImage" src="stilllife.png" alt="Player Headshot" class="player-headshot">
         <img src="circularframeformookie.png" alt="Frame" class="frame-overlay">
       </div>
-      <p id="playerQuestion">Where did <span id="playerName"></span> go to college?</p>
+      <p id="playerQuestion">Waiting for question...</p>
     </div>
 
     <div class="player-inputs">
@@ -50,7 +50,7 @@
       <p id="player2Progress">Player 2: </p>
     </div>
 
-    <div id="turnIndicator">Player 1 picks the decade first.</div>
+    <div id="turnIndicator">Player 1's turn</div>
   </div>
 
   <script src="pig.js"></script>
