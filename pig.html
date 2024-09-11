@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🐷</title>
+  <title>🐷 PIG Game</title>
   <link rel="stylesheet" href="pig.css">
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
@@ -25,29 +25,28 @@
 <body>
   <div id="app">
     <div id="questionContainer">
-      <!-- Player headshot and question -->
       <div class="frame-container">
         <img id="playerImage" src="stilllife.png" alt="Player Headshot" class="player-headshot">
         <img src="circularframeformookie.png" alt="Frame" class="frame-overlay">
       </div>
       <p id="playerQuestion">Where did <span id="playerName"></span> go to college?</p>
-      <div id="playingTwoForOne" class="playingTwoForOne"></div>
     </div>
 
-    <!-- User input for guesses -->
-    <input id="collegeGuess" type="text" placeholder="Enter college name" />
-    <div id="suggestions"></div>
-    
-    <!-- Submit button for answers -->
-    <button id="submitBtn">Let's see if you're right.</button>
-
-    <!-- Go 🐟 button -->
-    <div id="buttonRow">
-      <button id="goFishBtn">GO <span class="fishIcon">🐟</span></button>
+    <div class="player-inputs">
+      <div class="input-group">
+        <input id="collegeGuess1" type="text" placeholder="Player 1: Enter college name" />
+        <button id="submitBtn1">Player 1: Submit</button>
+      </div>
+      <div class="input-group">
+        <input id="collegeGuess2" type="text" placeholder="Player 2: Enter college name" />
+        <button id="submitBtn2">Player 2: Submit</button>
+      </div>
     </div>
-    
-    <!-- Decade dropdown (initially hidden, shows when GO 🐟 is clicked) -->
-    <div id="decadeDropdownContainer" style="display: none;">
+
+    <div id="result"></div>
+
+    <div id="decadePicker">
+      <button id="goFishBtn">Pick Decade</button>
       <select id="decadeDropdown">
         <option value="">Choose a Decade</option>
         <option value="1950s">1950s</option>
@@ -61,13 +60,12 @@
       </select>
     </div>
 
-    <!-- Result and turn display -->
-    <div id="result"></div>
     <div id="gameProgress">
       <p id="player1Progress">Player 1: </p>
       <p id="player2Progress">Player 2: </p>
     </div>
-    <div id="turnIndicator"></div>
+
+    <div id="turnIndicator">Player 1 picks the decade first.</div>
   </div>
 
   <script src="pig.js"></script>
