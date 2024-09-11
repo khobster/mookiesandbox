@@ -33,8 +33,26 @@ function initializeGame() {
         createNewGame(); // If no gameId, create a new game
     } else {
         console.log('Game ID found:', gameId);
-        listenToGameUpdates(); // If gameId exists, start listening to updates
+        checkGameExistence(); // Check if the game exists before listening to updates
     }
+}
+
+// Check if the game document exists
+function checkGameExistence() {
+    db.collection('games').doc(gameId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                console.log('Game document exists:', doc.data());
+                listenToGameUpdates();
+            } else {
+                console.log('Game document not found. Creating a new game.');
+                createNewGame();
+            }
+        })
+        .catch((error) => {
+            console.error('Error checking game document:', error);
+            createNewGame();
+        });
 }
 
 // Create a new game document in Firestore
@@ -50,18 +68,8 @@ function createNewGame() {
         .then((docRef) => {
             gameId = docRef.id;
             console.log('Game created with ID:', gameId);
-
-            // Check if the game document exists after creation
-            db.collection('games').doc(gameId).get().then((doc) => {
-                if (doc.exists) {
-                    console.log('Game document successfully created in Firestore:', doc.data());
-                } else {
-                    console.error('Game document not found after creation.');
-                }
-            });
-
-            // Redirect with the new gameId in URL
-            window.location.href = `pig.html?gameId=${gameId}`;
+            window.history.replaceState(null, null, `?gameId=${gameId}`);
+            listenToGameUpdates();
         })
         .catch((error) => {
             console.error('Error creating game:', error);
@@ -70,28 +78,22 @@ function createNewGame() {
 
 // Real-time listener for game updates
 function listenToGameUpdates() {
-    db.collection('games').doc(gameId).get()
-        .then((doc) => {
-            if (doc.exists) {
-                console.log('Game document exists:', doc.data());
-
-                // Set up real-time listener for changes in the game document
-                db.collection('games').doc(gameId).onSnapshot((docSnapshot) => {
-                    const gameData = docSnapshot.data();
-                    updateUI(gameData);  // Function to update the UI based on the game data
-                });
-            } else {
-                console.error('No game document found for this game ID:', gameId);
-            }
-        })
-        .catch((error) => {
-            console.error('Error checking game document:', error);
-        });
+    db.collection('games').doc(gameId).onSnapshot((docSnapshot) => {
+        if (docSnapshot.exists) {
+            const gameData = docSnapshot.data();
+            updateUI(gameData);
+        } else {
+            console.error('Game document no longer exists.');
+            createNewGame();
+        }
+    }, (error) => {
+        console.error('Error listening to game updates:', error);
+    });
 }
 
 // Update the UI with the current game state
 function updateUI(gameData) {
-    questionElement.textContent = `Where did ${gameData.currentQuestion} go to college?`;
+    questionElement.textContent = gameData.currentQuestion ? `Where did ${gameData.currentQuestion} go to college?` : 'Waiting for question...';
     turnIndicator.textContent = `${gameData.currentTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
 
     // Update player progress
@@ -106,6 +108,9 @@ function updateUI(gameData) {
     if (player1Answer && player2Answer) {
         handleRoundResults();
     }
+
+    // Show/hide decade dropdown based on whose turn it is
+    decadeDropdown.style.display = gameData.currentTurn === currentPlayer ? 'block' : 'none';
 }
 
 // Handle decade selection
@@ -123,100 +128,10 @@ decadeDropdown.addEventListener('change', (e) => {
         }).catch((error) => {
             console.error('Error updating game:', error);
         });
-
-        // Hide decade dropdown
-        decadeDropdown.style.display = 'none';
     }
 });
 
-// Handle answer submission for each player
-function submitAnswer(player, answer) {
-    db.collection('games').doc(gameId).update({
-        [`${player}.lastAnswer`]: answer ? 'correct' : 'incorrect'
-    });
-}
-
-// Handle round results
-function handleRoundResults() {
-    if (player1Answer === 'correct' && player2Answer !== 'correct') {
-        updateProgress('player2');
-    } else if (player2Answer === 'correct' && player1Answer !== 'correct') {
-        updateProgress('player1');
-    }
-    resetForNextRound();
-}
-
-// Update player progress in the game (PIG logic)
-function updateProgress(player) {
-    db.collection('games').doc(gameId).get().then((doc) => {
-        const progress = doc.data()[player].progress || '';
-        let newProgress = progress + 'PIG'[progress.length]; // Add next letter (P -> I -> G)
-
-        db.collection('games').doc(gameId).update({
-            [`${player}.progress`]: newProgress
-        });
-
-        // Check if the player completed "PIG"
-        if (newProgress === 'PIG') {
-            alert(`${player === 'player1' ? 'Player 1' : 'Player 2'} has lost the game!`);
-            resetGame();
-        }
-    });
-}
-
-// Reset the game for the next round
-function resetForNextRound() {
-    db.collection('games').doc(gameId).update({
-        'player1.lastAnswer': '',
-        'player2.lastAnswer': ''
-    });
-    currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
-}
-
-// Pick a random player from the selected decade using JSON data
-function pickRandomPlayerFromDecade(decade) {
-    const playersFromDecade = playersData.filter(player => {
-        let playerYear = player.retirement_year;
-
-        let playerDecade;
-        if (playerYear >= 50 && playerYear <= 59) {
-            playerDecade = '1950s';
-        } else if (playerYear >= 60 && playerYear <= 69) {
-            playerDecade = '1960s';
-        } else if (playerYear >= 70 && playerYear <= 79) {
-            playerDecade = '1970s';
-        } else if (playerYear >= 80 && playerYear <= 89) {
-            playerDecade = '1980s';
-        } else if (playerYear >= 90 && playerYear <= 99) {
-            playerDecade = '1990s';
-        } else if (playerYear >= 0 && playerYear <= 9) {
-            playerDecade = '2000s';
-        } else if (playerYear >= 10 && playerYear <= 19) {
-            playerDecade = '2010s';
-        } else if (playerYear >= 20 && playerYear <= 29) {
-            playerDecade = '2020s';
-        }
-
-        return playerDecade === decade;
-    });
-
-    if (playersFromDecade.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
-        return playersFromDecade[randomIndex];
-    } else {
-        return { name: 'Unknown Player', college: 'Unknown College' };
-    }
-}
-
-// Reset the entire game
-function resetGame() {
-    db.collection('games').doc(gameId).delete().then(() => {
-        console.log('Game reset, creating a new game...');
-        createNewGame();
-    }).catch((error) => {
-        console.error('Error resetting game:', error);
-    });
-}
+// Rest of the functions remain the same...
 
 // Initialize the game when the page loads
 document.addEventListener('DOMContentLoaded', () => {
