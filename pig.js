@@ -28,7 +28,7 @@ function loadPlayersData() {
 function createNewGame() {
     const newGame = {
         currentQuestion: '',
-        playerTurn: 'player1',  // Player 1 picks the decade first
+        currentTurn: 'player1',  // Player 1 picks the decade first
         player1: { lastAnswer: '', progress: '' },
         player2: { lastAnswer: '', progress: '' }
     };
@@ -37,12 +37,7 @@ function createNewGame() {
         .then((docRef) => {
             gameId = docRef.id;
             console.log('Game created with ID:', gameId);
-
-            // Update the URL with the gameId
-            const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?gameId=${gameId}`;
-            window.history.pushState({ path: newUrl }, '', newUrl);
-
-            listenToGameUpdates();  // Start listening to game updates
+            listenToGameUpdates();
         })
         .catch((error) => {
             console.error('Error creating game:', error);
@@ -54,53 +49,74 @@ function listenToGameUpdates() {
     db.collection('games').doc(gameId).onSnapshot((doc) => {
         if (doc.exists) {
             const gameData = doc.data();
-            console.log('Game data:', gameData);  // Log the game data for debugging
-
-            // Sync UI with the game state
-            questionElement.textContent = `Where did ${gameData.currentQuestion || '...'} go to college?`;
-            turnIndicator.textContent = `${gameData.playerTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
+            
+            // Update UI with the current question and turn
+            questionElement.textContent = `Where did ${gameData.currentQuestion} go to college?`;
+            turnIndicator.textContent = `${gameData.currentTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
 
             // Update player progress
-            player1Progress.textContent = gameData.player1.progress || '';
-            player2Progress.textContent = gameData.player2.progress || '';
+            player1Progress.textContent = gameData.player1.progress;
+            player2Progress.textContent = gameData.player2.progress;
 
-            // Sync the last answers
+            // Store the last answer for both players
             player1Answer = gameData.player1.lastAnswer;
             player2Answer = gameData.player2.lastAnswer;
 
-            // Sync the decade dropdown: Only show for the current player
-            if (gameData.playerTurn === currentPlayer) {
-                decadeDropdown.style.display = 'block';  // Show for the current player
-            } else {
-                decadeDropdown.style.display = 'none';  // Hide for the other player
-            }
-
-            // Handle round results if both players have submitted answers
+            // Handle round results if both players have submitted their answers
             if (player1Answer && player2Answer) {
                 handleRoundResults();
             }
-        } else {
-            console.error('No game data found!');
         }
     });
 }
 
-// Firebase: Load existing game by ID from URL
-function loadGameById(gameIdFromUrl) {
-    gameId = gameIdFromUrl;
-    listenToGameUpdates();
+// Pick a Random Player from the Selected Decade using JSON data
+function pickRandomPlayerFromDecade(decade) {
+    const playersFromDecade = playersData.filter(player => {
+        let playerYear = player.retirement_year;
+
+        let playerDecade;
+        if (playerYear >= 50 && playerYear <= 59) {
+            playerDecade = '1950s';
+        } else if (playerYear >= 60 && playerYear <= 69) {
+            playerDecade = '1960s';
+        } else if (playerYear >= 70 and playerYear <= 79) {
+            playerDecade = '1970s';
+        } else if (playerYear >= 80 && playerYear <= 89) {
+            playerDecade = '1980s';
+        } else if (playerYear >= 90 && playerYear <= 99) {
+            playerDecade = '1990s';
+        } else if (playerYear >= 2000 && playerYear <= 2009) {
+            playerDecade = '2000s';
+        } else if (playerYear >= 2010 && playerYear <= 2019) {
+            playerDecade = '2010s';
+        } else if (playerYear >= 2020) {
+            playerDecade = '2020s';
+        }
+
+        return playerDecade === decade;
+    });
+
+    if (playersFromDecade.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
+        return playersFromDecade[randomIndex];
+    } else {
+        return { name: 'Unknown Player', college: 'Unknown College' };
+    }
 }
 
 // Handle Decade Selection (by Player 1 or Player 2)
 decadeDropdown.addEventListener('change', (e) => {
     const selectedDecade = e.target.value;
+
     if (selectedDecade) {
+        // Retrieve a player from the selected decade
         const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
 
         // Update Firebase with the new question and switch turns
         db.collection('games').doc(gameId).update({
-            currentQuestion: randomPlayer.name,  // Set the selected player's name as the question
-            playerTurn: currentPlayer === 'player1' ? 'player2' : 'player1'  // Switch the turn
+            currentQuestion: randomPlayer.name,
+            currentTurn: currentPlayer === 'player1' ? 'player2' : 'player1'
         });
 
         // Hide the decade dropdown
@@ -108,18 +124,58 @@ decadeDropdown.addEventListener('change', (e) => {
     }
 });
 
-// On Page Load: Check if a `gameId` is present in the URL
-document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const gameIdFromUrl = urlParams.get('gameId');
+// Handle Player Answer Submission
+function submitAnswer(player, answer) {
+    db.collection('games').doc(gameId).update({
+        [`${player}.lastAnswer`]: answer ? 'correct' : 'incorrect'
+    });
+}
 
-    if (gameIdFromUrl) {
-        console.log('Loading existing game with ID:', gameIdFromUrl);
-        loadGameById(gameIdFromUrl);  // Load the existing game if the gameId is present in the URL
-    } else {
-        console.log('Creating a new game');
-        createNewGame();  // Create a new game if no gameId is present in the URL
+// Handle Round Results
+function handleRoundResults() {
+    if (player1Answer === 'correct' && player2Answer !== 'correct') {
+        // Player 2 gets a letter
+        updateProgress('player2');
+    } else if (player2Answer === 'correct' && player1Answer !== 'correct') {
+        // Player 1 gets a letter
+        updateProgress('player1');
     }
 
-    loadPlayersData();  // Load player data from JSON
+    // Reset answers for the next round
+    resetForNextRound();
+}
+
+// Update Player Progress (P-I-G)
+function updateProgress(player) {
+    db.collection('games').doc(gameId).get().then((doc) => {
+        const progress = doc.data()[player].progress || '';
+        let newProgress = progress + 'PIG'[progress.length];  // Add the next letter (P -> I -> G)
+        
+        db.collection('games').doc(gameId).update({
+            [`${player}.progress`]: newProgress
+        });
+
+        // Check if the player has completed PIG
+        if (newProgress === 'PIG') {
+            alert(`${player === 'player1' ? 'Player 1' : 'Player 2'} has lost the game!`);
+            resetGame();
+        }
+    });
+}
+
+// Reset for the Next Round
+function resetForNextRound() {
+    db.collection('games').doc(gameId).update({
+        'player1.lastAnswer': '',
+        'player2.lastAnswer': ''
+    });
+
+    // Switch the turn to the other player
+    currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
+}
+
+// Initialize Game and Load Players
+document.addEventListener('DOMContentLoaded', () => {
+    loadPlayersData();
+    createNewGame();
 });
