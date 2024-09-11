@@ -90,6 +90,32 @@
    <!-- Your existing game script -->
    <script src="plunko.js"></script>
 
+    <script>
+     // Add an event listener to the PIG button (🐷)
+     document.querySelector('#pigLink').addEventListener('click', (event) => {
+       event.preventDefault();  // Prevent the default action
+
+       // Create a new game in Firestore
+       const newGame = {
+           currentQuestion: '',
+           currentTurn: 'player1',
+           player1: { lastAnswer: '', progress: '' },
+           player2: { lastAnswer: '', progress: '' }
+       };
+
+       // Add the new game to Firestore and redirect the player to the PIG game with the new gameId
+       db.collection('games').add(newGame)
+           .then((docRef) => {
+               const gameId = docRef.id;
+               // Redirect the player to the PIG game with the gameId in the URL
+               window.location.href = `https://www.mookie.click/pig.html?gameId=${gameId}`;
+           })
+           .catch((error) => {
+               console.error('Error creating game:', error);
+           });
+     });
+   </script>
+
    <!-- Popup for MOOKIE challenge -->
    <div id="mookiePopup" class="popup">
        <div class="popup-content">
