@@ -4,6 +4,8 @@ let correctStreak1 = 0;
 let correctStreak2 = 0;
 let player1HasGuessed = false;
 let player2HasGuessed = false;
+let currentDifficultyLevel = 1;
+let cumulativeRarityScore = 0;
 
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
@@ -46,8 +48,8 @@ function loadPlayersData() {
         .then(response => response.json())
         .then(data => {
             playersData = data;
-            playersData.sort((a, b) => a.id - b.id);
-            startNewRound();
+            playersData.sort((a, b) => a.rarity_score - b.rarity_score);  // Sort players by rarity score
+            startNewRound();  
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
@@ -79,9 +81,14 @@ function startNewRound() {
 
 function displayRandomPlayer() {
     if (playersData.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersData.length);
-        currentPlayer = playersData[randomIndex];
+        // Filter players based on difficulty level and rarity score
+        const availablePlayers = playersData.filter(player => player.rarity_score <= currentDifficultyLevel);
+        const randomIndex = Math.floor(Math.random() * availablePlayers.length);
+        currentPlayer = availablePlayers[randomIndex];
+
+        // Store the current player's ID in Firebase so both players get the same question
         gameRef.set({ currentPlayerID: currentPlayer.id });
+
         displayPlayer(currentPlayer);
     } else {
         console.log("No data available");
@@ -94,6 +101,7 @@ function displayPlayer(player) {
 
     if (playerNameElement && playerImageElement) {
         playerNameElement.textContent = player.name;
+
         playerImageElement.src = 'stilllife.png';
         if (player.image_url) {
             playerImageElement.src = player.image_url;
@@ -102,6 +110,7 @@ function displayPlayer(player) {
                 this.src = 'stilllife.png';
             };
         }
+
         document.getElementById('result').textContent = '';
         document.getElementById('result').className = '';
         document.getElementById('turnIndicator').textContent = "Player 1's turn";
@@ -132,7 +141,7 @@ function handlePlayerGuess(playerNumber) {
 
     if (player1HasGuessed && player2HasGuessed) {
         setTimeout(() => {
-            startNewRound();
+            startNewRound();  // Start a new round after both players have guessed
         }, 2000);
     }
 }
