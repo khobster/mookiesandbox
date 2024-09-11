@@ -1,198 +1,144 @@
-let playersData = [];
-let playerTurn = 1; // Alternating turn for selecting the decade
-let playerProgress = { 1: "", 2: "" }; // Track P-I-G progress for both players
-let gameId = 'unique_game_id'; // Replace this dynamically
-let currentPlayer; // Store current player question
-let selectedDecade = ""; // Store selected decade
+// Firebase Reference
+const db = firebase.firestore();
+let gameId;  // This will hold the dynamically generated game ID
 
-document.addEventListener('DOMContentLoaded', () => {
-    initializeGame(); // Initialize the game, including Firebase syncing
+// UI Elements
+const player1Progress = document.getElementById('player1Progress');
+const player2Progress = document.getElementById('player2Progress');
+const decadeDropdown = document.getElementById('decadeDropdown');
+const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
+const turnIndicator = document.getElementById('turnIndicator');
+const questionElement = document.getElementById('playerQuestion');
 
-    // Add listeners for decade selection and answer submission
-    const submitBtn1 = document.getElementById('submitBtn1');
-    const submitBtn2 = document.getElementById('submitBtn2');
+// Track answers and player turn
+let player1Answer = null;
+let player2Answer = null;
+let playerTurn = 1;  // Player 1 starts by default
 
-    if (submitBtn1 && submitBtn2) {
-        submitBtn1.addEventListener('click', handleGuess);
-        submitBtn2.addEventListener('click', handleGuess);
-    }
+// Create a new game document with a unique game ID
+function createNewGame() {
+    const newGame = {
+        currentQuestion: '',
+        currentTurn: 'player1', // Player 1 starts by choosing the decade
+        player1: {
+            lastAnswer: '',
+            progress: ''
+        },
+        player2: {
+            lastAnswer: '',
+            progress: ''
+        }
+    };
 
-    const goFishBtn = document.getElementById('goFishBtn');
-    if (goFishBtn) {
-        goFishBtn.addEventListener('click', () => {
-            document.getElementById('decadeDropdownContainer').style.display = 'block';
+    // Add a new document to the "games" collection and get its ID
+    db.collection('games').add(newGame)
+        .then((docRef) => {
+            gameId = docRef.id;  // Store the new game ID
+            console.log('Game created with ID:', gameId);
+
+            // Start listening to the game state
+            listenToGameUpdates();
+        })
+        .catch((error) => {
+            console.error('Error creating game:', error);
         });
-    }
+}
 
-    const decadeDropdown = document.getElementById('decadeDropdown');
-    if (decadeDropdown) {
-        decadeDropdown.addEventListener('change', (e) => {
-            selectedDecade = e.target.value;
-            if (selectedDecade) {
-                document.getElementById('decadeDropdownContainer').style.display = 'none';
-                displayPlayerFromDecade(selectedDecade);
+// Real-time Firestore Listener for Game Updates
+function listenToGameUpdates() {
+    db.collection('games').doc(gameId).onSnapshot((doc) => {
+        if (doc.exists) {
+            const gameData = doc.data();
+            
+            // Update UI with the current question and turn
+            questionElement.textContent = `Where did ${gameData.currentQuestion} go to college?`;
+            turnIndicator.textContent = `${gameData.currentTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn to pick the decade`;
+            
+            // Update player progress
+            player1Progress.textContent = gameData.player1.progress;
+            player2Progress.textContent = gameData.player2.progress;
+
+            // Track the last answer for both players
+            player1Answer = gameData.player1.lastAnswer;
+            player2Answer = gameData.player2.lastAnswer;
+            
+            // Check if both players have answered
+            if (player1Answer && player2Answer) {
+                handleRoundResults();
             }
+        }
+    });
+}
+
+// Handle Decade Selection
+decadeDropdown.addEventListener('change', (e) => {
+    const selectedDecade = e.target.value;
+
+    if (selectedDecade) {
+        // Pick a random player from the selected decade (replace with actual logic)
+        const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
+        
+        // Update the game with the new question and switch turns
+        db.collection('games').doc(gameId).update({
+            currentQuestion: randomPlayer,
+            currentTurn: playerTurn === 1 ? 'player2' : 'player1'
         });
+        
+        decadeDropdownContainer.style.display = 'none';  // Hide the dropdown after selecting
     }
 });
 
-// Initialize game
-function initializeGame() {
-    loadPlayersData(); // Load players data
-    listenToGameUpdates(); // Listen to Firebase updates for sync
-}
-
-// Load players data
-function loadPlayersData() {
-    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
-        .then(response => response.json())
-        .then(data => {
-            playersData = data;
-            playersData.sort((a, b) => a.rarity_score - b.rarity_score); // Sort players by rarity score
-            startStandardPlay();
-        })
-        .catch(error => console.error('Error loading player data:', error));
-}
-
-// Start game with a random player
-function startStandardPlay() {
-    // Player chooses decade before question is selected
-    if (!selectedDecade) {
-        document.getElementById('decadeDropdownContainer').style.display = 'block';
-    } else {
-        displayRandomPlayer();
-    }
-}
-
-// Display random player based on selected decade
-function displayPlayerFromDecade(decade) {
-    const playersFromDecade = playersData.filter(player => player.retirement_year.startsWith(decade));
-    if (playersFromDecade.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
-        currentPlayer = playersFromDecade[randomIndex];
-        displayPlayer(currentPlayer);
-    }
-}
-
-// Display player info
-function displayPlayer(player) {
-    const playerNameElement = document.getElementById('playerName');
-    const playerImageElement = document.getElementById('playerImage');
-
-    if (playerNameElement && playerImageElement) {
-        playerNameElement.textContent = player.name;
-        playerImageElement.src = player.image_url || 'stilllife.png';
-        playerImageElement.onerror = function () {
-            this.onerror = null;
-            this.src = 'stilllife.png';
-        };
-        resetInputs(); // Clear previous inputs
-    }
+// Handle Answer Submission (each player submits an answer)
+function submitAnswer(player, answer) {
+    // Update the player's last answer in the game state
     db.collection('games').doc(gameId).update({
-        currentPlayerQuestion: player
+        [`${player}.lastAnswer`]: answer ? 'correct' : 'incorrect'
     });
 }
 
-// Reset input fields for new question
-function resetInputs() {
-    document.getElementById('collegeGuess1').value = '';
-    document.getElementById('collegeGuess2').value = '';
-    document.getElementById('result').textContent = '';
+// Determine Round Results
+function handleRoundResults() {
+    if (player1Answer === 'correct' && player2Answer !== 'correct') {
+        // Player 2 gets a letter
+        updateProgress(2);
+    } else if (player2Answer === 'correct' && player1Answer !== 'correct') {
+        // Player 1 gets a letter
+        updateProgress(1);
+    }
+
+    // Reset for the next round
+    resetForNextRound();
 }
 
-// Listen to Firebase for game updates
-function listenToGameUpdates() {
-    db.collection('games').doc(gameId).onSnapshot((doc) => {
-        const gameData = doc.data();
-        playerProgress = gameData.playerProgress || { 1: "", 2: "" };
-        playerTurn = gameData.playerTurn || 1;
-        updatePlayerProgressDisplay();
-        if (gameData.currentPlayerQuestion) {
-            displayPlayer(gameData.currentPlayerQuestion);
+// Update Progress (PIG game mechanics)
+function updateProgress(player) {
+    db.collection('games').doc(gameId).get().then((doc) => {
+        const progress = doc.data()[`player${player}`].progress || '';
+        
+        let newProgress = progress + 'P'.charAt(progress.length);  // Add next letter (P -> I -> G)
+        db.collection('games').doc(gameId).update({
+            [`player${player}.progress`]: newProgress
+        });
+
+        // Check if player has completed "PIG"
+        if (newProgress === 'PIG') {
+            alert(`Player ${player} has lost the game!`);
+            resetGame();
         }
     });
 }
 
-// Handle both players' guesses
-function handleGuess() {
-    const userGuess1 = document.getElementById('collegeGuess1').value.trim().toLowerCase();
-    const userGuess2 = document.getElementById('collegeGuess2').value.trim().toLowerCase();
-    const playerName = document.getElementById('playerName').textContent;
-
-    const isCorrect1 = currentPlayer && isCloseMatch(userGuess1, currentPlayer.college || 'No College');
-    const isCorrect2 = currentPlayer && isCloseMatch(userGuess2, currentPlayer.college || 'No College');
+// Reset for the next round
+function resetForNextRound() {
+    // Reset the answers in the database
+    db.collection('games').doc(gameId).update({
+        'player1.lastAnswer': '',
+        'player2.lastAnswer': ''
+    });
     
-    updateGameLogic(isCorrect1, isCorrect2);
-}
-
-// Check if guesses are correct
-function isCloseMatch(guess, answer) {
-    return guess === answer.toLowerCase().trim();
-}
-
-// Update game logic
-function updateGameLogic(isCorrect1, isCorrect2) {
-    const resultElement = document.getElementById('result');
-    
-    if (isCorrect1 && !isCorrect2) {
-        resultElement.textContent = "Player 2 gets a letter!";
-        addLetterToPlayer(2); // Player 2 gets a letter
-    } else if (!isCorrect1 && isCorrect2) {
-        resultElement.textContent = "Player 1 gets a letter!";
-        addLetterToPlayer(1); // Player 1 gets a letter
-    } else if (isCorrect1 && isCorrect2) {
-        resultElement.textContent = "Both players got it right! No letters.";
-    } else {
-        resultElement.textContent = "Both players got it wrong! No letters.";
-    }
-
-    setTimeout(() => {
-        passTurnToNextPlayer();
-    }, 3000);
-}
-
-// Add a letter to the player who got the question wrong
-function addLetterToPlayer(player) {
-    const currentProgress = playerProgress[player];
-    if (currentProgress.length < 3) {
-        playerProgress[player] = currentProgress + "PIG"[currentProgress.length];
-        updatePlayerProgressDisplay();
-
-        if (playerProgress[player] === "PIG") {
-            endGame(player);
-        }
-    }
-}
-
-// Update player progress display
-function updatePlayerProgressDisplay() {
-    document.getElementById('player1Progress').textContent = `Player 1: ${playerProgress[1]}`;
-    document.getElementById('player2Progress').textContent = `Player 2: ${playerProgress[2]}`;
-}
-
-// End the game when a player spells PIG
-function endGame(player) {
-    alert(`Player ${player} has spelled P-I-G and lost the game!`);
-    resetGame();
-}
-
-// Reset the game after someone loses
-function resetGame() {
-    playerProgress = { 1: "", 2: "" };
-    playerTurn = 1; // Reset turn
-    updatePlayerProgressDisplay();
-    document.getElementById('decadeDropdownContainer').style.display = 'block'; // Prompt for new decade selection
-}
-
-// Pass turn to next player and choose new question
-function passTurnToNextPlayer() {
+    // Switch the turn to the next player
     playerTurn = playerTurn === 1 ? 2 : 1;
-    document.getElementById('turnIndicator').textContent = `Player ${playerTurn}'s turn to pick the decade.`;
-    document.getElementById('decadeDropdownContainer').style.display = 'block'; // Show dropdown for next decade selection
-
-    // Sync turn and progress with Firebase
-    db.collection('games').doc(gameId).update({
-        playerTurn: playerTurn,
-        playerProgress: playerProgress
-    });
 }
+
+// Initialize the game
+createNewGame();  // This will create a new game each time
