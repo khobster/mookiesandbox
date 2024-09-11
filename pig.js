@@ -50,7 +50,18 @@ function createNewGame() {
         .then((docRef) => {
             gameId = docRef.id;
             console.log('Game created with ID:', gameId);
-            window.location.href = `pig.html?gameId=${gameId}`; // Redirect with new gameId
+
+            // Check if the game document exists after creation
+            db.collection('games').doc(gameId).get().then((doc) => {
+                if (doc.exists) {
+                    console.log('Game document successfully created in Firestore:', doc.data());
+                } else {
+                    console.error('Game document not found after creation.');
+                }
+            });
+
+            // Redirect with the new gameId in URL
+            window.location.href = `pig.html?gameId=${gameId}`;
         })
         .catch((error) => {
             console.error('Error creating game:', error);
@@ -59,30 +70,42 @@ function createNewGame() {
 
 // Real-time listener for game updates
 function listenToGameUpdates() {
-    db.collection('games').doc(gameId).onSnapshot((doc) => {
-        if (doc.exists) {
-            const gameData = doc.data();
+    db.collection('games').doc(gameId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                console.log('Game document exists:', doc.data());
 
-            // Update UI
-            questionElement.textContent = `Where did ${gameData.currentQuestion} go to college?`;
-            turnIndicator.textContent = `${gameData.currentTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
-
-            // Update player progress
-            player1Progress.textContent = gameData.player1.progress;
-            player2Progress.textContent = gameData.player2.progress;
-
-            // Store answers
-            player1Answer = gameData.player1.lastAnswer;
-            player2Answer = gameData.player2.lastAnswer;
-
-            // If both players answered, handle results
-            if (player1Answer && player2Answer) {
-                handleRoundResults();
+                // Set up real-time listener for changes in the game document
+                db.collection('games').doc(gameId).onSnapshot((docSnapshot) => {
+                    const gameData = docSnapshot.data();
+                    updateUI(gameData);  // Function to update the UI based on the game data
+                });
+            } else {
+                console.error('No game document found for this game ID:', gameId);
             }
-        } else {
-            console.log('No game document found for this game ID.');
-        }
-    });
+        })
+        .catch((error) => {
+            console.error('Error checking game document:', error);
+        });
+}
+
+// Update the UI with the current game state
+function updateUI(gameData) {
+    questionElement.textContent = `Where did ${gameData.currentQuestion} go to college?`;
+    turnIndicator.textContent = `${gameData.currentTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
+
+    // Update player progress
+    player1Progress.textContent = gameData.player1.progress;
+    player2Progress.textContent = gameData.player2.progress;
+
+    // Store answers
+    player1Answer = gameData.player1.lastAnswer;
+    player2Answer = gameData.player2.lastAnswer;
+
+    // If both players have answered, handle round results
+    if (player1Answer && player2Answer) {
+        handleRoundResults();
+    }
 }
 
 // Handle decade selection
@@ -183,6 +206,16 @@ function pickRandomPlayerFromDecade(decade) {
     } else {
         return { name: 'Unknown Player', college: 'Unknown College' };
     }
+}
+
+// Reset the entire game
+function resetGame() {
+    db.collection('games').doc(gameId).delete().then(() => {
+        console.log('Game reset, creating a new game...');
+        createNewGame();
+    }).catch((error) => {
+        console.error('Error resetting game:', error);
+    });
 }
 
 // Initialize the game when the page loads
