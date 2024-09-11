@@ -17,7 +17,8 @@ function loadPlayersData() {
         .then(response => response.json())
         .then(data => {
             playersData = data;
-            console.log('Players data loaded:', playersData);
+            console.log('Players data loaded:', playersData.length, 'players');
+            console.log('Sample players:', playersData.slice(0, 5));  // Log the first 5 players
         })
         .catch(error => {
             console.error('Error loading players data:', error);
@@ -114,48 +115,65 @@ function updateUI(gameData) {
     decadeDropdown.style.display = gameData.currentTurn === currentPlayer ? 'block' : 'none';
 }
 
-// Handle decade selection
-decadeDropdown.addEventListener('change', (e) => {
-    const selectedDecade = e.target.value;
-
-    if (selectedDecade) {
-        const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
-
-        db.collection('games').doc(gameId).update({
-            currentQuestion: randomPlayer.name,
-            currentTurn: currentPlayer === 'player1' ? 'player2' : 'player1'
-        }).then(() => {
-            console.log('Game updated successfully');
-        }).catch((error) => {
-            console.error('Error updating game:', error);
-            checkAndInitializeGame(); // Try to reinitialize the game if update fails
-        });
-    }
-});
-
 // Pick a random player from the selected decade
 function pickRandomPlayerFromDecade(decade) {
+    console.log('Selecting player from decade:', decade);
+    console.log('Total players in data:', playersData.length);
+
     const playersFromDecade = playersData.filter(player => {
-        const playerYear = player.retirement_year;
-        const playerDecade = Math.floor(playerYear / 10) * 10 + 's';
+        const playerYear = parseInt(player.retirement_year);
+        let playerDecade;
+
+        if (playerYear >= 1950 && playerYear < 1960) playerDecade = '1950s';
+        else if (playerYear >= 1960 && playerYear < 1970) playerDecade = '1960s';
+        else if (playerYear >= 1970 && playerYear < 1980) playerDecade = '1970s';
+        else if (playerYear >= 1980 && playerYear < 1990) playerDecade = '1980s';
+        else if (playerYear >= 1990 && playerYear < 2000) playerDecade = '1990s';
+        else if (playerYear >= 2000 && playerYear < 2010) playerDecade = '2000s';
+        else if (playerYear >= 2010 && playerYear < 2020) playerDecade = '2010s';
+        else if (playerYear >= 2020) playerDecade = '2020s';
+
         return playerDecade === decade;
     });
 
+    console.log('Players found in selected decade:', playersFromDecade.length);
+
     if (playersFromDecade.length > 0) {
         const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
-        return playersFromDecade[randomIndex];
+        const selectedPlayer = playersFromDecade[randomIndex];
+        console.log('Selected player:', selectedPlayer.name);
+        return selectedPlayer;
     } else {
+        console.error('No players found for the selected decade:', decade);
         return { name: 'Unknown Player', college: 'Unknown College' };
     }
 }
 
-// Initialize the game when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    loadPlayersData();
-    initializeGame();
+// Handle decade selection
+decadeDropdown.addEventListener('change', (e) => {
+    const selectedDecade = e.target.value;
+    console.log('Selected decade:', selectedDecade);
+
+    if (selectedDecade) {
+        const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
+
+        if (randomPlayer.name !== 'Unknown Player') {
+            db.collection('games').doc(gameId).update({
+                currentQuestion: randomPlayer.name,
+                currentTurn: currentPlayer === 'player1' ? 'player2' : 'player1'
+            }).then(() => {
+                console.log('Game updated successfully with player:', randomPlayer.name);
+            }).catch((error) => {
+                console.error('Error updating game:', error);
+                checkAndInitializeGame();
+            });
+        } else {
+            console.error('Failed to select a valid player for the decade:', selectedDecade);
+            alert('No players found for the selected decade. Please try another decade.');
+        }
+    }
 });
 
-// Add these functions to handle game logic
 function submitAnswer(player, answer) {
     db.collection('games').doc(gameId).update({
         [`${player}.lastAnswer`]: answer ? 'correct' : 'incorrect'
@@ -221,3 +239,9 @@ function resetGame() {
         createNewGame(); // Create a new game even if deletion fails
     });
 }
+
+// Initialize the game when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    loadPlayersData();
+    initializeGame();
+});
