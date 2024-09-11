@@ -13,6 +13,15 @@ let player1Answer = null;
 let player2Answer = null;
 let playerTurn = 1;  // Player 1 starts by default
 
+// Mock player data
+let playersData = [
+    { name: "Grant Hill", retirement_year: 2007 },
+    { name: "Michael Jordan", retirement_year: 2003 },
+    { name: "Larry Bird", retirement_year: 1992 },
+    { name: "Magic Johnson", retirement_year: 1991 },
+    // Add more players as needed
+];
+
 // Create a new game document with a unique game ID
 function createNewGame() {
     const newGame = {
@@ -73,18 +82,47 @@ decadeDropdown.addEventListener('change', (e) => {
     const selectedDecade = e.target.value;
 
     if (selectedDecade) {
-        // Pick a random player from the selected decade (replace with actual logic)
+        // Pick a random player from the selected decade
         const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
         
         // Update the game with the new question and switch turns
         db.collection('games').doc(gameId).update({
-            currentQuestion: randomPlayer,
+            currentQuestion: randomPlayer.name,
             currentTurn: playerTurn === 1 ? 'player2' : 'player1'
         });
         
         decadeDropdownContainer.style.display = 'none';  // Hide the dropdown after selecting
     }
 });
+
+// Pick a random player from the selected decade
+function pickRandomPlayerFromDecade(selectedDecade) {
+    const playersFromDecade = playersData.filter(player => {
+        const playerDecade = getPlayerDecade(player.retirement_year);
+        return playerDecade === selectedDecade;
+    });
+
+    if (playersFromDecade.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
+        return playersFromDecade[randomIndex];  // Return the random player
+    } else {
+        console.error(`No players found for the selected decade: ${selectedDecade}`);
+        return null;
+    }
+}
+
+// Helper function to get the decade from the retirement year
+function getPlayerDecade(year) {
+    if (year >= 1950 && year <= 1959) return "1950s";
+    if (year >= 1960 && year <= 1969) return "1960s";
+    if (year >= 1970 && year <= 1979) return "1970s";
+    if (year >= 1980 && year <= 1989) return "1980s";
+    if (year >= 1990 && year <= 1999) return "1990s";
+    if (year >= 2000 && year <= 2009) return "2000s";
+    if (year >= 2010 && year <= 2019) return "2010s";
+    if (year >= 2020 && year <= 2029) return "2020s";
+    return null;
+}
 
 // Handle Answer Submission (each player submits an answer)
 function submitAnswer(player, answer) {
