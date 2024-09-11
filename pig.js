@@ -1,5 +1,3 @@
-let db = firebase.firestore(); // Use the Firebase instance initialized in the HTML
-
 let playersData = [];
 let playerTurn = 1; // Alternating turn for selecting the decade
 let playerProgress = { 1: "", 2: "" }; // Track P-I-G progress for both players
