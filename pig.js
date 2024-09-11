@@ -124,6 +124,7 @@ function pickRandomPlayerFromDecade(decade) {
         const playerYear = parseInt(player.retirement_year);
         let playerDecade;
 
+        // Align the logic with the Plunko game's success in picking players
         if (playerYear >= 1950 && playerYear < 1960) playerDecade = '1950s';
         else if (playerYear >= 1960 && playerYear < 1970) playerDecade = '1960s';
         else if (playerYear >= 1970 && playerYear < 1980) playerDecade = '1970s';
@@ -144,8 +145,9 @@ function pickRandomPlayerFromDecade(decade) {
         console.log('Selected player:', selectedPlayer.name);
         return selectedPlayer;
     } else {
-        console.error('No players found for the selected decade:', decade);
-        return { name: 'Unknown Player', college: 'Unknown College' };
+        // Instead of an alert, we log a message and provide feedback in the UI
+        console.warn('No players found for the selected decade:', decade);
+        return null;  // Return null instead of a placeholder player
     }
 }
 
@@ -157,7 +159,8 @@ decadeDropdown.addEventListener('change', (e) => {
     if (selectedDecade) {
         const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
 
-        if (randomPlayer.name !== 'Unknown Player') {
+        if (randomPlayer) {
+            // Proceed if a valid player was found
             db.collection('games').doc(gameId).update({
                 currentQuestion: randomPlayer.name,
                 currentTurn: currentPlayer === 'player1' ? 'player2' : 'player1'
@@ -168,8 +171,8 @@ decadeDropdown.addEventListener('change', (e) => {
                 checkAndInitializeGame();
             });
         } else {
-            console.error('Failed to select a valid player for the decade:', selectedDecade);
-            alert('No players found for the selected decade. Please try another decade.');
+            // Provide feedback in the UI rather than an alert
+            questionElement.textContent = `No players found for the selected decade. Please try another decade.`;
         }
     }
 });
