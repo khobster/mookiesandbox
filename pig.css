@@ -7,8 +7,7 @@ body, html {
     margin: 0;
     padding: 0;
     height: 100%;
-    overflow: hidden; /* Prevent scrolling */
-    background-color: white;
+    overflow: hidden;
 }
 
 #app {
@@ -17,15 +16,15 @@ body, html {
     margin: 0 auto;
     padding: 20px;
     position: relative;
-    padding-bottom: 100px; /* Avoid overlap */
-    height: calc(100vh - 100px); /* Adjust height */
-    overflow-y: auto; /* Allow scrolling */
+    padding-bottom: 100px;
+    height: calc(100vh - 100px);
+    overflow-y: auto;
 }
 
 .frame-container {
     position: relative;
-    width: 200px;
-    height: 200px;
+    width: 180px; /* Adjusted width */
+    height: 180px; /* Adjusted height */
     margin: 0 auto;
     overflow: hidden;
     border-radius: 50%;
@@ -36,6 +35,7 @@ body, html {
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
+    transform: scale(0.85); /* Adjust the size */
 }
 
 .frame-overlay {
@@ -47,110 +47,63 @@ body, html {
     transform: translate(-50%, -50%);
     z-index: 2;
     pointer-events: none;
-    background-image: url('circularframeformookie.png');
     background-size: cover;
     border-radius: 50%;
 }
 
-#playerQuestion {
-    font-family: 'Archivo Narrow', sans-serif;
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-#playerName {
-    font-family: 'Archivo Narrow', sans-serif;
-    font-size: 26px;
-    color: #333;
-}
-
 #collegeGuess {
-    width: 100%;
+    width: 90%; /* Adjusted width */
     padding: 15px;
-    font-size: 16px;
+    margin: 15px 0;
     border: 2px solid #333;
-    border-radius: 6px;
-    margin-top: 15px;
-    margin-bottom: 10px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: 'Archivo Narrow', sans-serif;
+    box-sizing: border-box;
 }
 
 #submitBtn {
     background-color: #00b0a9;
-    color: white;
-    padding: 15px 20px;
-    font-size: 18px;
-    font-weight: bold;
+    color: #f8f8f8;
     text-transform: uppercase;
     border: none;
-    border-radius: 6px;
+    padding: 12px;
+    font-size: 18px;
+    font-weight: bold;
     cursor: pointer;
+    border-radius: 4px;
+    margin-top: 15px;
     width: 100%;
-    margin-top: 20px;
-    transition: background-color 0.3s;
 }
 
 #submitBtn:hover {
     background-color: #008f8a;
 }
 
+#buttonRow {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    width: 100%;
+}
+
 #goFishBtn {
     background-color: #1E90FF;
     color: white;
-    padding: 10px 15px;
-    font-size: 16px;
-    border-radius: 6px;
+    text-transform: uppercase;
     border: none;
+    padding: 12px;
+    font-size: 14px;
     cursor: pointer;
+    border-radius: 4px;
     width: 100%;
-    margin-top: 10px;
 }
 
 #goFishBtn:hover {
     background-color: #1C86EE;
 }
 
-#suggestions {
-    position: absolute;
-    background-color: white;
-    border: 1px solid #ccc;
-    max-height: 200px;
-    overflow-y: auto;
-    width: 90%;
-    z-index: 1000;
-    margin-top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.suggestion-item {
-    padding: 10px;
-    cursor: pointer;
-}
-
-.suggestion-item:hover {
-    background-color: #f0f0f0;
-}
-
-#result {
-    margin-top: 20px;
-    padding: 10px;
-    color: white;
-    background-color: #333;
-    border-radius: 6px;
-    font-size: 18px;
-    display: none;
-    text-align: center;
-}
-
-.correct {
-    background-color: green;
-}
-
-.incorrect {
-    background-color: red;
-}
-
-/* Dropdown for decades */
 #decadeDropdownContainer {
     margin-top: 10px;
 }
@@ -159,6 +112,51 @@ body, html {
     width: 100%;
     padding: 10px;
     border: 2px solid #ddd;
-    border-radius: 6px;
+    border-radius: 4px;
     font-size: 16px;
+    font-family: 'Archivo Narrow', sans-serif;
+}
+
+#result {
+    margin-top: 15px;
+    padding: 10px;
+    text-align: center;
+    font-size: 18px;
+    font-family: 'Archivo Narrow', sans-serif;
+}
+
+.correct {
+    background-color: green;
+    color: white;
+    padding: 10px;
+}
+
+.incorrect {
+    background-color: red;
+    color: white;
+    padding: 10px;
+}
+
+#suggestions {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ddd;
+    max-height: 150px;
+    overflow-y: auto;
+    width: 90%;
+    z-index: 1000;
+    margin-top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 14px;
+}
+
+.suggestion-item {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.suggestion-item:hover {
+    background-color: #f0f0f0;
 }
