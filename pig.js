@@ -1,132 +1,122 @@
 let playersData = [];
-let currentPlayer = 'player1'; // Player 1 starts by default
-let player1Answer = null;
-let player2Answer = null;
+let currentPlayer = null; // Store the current player globally so both players answer the same question.
+let correctStreak1 = 0;
+let correctStreak2 = 0;
+let player1Turn = true; // Track whose turn it is
 
-// Get UI Elements
-const player1Progress = document.getElementById('player1Progress');
-const player2Progress = document.getElementById('player2Progress');
-const questionElement = document.getElementById('playerQuestion');
-const turnIndicator = document.getElementById('turnIndicator');
+const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
+const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
-// Load players data from the JSON file
+document.addEventListener('DOMContentLoaded', () => {
+    loadPlayersData();
+
+    // Handle player submissions
+    const submitBtn1 = document.getElementById('submitBtn1');
+    const submitBtn2 = document.getElementById('submitBtn2');
+
+    submitBtn1.addEventListener('click', () => {
+        handlePlayerGuess(1);
+    });
+
+    submitBtn2.addEventListener('click', () => {
+        handlePlayerGuess(2);
+    });
+});
+
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
         .then(response => response.json())
         .then(data => {
             playersData = data;
-            console.log('Players data loaded:', playersData.length, 'players');
-            displayRandomPlayer(); // Pick a random player on load
+            displayRandomPlayer();
         })
         .catch(error => {
-            console.error('Error loading players data:', error);
+            console.error('Error loading JSON:', error);
+            const playerQuestionElement = document.getElementById('playerQuestion');
+            if (playerQuestionElement) {
+                playerQuestionElement.textContent = 'Error loading player data.';
+            }
         });
 }
 
-// Initialize the game when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    loadPlayersData();
-});
-
-// Pick a random player and display it
 function displayRandomPlayer() {
     if (playersData.length > 0) {
         const randomIndex = Math.floor(Math.random() * playersData.length);
-        const player = playersData[randomIndex];
-        displayPlayer(player);
+        currentPlayer = playersData[randomIndex]; // Set the current player globally
+        displayPlayer(currentPlayer);
     } else {
-        console.error("No players data available");
+        console.log("No data available");
     }
 }
 
-// Display player details in the UI
 function displayPlayer(player) {
     const playerNameElement = document.getElementById('playerName');
     const playerImageElement = document.getElementById('playerImage');
 
     if (playerNameElement && playerImageElement) {
-        playerNameElement.textContent = player.name || 'Unknown Player';
-        playerImageElement.src = player.image_url || 'stilllife.png';
+        playerNameElement.textContent = player.name;
 
-        playerImageElement.onerror = function () {
-            this.onerror = null;
-            this.src = 'stilllife.png'; // Fallback to default image
-        };
+        playerImageElement.src = 'stilllife.png'; // Placeholder image
+        if (player.image_url) {
+            playerImageElement.src = player.image_url;
+            playerImageElement.onerror = function () {
+                this.onerror = null;
+                this.src = 'stilllife.png';
+            };
+        }
 
-        document.getElementById('collegeGuess1').value = '';
-        document.getElementById('collegeGuess2').value = '';
         document.getElementById('result').textContent = '';
         document.getElementById('result').className = '';
-        turnIndicator.textContent = `${currentPlayer === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
-
     } else {
         console.error("Player name or image element not found");
     }
 }
 
-// Player submits the answer
-document.getElementById('submitBtn1').addEventListener('click', () => {
-    const answer = document.getElementById('collegeGuess1').value.trim();
-    submitAnswer('player1', answer);
-});
+function handlePlayerGuess(playerNumber) {
+    const guessInput = document.getElementById(`collegeGuess${playerNumber}`);
+    const guess = guessInput.value.trim().toLowerCase();
+    const resultElement = document.getElementById('result');
+    let isCorrect = false;
 
-document.getElementById('submitBtn2').addEventListener('click', () => {
-    const answer = document.getElementById('collegeGuess2').value.trim();
-    submitAnswer('player2', answer);
-});
+    if (currentPlayer) {
+        isCorrect = isCloseMatch(guess, currentPlayer.college || 'No College');
+    }
 
-function submitAnswer(player, answer) {
-    const playerGuess = simplifyString(answer);
-    const correctAnswer = simplifyString(document.getElementById('playerName').textContent);
+    updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement);
 
-    if (isCloseMatch(playerGuess, correctAnswer)) {
-        updateProgress(player, 'correct');
+    // Clear the input field
+    guessInput.value = '';
+
+    // Switch turns
+    if (playerNumber === 1) {
+        document.getElementById('turnIndicator').textContent = "Player 2's turn";
     } else {
-        updateProgress(player, 'incorrect');
+        document.getElementById('turnIndicator').textContent = "Player 1's turn";
+        displayRandomPlayer(); // Once both players answer, display a new player.
     }
 }
 
-// Simplify string for comparison
-function simplifyString(str) {
-    return str.trim().toLowerCase().replace(/university|college|the| /g, '');
+function updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement) {
+    if (isCorrect) {
+        if (playerNumber === 1) {
+            correctStreak1++;
+            document.getElementById('player1Progress').textContent = `Player 1: Correct!`;
+        } else {
+            correctStreak2++;
+            document.getElementById('player2Progress').textContent = `Player 2: Correct!`;
+        }
+        resultElement.textContent = "Correct!";
+        resultElement.className = 'correct';
+        correctSound.play();
+    } else {
+        resultElement.textContent = "Wrong answer. Try again!";
+        resultElement.className = 'incorrect';
+        wrongSound.play();
+    }
 }
 
-// Check if the guess is close to the correct answer
 function isCloseMatch(guess, answer) {
-    return answer.includes(guess);
-}
-
-// Update the player's progress
-function updateProgress(player, result) {
-    if (player === 'player1') {
-        player1Answer = result;
-        player1Progress.textContent = `Player 1: ${result}`;
-    } else {
-        player2Answer = result;
-        player2Progress.textContent = `Player 2: ${result}`;
-    }
-
-    if (player1Answer && player2Answer) {
-        handleRoundResults();
-    }
-}
-
-// Handle round results
-function handleRoundResults() {
-    if (player1Answer === 'correct' && player2Answer !== 'correct') {
-        alert('Player 1 wins this round!');
-    } else if (player2Answer === 'correct' && player1Answer !== 'correct') {
-        alert('Player 2 wins this round!');
-    } else {
-        alert('Both players were incorrect, try again!');
-    }
-    resetForNextRound();
-}
-
-// Reset for the next round
-function resetForNextRound() {
-    player1Answer = null;
-    player2Answer = null;
-    currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
-    displayRandomPlayer();
+    let simpleGuess = guess.trim().toLowerCase();
+    let simpleAnswer = answer.trim().toLowerCase();
+    return simpleAnswer.includes(simpleGuess);
 }
