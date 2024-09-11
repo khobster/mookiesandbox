@@ -1,35 +1,60 @@
 let playersData = [];
-let correctStreakStandard = 0;
-let lastThreeCorrectStandard = [];
 let currentDifficultyLevel = 1;
-let isTwoForOneActive = false;
-let twoForOneCounter = 0;
-let playerTurn = 1;  // Track whose turn it is (Player 1 or Player 2)
-let playerProgress = { 1: "", 2: "" };  // Track progress (P, I, G) for each player
-let maxLetters = 3;  // P-I-G has 3 letters
+let playerTurn = 1; // To alternate between Player 1 and Player 2
+let playerProgress = { 1: "", 2: "" }; // Track P-I-G progress for both players
+let maxLetters = 3; // For P-I-G game
 
-// Load player data from JSON and initialize
 document.addEventListener('DOMContentLoaded', () => {
-    loadPlayersData(); // Load player data
-    startStandardPlay(); // Start the standard gameplay
-    setupGuessHandler(); // Handle guesses from the input
-    setupGoFishHandler(); // Handle GO 🐟 button functionality
-    setupAutoComplete(); // Set up autocomplete functionality
+    loadPlayersData();
+
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', handleGuess);
+    }
+
+    const goFishBtn = document.getElementById('goFishBtn');
+    if (goFishBtn) {
+        goFishBtn.addEventListener('click', () => {
+            document.getElementById('decadeDropdownContainer').style.display = 'block';
+        });
+    }
+
+    const decadeDropdown = document.getElementById('decadeDropdown');
+    if (decadeDropdown) {
+        decadeDropdown.addEventListener('change', (e) => {
+            const selectedDecade = e.target.value;
+            if (selectedDecade) {
+                displayPlayerFromDecade(selectedDecade);
+                document.getElementById('decadeDropdownContainer').style.display = 'none';
+            }
+        });
+    }
+
+    setupAutoComplete(); // Setup autocomplete for college names
 });
 
-// Load player data from JSON
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
         .then(response => response.json())
         .then(data => {
             playersData = data;
-            playersData.sort((a, b) => a.rarity_score - b.rarity_score); // Sort by rarity
-            displayRandomPlayer(); // Show the first player
+            playersData.sort((a, b) => a.rarity_score - b.rarity_score);
+            playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
+            startStandardPlay();
         })
-        .catch(error => console.error('Error loading player data:', error));
+        .catch(error => {
+            console.error('Error loading JSON:', error);
+            const playerQuestionElement = document.getElementById('playerQuestion');
+            if (playerQuestionElement) {
+                playerQuestionElement.textContent = 'Error loading player data.';
+            }
+        });
 }
 
-// Display a random player
+function startStandardPlay() {
+    displayRandomPlayer();
+}
+
 function displayRandomPlayer() {
     if (playersData.length > 0) {
         const randomIndex = Math.floor(Math.random() * playersData.length);
@@ -38,60 +63,98 @@ function displayRandomPlayer() {
     }
 }
 
-// Display player info (image, name)
 function displayPlayer(player) {
     const playerNameElement = document.getElementById('playerName');
     const playerImageElement = document.getElementById('playerImage');
+
     if (playerNameElement && playerImageElement) {
         playerNameElement.textContent = player.name;
         playerImageElement.src = player.image_url || 'stilllife.png';
+
+        playerImageElement.onerror = function () {
+            this.onerror = null;
+            this.src = 'stilllife.png';
+        };
+
+        document.getElementById('collegeGuess').value = '';
+        document.getElementById('result').textContent = '';
+        document.getElementById('result').className = '';
     }
 }
 
-// Handle user guesses and update game state
-function setupGuessHandler() {
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', () => {
-            const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
-            const playerName = document.getElementById('playerName').textContent;
-            const player = playersData.find(p => p.name === playerName);
-            let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
-            handleGuess(isCorrect, playerName);
-        });
-    }
-}
+function displayPlayerFromDecade(decade) {
+    const playersFromDecade = playersData.filter(player => {
+        let playerYear = player.retirement_year;
+        let playerDecade;
+        
+        if (playerYear >= 50 && playerYear <= 59) playerDecade = '1950s';
+        else if (playerYear >= 60 && playerYear <= 69) playerDecade = '1960s';
+        else if (playerYear >= 70 && playerYear <= 79) playerDecade = '1970s';
+        else if (playerYear >= 80 && playerYear <= 89) playerDecade = '1980s';
+        else if (playerYear >= 90 and playerYear <= 99) playerDecade = '1990s';
+        else if (playerYear >= 0 && playerYear <= 9) playerDecade = '2000s';
+        else if (playerYear >= 10 && playerYear <= 19) playerDecade = '2010s';
+        else if (playerYear >= 20 && playerYear <= 29) playerDecade = '2020s';
 
-// Handle correct and incorrect guesses
-function handleGuess(isCorrect, playerName) {
-    const resultElement = document.getElementById('result');
-    if (isCorrect) {
-        resultElement.textContent = 'Correct!';
-        resultElement.classList.add('correct');
-        resultElement.classList.remove('incorrect');
-        correctStreakStandard++; // Increment streak
+        return playerDecade === decade;
+    });
+
+    if (playersFromDecade.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
+        const player = playersFromDecade[randomIndex];
+        displayPlayer(player);
     } else {
-        resultElement.textContent = 'Wrong! You get a letter.';
-        resultElement.classList.add('incorrect');
-        resultElement.classList.remove('correct');
-        addLetterToCurrentPlayer();  // Add a letter (P, I, or G) to the current player
+        const playerQuestionElement = document.getElementById('playerQuestion');
+        if (playerQuestionElement) {
+            playerQuestionElement.textContent = `No players found for the ${decade}`;
+        }
     }
-    updatePlayerTurn();  // Switch to the next player's turn
-    displayRandomPlayer();  // Show the next player
 }
 
-// Add a letter (P, I, or G) to the current player
-function addLetterToCurrentPlayer() {
+function handleGuess() {
+    console.log("Checking the guess...");
+
+    const userGuess = document.getElementById('collegeGuess').value.trim().toLowerCase();
+    const playerName = document.getElementById('playerName').textContent;
+    const player = playersData.find(p => p.name === playerName);
+
+    let isCorrect = player && isCloseMatch(userGuess, player.college || 'No College');
+    updateStreakAndGenerateSnippetStandard(isCorrect, playerName, document.getElementById('result'), displayRandomPlayer);
+}
+
+function isCloseMatch(guess, answer) {
+    return guess === answer.toLowerCase().trim();
+}
+
+function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
+    if (isCorrect) {
+        resultElement.textContent = "That's CORRECT!";
+        resultElement.className = 'correct';
+    } else {
+        resultElement.textContent = "That's WRONG!";
+        resultElement.className = 'incorrect';
+        addLetterToPlayer(); // Add letter when wrong guess
+    }
+
+    setTimeout(() => {
+        nextPlayerCallback();
+    }, 2000);
+}
+
+// Add a letter (P-I-G logic) to the current player
+function addLetterToPlayer() {
     const currentPlayer = playerTurn;
     const currentProgress = playerProgress[currentPlayer];
     if (currentProgress.length < maxLetters) {
         const newProgress = currentProgress + "PIG"[currentProgress.length];
         playerProgress[currentPlayer] = newProgress;
         updatePlayerProgressDisplay();
+
         if (newProgress === "PIG") {
             endGame(currentPlayer);  // End game if the player has spelled PIG
         }
     }
+    updatePlayerTurn();  // Switch turns
 }
 
 // Update the progress display for both players
@@ -106,50 +169,17 @@ function updatePlayerTurn() {
     document.getElementById('turnIndicator').textContent = `Player ${playerTurn}'s turn`;
 }
 
-// Handle "GO 🐟" functionality
-function setupGoFishHandler() {
-    const goFishBtn = document.getElementById('goFishBtn');
-    if (goFishBtn) {
-        goFishBtn.addEventListener('click', () => {
-            const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
-            decadeDropdownContainer.style.display = 'block';
-        });
-    }
-    const decadeDropdown = document.getElementById('decadeDropdown');
-    if (decadeDropdown) {
-        decadeDropdown.addEventListener('change', (e) => {
-            const selectedDecade = e.target.value;
-            if (selectedDecade) {
-                displayPlayerFromDecade(selectedDecade);
-                document.getElementById('decadeDropdownContainer').style.display = 'none';
-            }
-        });
-    }
-}
-
-// Display player from a selected decade
-function displayPlayerFromDecade(decade) {
-    const playersFromDecade = playersData.filter(player => {
-        let playerDecade = Math.floor(player.retirement_year / 10) * 10 + "s";
-        return playerDecade === decade;
-    });
-    if (playersFromDecade.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
-        const player = playersFromDecade[randomIndex];
-        displayPlayer(player);
-    }
-}
-
-// Set up autocomplete suggestions for college names
+// Set up autocomplete for college names
 function setupAutoComplete() {
     const collegeGuess = document.getElementById('collegeGuess');
     const suggestionsContainer = document.getElementById('suggestions');
+
     collegeGuess.addEventListener('input', () => {
         const inputValue = collegeGuess.value.toLowerCase();
         const suggestions = Array.from(new Set(playersData
             .map(player => player.college)
             .filter(college => college && college.toLowerCase().includes(inputValue))))
-            .slice(0, 5);
+            .slice(0, 5); // Show up to 5 suggestions
         suggestionsContainer.innerHTML = '';
         suggestions.forEach(suggestion => {
             const suggestionItem = document.createElement('div');
@@ -164,10 +194,9 @@ function setupAutoComplete() {
     });
 }
 
-// End the game if a player spells "PIG"
 function endGame(player) {
     alert(`Player ${player} has spelled P-I-G and lost the game!`);
-    playerProgress = { 1: "", 2: "" };  // Reset game state
+    playerProgress = { 1: "", 2: "" };  // Reset progress
     updatePlayerProgressDisplay();
     playerTurn = 1;  // Reset to Player 1's turn
     updatePlayerTurn();
