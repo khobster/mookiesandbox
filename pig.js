@@ -3,10 +3,11 @@ let currentDifficultyLevel = 1;
 let playerTurn = 1; // To alternate between Player 1 and Player 2
 let playerProgress = { 1: "", 2: "" }; // Track P-I-G progress for both players
 let maxLetters = 3; // For P-I-G game
-let gameId = 'unique_game_id'; // Replace this with a dynamic value if needed
+let gameId = getGameId(); // Generate or get gameId from URL
 
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayersData();
+    listenToGameUpdates(); // Listen to Firestore for real-time updates
 
     const submitBtn = document.getElementById('submitBtn');
     if (submitBtn) {
@@ -34,6 +35,27 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAutoComplete(); // Setup autocomplete for college names
 });
 
+// Function to generate or get gameId from URL
+function getGameId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    let gameId = urlParams.get('gameId');
+
+    // If no gameId in URL, create one for Player 1
+    if (!gameId) {
+        gameId = generateGameId();
+        const newUrl = `${window.location.origin}${window.location.pathname}?gameId=${gameId}`;
+        window.history.replaceState(null, null, newUrl); // Update URL without refreshing the page
+    }
+
+    return gameId;
+}
+
+// Helper function to generate a unique game ID
+function generateGameId() {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+// Load players data from JSON
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
         .then(response => response.json())
@@ -52,6 +74,7 @@ function loadPlayersData() {
         });
 }
 
+// Start the standard game by displaying a random player
 function startStandardPlay() {
     displayRandomPlayer();
 }
@@ -83,11 +106,12 @@ function displayPlayer(player) {
     }
 }
 
+// Display player from the selected decade
 function displayPlayerFromDecade(decade) {
     const playersFromDecade = playersData.filter(player => {
         let playerYear = player.retirement_year;
         let playerDecade;
-        
+
         if (playerYear >= 50 && playerYear <= 59) playerDecade = '1950s';
         else if (playerYear >= 60 && playerYear <= 69) playerDecade = '1960s';
         else if (playerYear >= 70 && playerYear <= 79) playerDecade = '1970s';
@@ -112,6 +136,7 @@ function displayPlayerFromDecade(decade) {
     }
 }
 
+// Handle the player's guess
 function handleGuess() {
     console.log("Checking the guess...");
 
@@ -123,10 +148,12 @@ function handleGuess() {
     updateStreakAndGenerateSnippetStandard(isCorrect, playerName, document.getElementById('result'), displayRandomPlayer);
 }
 
+// Check if the guess is close enough to the correct answer
 function isCloseMatch(guess, answer) {
     return guess === answer.toLowerCase().trim();
 }
 
+// Update streak, check if correct, and switch players
 function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultElement, nextPlayerCallback) {
     if (isCorrect) {
         resultElement.textContent = "That's CORRECT!";
@@ -142,7 +169,7 @@ function updateStreakAndGenerateSnippetStandard(isCorrect, playerName, resultEle
     }, 2000);
 }
 
-// Add a letter (P-I-G logic) to the current player
+// Add a letter to the current player's progress (P-I-G)
 function addLetterToPlayer() {
     const currentPlayer = playerTurn;
     const currentProgress = playerProgress[currentPlayer];
@@ -158,26 +185,27 @@ function addLetterToPlayer() {
     updatePlayerTurn();  // Switch turns
 }
 
-// Update the progress display for both players
+// Update the progress display for both players and store it in Firestore
 function updatePlayerProgressDisplay() {
     document.getElementById('player1Progress').textContent = `Player 1: ${playerProgress[1]}`;
     document.getElementById('player2Progress').textContent = `Player 2: ${playerProgress[2]}`;
 
-    // Update Firestore
-    db.collection('games').doc(gameId).update({
-        playerProgress: playerProgress
-    });
+    // Update Firestore with the game state
+    db.collection('games').doc(gameId).set({
+        playerProgress: playerProgress,
+        playerTurn: playerTurn
+    }, { merge: true });
 }
 
-// Switch to the next player's turn
+// Switch to the next player's turn and update Firestore
 function updatePlayerTurn() {
     playerTurn = playerTurn === 1 ? 2 : 1;
     document.getElementById('turnIndicator').textContent = `Player ${playerTurn}'s turn`;
 
     // Update Firestore
-    db.collection('games').doc(gameId).update({
+    db.collection('games').doc(gameId).set({
         playerTurn: playerTurn
-    });
+    }, { merge: true });
 }
 
 // Set up autocomplete for college names
@@ -205,6 +233,7 @@ function setupAutoComplete() {
     });
 }
 
+// End the game when a player spells P-I-G
 function endGame(player) {
     alert(`Player ${player} has spelled P-I-G and lost the game!`);
     playerProgress = { 1: "", 2: "" };  // Reset progress
@@ -216,5 +245,19 @@ function endGame(player) {
     db.collection('games').doc(gameId).update({
         playerProgress: playerProgress,
         playerTurn: playerTurn
+    });
+}
+
+// Listen to real-time game updates from Firestore
+function listenToGameUpdates() {
+    db.collection('games').doc(gameId).onSnapshot((doc) => {
+        if (doc.exists) {
+            const data = doc.data();
+            playerProgress = data.playerProgress || { 1: "", 2: "" };
+            playerTurn = data.playerTurn || 1;
+
+            updatePlayerProgressDisplay();
+            updatePlayerTurn();
+        }
     });
 }
