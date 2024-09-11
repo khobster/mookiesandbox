@@ -1,28 +1,35 @@
 let playersData = [];
-let currentPlayer = null; // Store the current player globally so both players answer the same question.
+let currentPlayer = null; // Store the current player globally
 let correctStreak1 = 0;
 let correctStreak2 = 0;
-let currentTurn = 1; // Track whose turn it is
-let player1HasGuessed = false; // Track if Player 1 has guessed
-let player2HasGuessed = false; // Track if Player 2 has guessed
+let player1HasGuessed = false;
+let player2HasGuessed = false;
 
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
+// Generate a unique game ID
+function generateGameID() {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+// Store or retrieve the game ID
+let gameID = localStorage.getItem('gameID') || new URLSearchParams(window.location.search).get('gameID');
+if (!gameID) {
+    gameID = generateGameID();
+    localStorage.setItem('gameID', gameID);
+    // Optionally add the gameID to the URL
+    window.history.replaceState({}, '', `?gameID=${gameID}`);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayersData();
-
-    // Handle player submissions
+    
     const submitBtn1 = document.getElementById('submitBtn1');
     const submitBtn2 = document.getElementById('submitBtn2');
-
-    submitBtn1.addEventListener('click', () => {
-        handlePlayerGuess(1);
-    });
-
-    submitBtn2.addEventListener('click', () => {
-        handlePlayerGuess(2);
-    });
+    
+    submitBtn1.addEventListener('click', () => handlePlayerGuess(1));
+    submitBtn2.addEventListener('click', () => handlePlayerGuess(2));
 });
 
 function loadPlayersData() {
@@ -30,28 +37,41 @@ function loadPlayersData() {
         .then(response => response.json())
         .then(data => {
             playersData = data;
-            startNewRound(); // Start the game with a new player
+            
+            // Retrieve the current player ID from local storage
+            const currentPlayerID = localStorage.getItem(`currentPlayerID_${gameID}`);
+            if (currentPlayerID) {
+                currentPlayer = playersData.find(player => player.id === currentPlayerID);
+                if (currentPlayer) {
+                    displayPlayer(currentPlayer);
+                } else {
+                    console.error("Player with stored ID not found. Starting a new round.");
+                    startNewRound(); 
+                }
+            } else {
+                startNewRound();
+            }
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
-            const playerQuestionElement = document.getElementById('playerQuestion');
-            if (playerQuestionElement) {
-                playerQuestionElement.textContent = 'Error loading player data.';
-            }
+            document.getElementById('playerQuestion').textContent = 'Error loading player data.';
         });
 }
 
 function startNewRound() {
     player1HasGuessed = false;
     player2HasGuessed = false;
-    displayRandomPlayer(); // Select and display a new random player for both players
+    displayRandomPlayer();
 }
 
 function displayRandomPlayer() {
     if (playersData.length > 0) {
         const randomIndex = Math.floor(Math.random() * playersData.length);
-        currentPlayer = playersData[randomIndex]; // Set the current player globally
-        displayPlayer(currentPlayer); // Display player info for both players
+        currentPlayer = playersData[randomIndex];
+        
+        // Store the current player ID in local storage
+        localStorage.setItem(`currentPlayerID_${gameID}`, currentPlayer.id);
+        displayPlayer(currentPlayer);
     } else {
         console.log("No data available");
     }
@@ -64,7 +84,7 @@ function displayPlayer(player) {
     if (playerNameElement && playerImageElement) {
         playerNameElement.textContent = player.name;
 
-        playerImageElement.src = 'stilllife.png'; // Placeholder image
+        playerImageElement.src = 'stilllife.png';
         if (player.image_url) {
             playerImageElement.src = player.image_url;
             playerImageElement.onerror = function () {
@@ -75,7 +95,7 @@ function displayPlayer(player) {
 
         document.getElementById('result').textContent = '';
         document.getElementById('result').className = '';
-        document.getElementById('turnIndicator').textContent = "Player 1's turn"; // Reset the turn indicator
+        document.getElementById('turnIndicator').textContent = "Player 1's turn";
     } else {
         console.error("Player name or image element not found");
     }
