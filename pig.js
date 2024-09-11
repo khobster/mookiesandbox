@@ -18,7 +18,7 @@ function loadPlayersData() {
         .then(data => {
             playersData = data;
             console.log('Players data loaded:', playersData.length, 'players');
-            console.log('Sample players:', playersData.slice(0, 5));  // Log the first 5 players for debugging
+            console.log('Sample players:', playersData.slice(0, 5));  // Log the first 5 players
         })
         .catch(error => {
             console.error('Error loading players data:', error);
@@ -122,12 +122,8 @@ function pickRandomPlayerFromDecade(decade) {
 
     const playersFromDecade = playersData.filter(player => {
         const playerYear = parseInt(player.retirement_year);
-        if (isNaN(playerYear)) {
-            console.log(`Skipping player without valid retirement_year: ${player.name}, retirement_year: ${player.retirement_year}`);
-            return false;  // Skip invalid entries
-        }
+        let playerDecade;
 
-        let playerDecade = '';
         if (playerYear >= 1950 && playerYear < 1960) playerDecade = '1950s';
         else if (playerYear >= 1960 && playerYear < 1970) playerDecade = '1960s';
         else if (playerYear >= 1970 && playerYear < 1980) playerDecade = '1970s';
@@ -135,12 +131,12 @@ function pickRandomPlayerFromDecade(decade) {
         else if (playerYear >= 1990 && playerYear < 2000) playerDecade = '1990s';
         else if (playerYear >= 2000 && playerYear < 2010) playerDecade = '2000s';
         else if (playerYear >= 2010 && playerYear < 2020) playerDecade = '2010s';
-        else if (playerYear >= 2020) playerDecade = '2020s';
+        else if (playerYear >= 2020 && playerYear < 2030) playerDecade = '2020s';
 
         return playerDecade === decade;
     });
 
-    console.log(`Players found for ${decade}:`, playersFromDecade.length);
+    console.log('Players found in selected decade:', playersFromDecade.length);
 
     if (playersFromDecade.length > 0) {
         const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
@@ -148,8 +144,8 @@ function pickRandomPlayerFromDecade(decade) {
         console.log('Selected player:', selectedPlayer.name);
         return selectedPlayer;
     } else {
-        console.error(`No players found for ${decade}`);
-        return null;
+        console.error('No players found for the selected decade:', decade);
+        return { name: 'Unknown Player', college: 'Unknown College' };
     }
 }
 
@@ -161,7 +157,7 @@ decadeDropdown.addEventListener('change', (e) => {
     if (selectedDecade) {
         const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
 
-        if (randomPlayer && randomPlayer.name !== 'Unknown Player') {
+        if (randomPlayer.name !== 'Unknown Player') {
             db.collection('games').doc(gameId).update({
                 currentQuestion: randomPlayer.name,
                 currentTurn: currentPlayer === 'player1' ? 'player2' : 'player1'
