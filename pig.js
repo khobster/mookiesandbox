@@ -1,8 +1,8 @@
 let gameId;
-let currentPlayer = 'player1'; // Start with Player 1
-let playersData = []; // Holds the player data from the JSON
+let currentPlayer = 'player1';  // Start with Player 1 by default
 let player1Answer = null;
 let player2Answer = null;
+let playersData = [];  // Holds the player data from the JSON
 
 // Get UI Elements
 const player1Progress = document.getElementById('player1Progress');
@@ -28,7 +28,7 @@ function loadPlayersData() {
 function createNewGame() {
     const newGame = {
         currentQuestion: '',
-        currentTurn: 'player1', // Player 1 picks the decade first
+        playerTurn: 'player1',  // Player 1 picks the decade first
         player1: { lastAnswer: '', progress: '' },
         player2: { lastAnswer: '', progress: '' }
     };
@@ -37,7 +37,7 @@ function createNewGame() {
         .then((docRef) => {
             gameId = docRef.id;
             console.log('Game created with ID:', gameId);
-            listenToGameUpdates(); // Start listening for updates
+            listenToGameUpdates();  // Start listening to game updates
         })
         .catch((error) => {
             console.error('Error creating game:', error);
@@ -49,30 +49,33 @@ function listenToGameUpdates() {
     db.collection('games').doc(gameId).onSnapshot((doc) => {
         if (doc.exists) {
             const gameData = doc.data();
-            
+            console.log('Game data:', gameData);  // Log the game data for debugging
+
             // Sync UI with the game state
-            questionElement.textContent = `Where did ${gameData.currentQuestion} go to college?`;
-            turnIndicator.textContent = `${gameData.currentTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
+            questionElement.textContent = `Where did ${gameData.currentQuestion || '...'} go to college?`;
+            turnIndicator.textContent = `${gameData.playerTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
 
             // Update player progress
-            player1Progress.textContent = gameData.player1.progress;
-            player2Progress.textContent = gameData.player2.progress;
+            player1Progress.textContent = gameData.player1.progress || '';
+            player2Progress.textContent = gameData.player2.progress || '';
 
-            // Sync answers
+            // Sync the last answers
             player1Answer = gameData.player1.lastAnswer;
             player2Answer = gameData.player2.lastAnswer;
 
-            // Sync the decade dropdown
-            if (gameData.currentTurn === currentPlayer) {
-                decadeDropdown.style.display = 'block'; // Show the dropdown for the current player
+            // Sync the decade dropdown: Only show for the current player
+            if (gameData.playerTurn === currentPlayer) {
+                decadeDropdown.style.display = 'block';  // Show for the current player
             } else {
-                decadeDropdown.style.display = 'none'; // Hide the dropdown for the other player
+                decadeDropdown.style.display = 'none';  // Hide for the other player
             }
 
             // Handle round results if both players have submitted answers
             if (player1Answer && player2Answer) {
                 handleRoundResults();
             }
+        } else {
+            console.error('No game data found!');
         }
     });
 }
@@ -80,18 +83,16 @@ function listenToGameUpdates() {
 // Handle Decade Selection (by Player 1 or Player 2)
 decadeDropdown.addEventListener('change', (e) => {
     const selectedDecade = e.target.value;
-
     if (selectedDecade) {
-        // Retrieve a player from the selected decade
         const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
 
         // Update Firebase with the new question and switch turns
         db.collection('games').doc(gameId).update({
-            currentQuestion: randomPlayer.name,
-            currentTurn: currentPlayer === 'player1' ? 'player2' : 'player1'
+            currentQuestion: randomPlayer.name,  // Set the selected player's name as the question
+            playerTurn: currentPlayer === 'player1' ? 'player2' : 'player1'  // Switch the turn
         });
 
-        // Hide the decade dropdown for both players
+        // Hide the decade dropdown
         decadeDropdown.style.display = 'none';
     }
 });
@@ -121,13 +122,13 @@ function handleRoundResults() {
 function updateProgress(player) {
     db.collection('games').doc(gameId).get().then((doc) => {
         const progress = doc.data()[player].progress || '';
-        let newProgress = progress + 'PIG'[progress.length]; // Add the next letter (P -> I -> G)
-        
+        let newProgress = progress + 'PIG'[progress.length];  // Add the next letter (P -> I -> G)
+
         db.collection('games').doc(gameId).update({
             [`${player}.progress`]: newProgress
         });
 
-        // Check if the player has completed PIG
+        // Check if the player has completed "PIG"
         if (newProgress === 'PIG') {
             alert(`${player === 'player1' ? 'Player 1' : 'Player 2'} has lost the game!`);
             resetGame();
