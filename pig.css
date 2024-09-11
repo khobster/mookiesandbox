@@ -7,7 +7,7 @@ body, html {
     margin: 0;
     padding: 0;
     height: 100%;
-    overflow: hidden;
+    overflow: hidden; /* Prevent scrolling when the keyboard is active */
 }
 
 #app {
@@ -15,20 +15,22 @@ body, html {
     max-width: 400px;
     margin: 0 auto;
     padding: 20px;
-    height: calc(100vh - 100px);
-    overflow-y: auto;
+    position: relative;
+    padding-bottom: 100px; /* Add padding at the bottom to avoid overlap */
+    height: calc(100vh - 100px); /* Adjust height to leave space for fixed bottom container */
+    overflow-y: auto; /* Allow scrolling for the main content */
 }
 
 .frame-container {
     position: relative;
-    width: 200px;
-    height: 200px;
+    width: 200px; /* Adjusted width */
+    height: 200px; /* Adjusted height */
     margin: 0 auto;
     overflow: hidden;
     border-radius: 50%;
 }
 
-.player-headshot {
+.headshot {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -39,79 +41,89 @@ body, html {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 130%;
-    height: 130%;
+    width: 130%; /* Increased width to make the frame larger */
+    height: 130%; /* Increased height to make the frame larger */
     transform: translate(-50%, -50%);
+    z-index: 2; /* Ensures the frame is above the headshot */
+    pointer-events: none; /* Allows clicks to pass through to the image */
     background-image: url('circularframeformookie.png');
     background-size: cover;
-    border-radius: 50%;
-}
-
-#playerQuestion {
-    font-size: 18px;
-    font-family: 'Archivo Narrow', sans-serif;
-    margin-bottom: 5px;
+    border-radius: 50%; /* Ensure the frame overlay is circular */
 }
 
 #collegeGuess {
-    width: 100%;
-    padding: 15px 20px;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    border: 2px solid #000;
-    border-radius: 8px;
-    font-size: 18px;
+    width: 100%; /* Expand the input to take full width of its container */
+    padding: 15px 20px; /* Increase padding for a larger input area */
+    margin-top: 15px; /* Add more space above the input */
+    margin-bottom: 15px; /* Add space below the input for better spacing */
+    border: 2px solid #000; /* Make the border more prominent */
+    border-radius: 8px; /* Increase border radius for more rounded corners */
+    font-size: 18px; /* Larger font size for better readability */
     font-family: 'Archivo Narrow', sans-serif;
-    background-color: #f9f9f9;
+    box-sizing: border-box; /* Ensure padding is included within the width */
+    background-color: #f9f9f9; /* Optional: Light background color for better visibility */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Add subtle shadow for depth */
+    transition: all 0.3s ease; /* Optional: Smooth transition for interactive effects */
 }
 
 #submitBtn {
-    background-color: #00b0a9;
+    background-color: #00b0a9; /* Update button color */
     color: #f8f8f8;
     text-transform: uppercase;
     border: none;
-    padding: 12px;
-    font-size: 18px;
-    font-weight: bold;
+    padding: 12px 12px; /* Increase the padding to make the button taller */
+    font-size: 18px; /* Increase the font size */
+    font-weight: bold; /* Make the text bold */
     cursor: pointer;
     border-radius: 4px;
-    width: 100%;
-    margin-top: 20px;
+    transition: background-color 0.3s;
+    font-family: 'Archivo Narrow', sans-serif;
+    margin-bottom: 10px;
+    margin-top: 20px; /* Add margin to separate from input fields */
+    width: 100%; /* Make the main button span the full width */
+    line-height: 1.2; /* Adjust line height for better text spacing */
 }
 
 #submitBtn:hover {
-    background-color: #008f8a;
+    background-color: #008f8a; /* Slightly darker shade for hover */
 }
 
 #buttonRow {
     display: flex;
     justify-content: center;
     gap: 10px;
+    margin-top: 4px; /* Reduce this value to bring the buttons closer */
     width: 100%;
-    margin-top: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 1px;
 }
 
 #goFishBtn {
-    background-color: #1E90FF;
+    background-color: #1E90FF; /* Ocean blue color */
     color: white;
     text-transform: uppercase;
+    border: none;
     padding: 8px 12px;
     font-size: 14px;
     cursor: pointer;
     border-radius: 4px;
-    width: 100%;
+    transition: background-color 0.3s;
+    font-family: 'Archivo Narrow', sans-serif;
+    width: 48%; /* Make buttons narrower to avoid overlap */
+    flex: 1; /* Make the button expand to fill the available space */
+}
+
+#goFishBtn .fishIcon {
+    font-size: 20px; /* Increase the size of the fish icon */
 }
 
 #goFishBtn:hover {
-    background-color: #1C86EE;
-}
-
-.fishIcon {
-    font-size: 20px;
+    background-color: #1C86EE; /* Darker shade on hover */
 }
 
 #decadeDropdownContainer {
     margin-top: 10px;
+    display: none; /* Initially hidden */
 }
 
 #decadeDropdown {
@@ -120,10 +132,26 @@ body, html {
     border: 2px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+    font-family: 'Archivo Narrow', sans-serif;
+}
+
+#player1Progress,
+#player2Progress {
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+#turnIndicator {
+    font-family: 'Archivo Narrow', sans-serif;
+    color: blue;
+    margin-top: 10px;
+    font-size: 16px;
+    font-weight: bold;
 }
 
 #result {
-    margin-top: 15px;
+    margin-top: 15px; /* Add more space above the result text */
     padding: 10px;
     color: white;
     text-align: center;
@@ -132,13 +160,12 @@ body, html {
     font-family: 'Archivo Narrow', sans-serif;
 }
 
-#player1Progress, #player2Progress {
-    font-family: 'Archivo Narrow', sans-serif;
-    font-size: 16px;
+.correct {
+    background-color: green;
+    font-family: 'Anton', sans-serif;
 }
 
-#turnIndicator {
-    margin-top: 10px;
-    font-size: 16px;
-    color: #007BFF;
+.incorrect {
+    background-color: red;
+    font-family: 'Anton', sans-serif;
 }
