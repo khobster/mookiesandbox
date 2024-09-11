@@ -1,12 +1,11 @@
+let db = firebase.firestore(); // Use the Firebase instance initialized in the HTML
+
 let playersData = [];
 let playerTurn = 1; // Alternating turn for selecting the decade
 let playerProgress = { 1: "", 2: "" }; // Track P-I-G progress for both players
 let gameId = 'unique_game_id'; // Replace this dynamically
 let currentPlayer; // Store current player question
 let selectedDecade = ""; // Store selected decade
-
-// Firebase sync
-let db = firebase.firestore();
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeGame(); // Initialize the game, including Firebase syncing
@@ -137,32 +136,65 @@ function isCloseMatch(guess, answer) {
 function updateGameLogic(isCorrect1, isCorrect2) {
     const resultElement = document.getElementById('result');
     
-    if (isCorrect1 !== isCorrect2) {
-        if (isCorrect1) {
-            playerProgress[2] += "PIG"[playerProgress[2].length];
-            resultElement.textContent = "Player 2 gets a letter!";
-        } else {
-            playerProgress[1] += "PIG"[playerProgress[1].length];
-            resultElement.textContent = "Player 1 gets a letter!";
-        }
+    if (isCorrect1 && !isCorrect2) {
+        resultElement.textContent = "Player 2 gets a letter!";
+        addLetterToPlayer(2); // Player 2 gets a letter
+    } else if (!isCorrect1 && isCorrect2) {
+        resultElement.textContent = "Player 1 gets a letter!";
+        addLetterToPlayer(1); // Player 1 gets a letter
+    } else if (isCorrect1 && isCorrect2) {
+        resultElement.textContent = "Both players got it right! No letters.";
     } else {
-        resultElement.textContent = "No letters given. Next question!";
+        resultElement.textContent = "Both players got it wrong! No letters.";
     }
 
-    updatePlayerProgressDisplay();
-
-    // Sync progress with Firebase
-    db.collection('games').doc(gameId).update({
-        playerProgress: playerProgress
-    });
-
     setTimeout(() => {
-        startStandardPlay(); // New question
-    }, 2000);
+        passTurnToNextPlayer();
+    }, 3000);
 }
 
-// Display player progress
+// Add a letter to the player who got the question wrong
+function addLetterToPlayer(player) {
+    const currentProgress = playerProgress[player];
+    if (currentProgress.length < 3) {
+        playerProgress[player] = currentProgress + "PIG"[currentProgress.length];
+        updatePlayerProgressDisplay();
+
+        if (playerProgress[player] === "PIG") {
+            endGame(player);
+        }
+    }
+}
+
+// Update player progress display
 function updatePlayerProgressDisplay() {
     document.getElementById('player1Progress').textContent = `Player 1: ${playerProgress[1]}`;
     document.getElementById('player2Progress').textContent = `Player 2: ${playerProgress[2]}`;
+}
+
+// End the game when a player spells PIG
+function endGame(player) {
+    alert(`Player ${player} has spelled P-I-G and lost the game!`);
+    resetGame();
+}
+
+// Reset the game after someone loses
+function resetGame() {
+    playerProgress = { 1: "", 2: "" };
+    playerTurn = 1; // Reset turn
+    updatePlayerProgressDisplay();
+    document.getElementById('decadeDropdownContainer').style.display = 'block'; // Prompt for new decade selection
+}
+
+// Pass turn to next player and choose new question
+function passTurnToNextPlayer() {
+    playerTurn = playerTurn === 1 ? 2 : 1;
+    document.getElementById('turnIndicator').textContent = `Player ${playerTurn}'s turn to pick the decade.`;
+    document.getElementById('decadeDropdownContainer').style.display = 'block'; // Show dropdown for next decade selection
+
+    // Sync turn and progress with Firebase
+    db.collection('games').doc(gameId).update({
+        playerTurn: playerTurn,
+        playerProgress: playerProgress
+    });
 }
