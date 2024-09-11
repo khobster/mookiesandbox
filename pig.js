@@ -30,15 +30,15 @@ function initializeGame() {
     gameId = urlParams.get('gameId');
 
     if (!gameId) {
-        createNewGame(); // If no gameId, create a new game
+        createNewGame();
     } else {
         console.log('Game ID found:', gameId);
-        checkGameExistence(); // Check if the game exists before listening to updates
+        checkAndInitializeGame();
     }
 }
 
-// Check if the game document exists
-function checkGameExistence() {
+// Check if the game exists and initialize or create a new one
+function checkAndInitializeGame() {
     db.collection('games').doc(gameId).get()
         .then((doc) => {
             if (doc.exists) {
@@ -59,7 +59,7 @@ function checkGameExistence() {
 function createNewGame() {
     const newGame = {
         currentQuestion: '',
-        currentTurn: 'player1', // Player 1 starts by choosing the decade
+        currentTurn: 'player1',
         player1: { lastAnswer: '', progress: '' },
         player2: { lastAnswer: '', progress: '' }
     };
@@ -93,23 +93,24 @@ function listenToGameUpdates() {
 
 // Update the UI with the current game state
 function updateUI(gameData) {
+    if (!gameData) {
+        console.error('No game data available');
+        return;
+    }
+
     questionElement.textContent = gameData.currentQuestion ? `Where did ${gameData.currentQuestion} go to college?` : 'Waiting for question...';
     turnIndicator.textContent = `${gameData.currentTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
 
-    // Update player progress
     player1Progress.textContent = gameData.player1.progress;
     player2Progress.textContent = gameData.player2.progress;
 
-    // Store answers
     player1Answer = gameData.player1.lastAnswer;
     player2Answer = gameData.player2.lastAnswer;
 
-    // If both players have answered, handle round results
     if (player1Answer && player2Answer) {
         handleRoundResults();
     }
 
-    // Show/hide decade dropdown based on whose turn it is
     decadeDropdown.style.display = gameData.currentTurn === currentPlayer ? 'block' : 'none';
 }
 
@@ -118,23 +119,105 @@ decadeDropdown.addEventListener('change', (e) => {
     const selectedDecade = e.target.value;
 
     if (selectedDecade) {
-        // Pick a random player from the selected decade
         const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
 
-        // Update game document with new question and switch turns
         db.collection('games').doc(gameId).update({
             currentQuestion: randomPlayer.name,
             currentTurn: currentPlayer === 'player1' ? 'player2' : 'player1'
+        }).then(() => {
+            console.log('Game updated successfully');
         }).catch((error) => {
             console.error('Error updating game:', error);
+            checkAndInitializeGame(); // Try to reinitialize the game if update fails
         });
     }
 });
 
-// Rest of the functions remain the same...
+// Pick a random player from the selected decade
+function pickRandomPlayerFromDecade(decade) {
+    const playersFromDecade = playersData.filter(player => {
+        const playerYear = player.retirement_year;
+        const playerDecade = Math.floor(playerYear / 10) * 10 + 's';
+        return playerDecade === decade;
+    });
+
+    if (playersFromDecade.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
+        return playersFromDecade[randomIndex];
+    } else {
+        return { name: 'Unknown Player', college: 'Unknown College' };
+    }
+}
 
 // Initialize the game when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     loadPlayersData();
     initializeGame();
 });
+
+// Add these functions to handle game logic
+function submitAnswer(player, answer) {
+    db.collection('games').doc(gameId).update({
+        [`${player}.lastAnswer`]: answer ? 'correct' : 'incorrect'
+    }).catch((error) => {
+        console.error('Error submitting answer:', error);
+        checkAndInitializeGame(); // Try to reinitialize the game if update fails
+    });
+}
+
+function handleRoundResults() {
+    if (player1Answer === 'correct' && player2Answer !== 'correct') {
+        updateProgress('player2');
+    } else if (player2Answer === 'correct' && player1Answer !== 'correct') {
+        updateProgress('player1');
+    }
+    resetForNextRound();
+}
+
+function updateProgress(player) {
+    db.collection('games').doc(gameId).get().then((doc) => {
+        if (doc.exists) {
+            const progress = doc.data()[player].progress || '';
+            let newProgress = progress + 'PIG'[progress.length];
+
+            db.collection('games').doc(gameId).update({
+                [`${player}.progress`]: newProgress
+            }).then(() => {
+                if (newProgress === 'PIG') {
+                    alert(`${player === 'player1' ? 'Player 1' : 'Player 2'} has lost the game!`);
+                    resetGame();
+                }
+            }).catch((error) => {
+                console.error('Error updating progress:', error);
+                checkAndInitializeGame(); // Try to reinitialize the game if update fails
+            });
+        } else {
+            console.error('Game document not found');
+            createNewGame();
+        }
+    }).catch((error) => {
+        console.error('Error getting game document:', error);
+        checkAndInitializeGame(); // Try to reinitialize the game if get fails
+    });
+}
+
+function resetForNextRound() {
+    db.collection('games').doc(gameId).update({
+        'player1.lastAnswer': '',
+        'player2.lastAnswer': ''
+    }).catch((error) => {
+        console.error('Error resetting for next round:', error);
+        checkAndInitializeGame(); // Try to reinitialize the game if update fails
+    });
+    currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
+}
+
+function resetGame() {
+    db.collection('games').doc(gameId).delete().then(() => {
+        console.log('Game reset, creating a new game...');
+        createNewGame();
+    }).catch((error) => {
+        console.error('Error resetting game:', error);
+        createNewGame(); // Create a new game even if deletion fails
+    });
+}
