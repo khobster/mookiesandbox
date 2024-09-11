@@ -4,10 +4,10 @@ let playerTurn = 1; // To alternate between Player 1 and Player 2
 let playerProgress = { 1: "", 2: "" }; // Track P-I-G progress for both players
 let maxLetters = 3; // For P-I-G game
 let gameId; // Unique game session ID
-let db; // Firebase Database Reference
+// Assuming Firebase is already initialized elsewhere, we'll avoid redeclaring db
 
 document.addEventListener('DOMContentLoaded', () => {
-    initFirebase(); // Initialize Firebase
+    // Firebase should be initialized already, so no need to redeclare `db`
     loadPlayersData();
 
     const submitBtn = document.getElementById('submitBtn');
@@ -35,66 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupAutoComplete(); // Setup autocomplete for college names
 });
-
-function initFirebase() {
-    // Firebase config
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-
-    // Check if there's an existing gameId in the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    gameId = urlParams.get('gameId');
-
-    if (!gameId) {
-        // Create a new game session if one doesn't exist
-        createNewGame();
-    } else {
-        // Load the existing game state
-        loadGameFromFirebase(gameId);
-    }
-}
-
-function createNewGame() {
-    // Generate a new unique game ID using Firebase push()
-    const newGameRef = db.ref('games').push();
-    gameId = newGameRef.key;
-
-    // Update the URL to share with other players
-    window.history.replaceState(null, null, `?gameId=${gameId}`);
-
-    // Initialize game data in Firebase
-    newGameRef.set({
-        playerTurn: 1,
-        playerProgress: { 1: "", 2: "" }
-    });
-
-    alert(`Share this URL with Player 2: ${window.location.href}`);
-}
-
-function loadGameFromFirebase(gameId) {
-    const gameRef = db.ref(`games/${gameId}`);
-
-    // Listen for game state changes
-    gameRef.on('value', (snapshot) => {
-        const gameState = snapshot.val();
-        if (gameState) {
-            playerTurn = gameState.playerTurn;
-            playerProgress = gameState.playerProgress;
-            updatePlayerProgressDisplay();
-            updatePlayerTurn();
-        }
-    });
-}
 
 function loadPlayersData() {
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
@@ -226,7 +166,7 @@ function updatePlayerProgressDisplay() {
     document.getElementById('player2Progress').textContent = `Player 2: ${playerProgress[2]}`;
 
     // Update Firebase
-    db.ref(`games/${gameId}`).update({
+    firebase.database().ref(`games/${gameId}`).update({
         playerProgress: playerProgress
     });
 }
@@ -237,7 +177,7 @@ function updatePlayerTurn() {
     document.getElementById('turnIndicator').textContent = `Player ${playerTurn}'s turn`;
 
     // Update Firebase
-    db.ref(`games/${gameId}`).update({
+    firebase.database().ref(`games/${gameId}`).update({
         playerTurn: playerTurn
     });
 }
