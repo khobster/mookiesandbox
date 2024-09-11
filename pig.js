@@ -7,7 +7,6 @@ let playersData = [];
 // Get UI Elements
 const player1Progress = document.getElementById('player1Progress');
 const player2Progress = document.getElementById('player2Progress');
-const decadeDropdown = document.getElementById('decadeDropdown');
 const questionElement = document.getElementById('playerQuestion');
 const turnIndicator = document.getElementById('turnIndicator');
 
@@ -111,78 +110,31 @@ function updateUI(gameData) {
     if (player1Answer && player2Answer) {
         handleRoundResults();
     }
-
-    decadeDropdown.style.display = gameData.currentTurn === currentPlayer ? 'block' : 'none';
 }
 
-// Pick a random player from the selected decade
-function pickRandomPlayerFromDecade(decade) {
-    console.log('Selecting player from decade:', decade);
-    console.log('Total players in data:', playersData.length);
-
-    const playersFromDecade = playersData.filter(player => {
-        const playerYear = parseInt(player.retirement_year);
-        let playerDecade;
-
-        if (playerYear >= 1950 && playerYear < 1960) playerDecade = '1950s';
-        else if (playerYear >= 1960 && playerYear < 1970) playerDecade = '1960s';
-        else if (playerYear >= 1970 && playerYear < 1980) playerDecade = '1970s';
-        else if (playerYear >= 1980 && playerYear < 1990) playerDecade = '1980s';
-        else if (playerYear >= 1990 && playerYear < 2000) playerDecade = '1990s';
-        else if (playerYear >= 2000 && playerYear < 2010) playerDecade = '2000s';
-        else if (playerYear >= 2010 && playerYear < 2020) playerDecade = '2010s';
-        else if (playerYear >= 2020 && playerYear < 2030) playerDecade = '2020s';
-
-        return playerDecade === decade;
-    });
-
-    console.log('Players found in selected decade:', playersFromDecade.length);
-
-    if (playersFromDecade.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
-        const selectedPlayer = playersFromDecade[randomIndex];
+// Pick a random player from the players data
+function displayRandomPlayer() {
+    console.log('Selecting random player from available data...');
+    if (playersData.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersData.length);
+        const selectedPlayer = playersData[randomIndex];
         console.log('Selected player:', selectedPlayer.name);
-        return selectedPlayer;
+
+        db.collection('games').doc(gameId).update({
+            currentQuestion: selectedPlayer.name,
+            currentTurn: currentPlayer === 'player1' ? 'player2' : 'player1'
+        }).then(() => {
+            console.log('Game updated successfully with player:', selectedPlayer.name);
+        }).catch((error) => {
+            console.error('Error updating game:', error);
+        });
     } else {
-        console.error('No players found for the selected decade:', decade);
-        return { name: 'Unknown Player', college: 'Unknown College' };
+        console.error('No players available in data.');
+        questionElement.textContent = 'No players available. Please refresh the game.';
     }
 }
 
-// Handle decade selection
-decadeDropdown.addEventListener('change', (e) => {
-    const selectedDecade = e.target.value;
-    console.log('Selected decade:', selectedDecade);
-
-    if (selectedDecade) {
-        const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
-
-        if (randomPlayer.name !== 'Unknown Player') {
-            db.collection('games').doc(gameId).update({
-                currentQuestion: randomPlayer.name,
-                currentTurn: currentPlayer === 'player1' ? 'player2' : 'player1'
-            }).then(() => {
-                console.log('Game updated successfully with player:', randomPlayer.name);
-            }).catch((error) => {
-                console.error('Error updating game:', error);
-                checkAndInitializeGame();
-            });
-        } else {
-            console.error('Failed to select a valid player for the decade:', selectedDecade);
-            alert('No players found for the selected decade. Please try another decade.');
-        }
-    }
-});
-
-function submitAnswer(player, answer) {
-    db.collection('games').doc(gameId).update({
-        [`${player}.lastAnswer`]: answer ? 'correct' : 'incorrect'
-    }).catch((error) => {
-        console.error('Error submitting answer:', error);
-        checkAndInitializeGame(); // Try to reinitialize the game if update fails
-    });
-}
-
+// Handle round results after both players submit their answers
 function handleRoundResults() {
     if (player1Answer === 'correct' && player2Answer !== 'correct') {
         updateProgress('player2');
@@ -207,7 +159,6 @@ function updateProgress(player) {
                 }
             }).catch((error) => {
                 console.error('Error updating progress:', error);
-                checkAndInitializeGame(); // Try to reinitialize the game if update fails
             });
         } else {
             console.error('Game document not found');
@@ -215,7 +166,6 @@ function updateProgress(player) {
         }
     }).catch((error) => {
         console.error('Error getting game document:', error);
-        checkAndInitializeGame(); // Try to reinitialize the game if get fails
     });
 }
 
@@ -225,7 +175,6 @@ function resetForNextRound() {
         'player2.lastAnswer': ''
     }).catch((error) => {
         console.error('Error resetting for next round:', error);
-        checkAndInitializeGame(); // Try to reinitialize the game if update fails
     });
     currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
 }
@@ -236,7 +185,7 @@ function resetGame() {
         createNewGame();
     }).catch((error) => {
         console.error('Error resetting game:', error);
-        createNewGame(); // Create a new game even if deletion fails
+        createNewGame();
     });
 }
 
