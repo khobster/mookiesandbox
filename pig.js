@@ -1,42 +1,42 @@
-let gameId;  // This will hold the dynamically generated game ID
-let playerId; // Will hold 'player1' or 'player2' for each player
+let gameId;
+let currentPlayer = 'player1';  // Start with Player 1 by default
+let player1Answer = null;
+let player2Answer = null;
+let playersData = [];  // Holds the player data from the JSON
 
-// UI Elements
+// Get UI Elements
 const player1Progress = document.getElementById('player1Progress');
 const player2Progress = document.getElementById('player2Progress');
 const decadeDropdown = document.getElementById('decadeDropdown');
-const decadeDropdownContainer = document.getElementById('decadeDropdownContainer');
-const turnIndicator = document.getElementById('turnIndicator');
 const questionElement = document.getElementById('playerQuestion');
-const submitBtn = document.getElementById('submitBtn');
+const turnIndicator = document.getElementById('turnIndicator');
 
-// Track answers and player turn
-let player1Answer = null;
-let player2Answer = null;
-let playerTurn = 1;  // Player 1 starts by default
+// Load players data from the JSON file
+function loadPlayersData() {
+    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
+        .then(response => response.json())
+        .then(data => {
+            playersData = data;
+            console.log('Players data loaded:', playersData);
+        })
+        .catch(error => {
+            console.error('Error loading players data:', error);
+        });
+}
 
-// Create a new game document with a unique game ID
+// Firebase: Create a New Game
 function createNewGame() {
     const newGame = {
         currentQuestion: '',
-        currentTurn: 'player1', // Player 1 starts by choosing the decade
-        player1: {
-            lastAnswer: '',
-            progress: ''
-        },
-        player2: {
-            lastAnswer: '',
-            progress: ''
-        }
+        currentTurn: 'player1',  // Player 1 picks the decade first
+        player1: { lastAnswer: '', progress: '' },
+        player2: { lastAnswer: '', progress: '' }
     };
 
-    // Add a new document to the "games" collection and get its ID
     db.collection('games').add(newGame)
         .then((docRef) => {
-            gameId = docRef.id;  // Store the new game ID
+            gameId = docRef.id;
             console.log('Game created with ID:', gameId);
-
-            // Start listening to the game state
             listenToGameUpdates();
         })
         .catch((error) => {
@@ -44,25 +44,25 @@ function createNewGame() {
         });
 }
 
-// Real-time Firestore Listener for Game Updates
+// Firebase: Listen to Real-Time Game Updates
 function listenToGameUpdates() {
     db.collection('games').doc(gameId).onSnapshot((doc) => {
         if (doc.exists) {
             const gameData = doc.data();
-
+            
             // Update UI with the current question and turn
             questionElement.textContent = `Where did ${gameData.currentQuestion} go to college?`;
-            turnIndicator.textContent = `${gameData.currentTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn to pick the decade`;
+            turnIndicator.textContent = `${gameData.currentTurn === 'player1' ? 'Player 1' : 'Player 2'}'s turn`;
 
             // Update player progress
             player1Progress.textContent = gameData.player1.progress;
             player2Progress.textContent = gameData.player2.progress;
 
-            // Track the last answer for both players
+            // Store the last answer for both players
             player1Answer = gameData.player1.lastAnswer;
             player2Answer = gameData.player2.lastAnswer;
 
-            // Check if both players have answered
+            // Handle round results if both players have submitted their answers
             if (player1Answer && player2Answer) {
                 handleRoundResults();
             }
@@ -70,39 +70,29 @@ function listenToGameUpdates() {
     });
 }
 
-// Handle Decade Selection
+// Handle Decade Selection (by Player 1 or Player 2)
 decadeDropdown.addEventListener('change', (e) => {
     const selectedDecade = e.target.value;
 
     if (selectedDecade) {
-        // Pick a random player from the selected decade (replace with actual logic)
-        const randomPlayer = pickRandomPlayerFromDecade(selectedDecade); // Replace this with actual player data logic
+        // Retrieve a player from the selected decade
+        const randomPlayer = pickRandomPlayerFromDecade(selectedDecade);
 
-        // Update the game with the new question and switch turns
+        // Update Firebase with the new question and switch turns
         db.collection('games').doc(gameId).update({
-            currentQuestion: randomPlayer,
-            currentTurn: playerTurn === 1 ? 'player2' : 'player1'
+            currentQuestion: randomPlayer.name,
+            currentTurn: currentPlayer === 'player1' ? 'player2' : 'player1'
         });
 
-        decadeDropdownContainer.style.display = 'none'; // Hide the dropdown after selecting
+        // Hide the decade dropdown
+        decadeDropdown.style.display = 'none';
     }
 });
 
-// Handle Answer Submission (each player submits an answer)
-submitBtn.addEventListener('click', () => {
-    const answerInput = document.getElementById('collegeGuess').value;
-    const currentPlayer = playerTurn === 1 ? 'player1' : 'player2';
-    
-    submitAnswer(currentPlayer, answerInput);
-});
-
-// Submit answer and update Firestore
+// Handle Player Answer Submission
 function submitAnswer(player, answer) {
-    // Example validation for correct/incorrect answers (to be replaced with real logic)
-    const isCorrect = (answer.toLowerCase() === 'correct answer');  // Replace with actual validation logic
-
     db.collection('games').doc(gameId).update({
-        [`${player}.lastAnswer`]: isCorrect ? 'correct' : 'incorrect'
+        [`${player}.lastAnswer`]: answer ? 'correct' : 'incorrect'
     });
 }
 
@@ -110,71 +100,82 @@ function submitAnswer(player, answer) {
 function handleRoundResults() {
     if (player1Answer === 'correct' && player2Answer !== 'correct') {
         // Player 2 gets a letter
-        updateProgress(2);
+        updateProgress('player2');
     } else if (player2Answer === 'correct' && player1Answer !== 'correct') {
         // Player 1 gets a letter
-        updateProgress(1);
+        updateProgress('player1');
     }
 
-    // Reset for the next round
+    // Reset answers for the next round
     resetForNextRound();
 }
 
-// Update Progress (PIG game mechanics)
+// Update Player Progress (P-I-G)
 function updateProgress(player) {
     db.collection('games').doc(gameId).get().then((doc) => {
-        const progress = doc.data()[`player${player}`].progress || '';
+        const progress = doc.data()[player].progress || '';
+        let newProgress = progress + 'PIG'[progress.length];  // Add the next letter (P -> I -> G)
         
-        let newProgress = progress + 'P'.charAt(progress.length);  // Add next letter (P -> I -> G)
         db.collection('games').doc(gameId).update({
-            [`player${player}.progress`]: newProgress
+            [`${player}.progress`]: newProgress
         });
 
-        // Check if player has completed "PIG"
+        // Check if the player has completed PIG
         if (newProgress === 'PIG') {
-            alert(`Player ${player} has lost the game!`);
+            alert(`${player === 'player1' ? 'Player 1' : 'Player 2'} has lost the game!`);
             resetGame();
         }
     });
 }
 
-// Reset for the next round
+// Reset for the Next Round
 function resetForNextRound() {
-    // Reset the answers in the database
     db.collection('games').doc(gameId).update({
         'player1.lastAnswer': '',
         'player2.lastAnswer': ''
     });
 
-    // Switch the turn to the next player
-    playerTurn = playerTurn === 1 ? 2 : 1;
-
-    // Show the decade dropdown only for the player whose turn it is
-    if (playerTurn === 1) {
-        decadeDropdownContainer.style.display = 'block';
-    } else {
-        decadeDropdownContainer.style.display = 'none';  // Player 2 should not see the dropdown
-    }
+    // Switch the turn to the other player
+    currentPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
 }
 
-// Pick a random player from the selected decade (mock data for testing, replace with actual logic)
+// Pick a Random Player from the Selected Decade using JSON data
 function pickRandomPlayerFromDecade(decade) {
-    // Mock data for testing, replace with actual player data lookup
-    const playersByDecade = {
-        '1980s': ['Michael Jordan', 'Magic Johnson', 'Larry Bird'],
-        '1990s': ['Shaquille O’Neal', 'Kobe Bryant', 'Tim Duncan'],
-        '2000s': ['LeBron James', 'Carmelo Anthony', 'Dwyane Wade'],
-    };
+    const playersFromDecade = playersData.filter(player => {
+        let playerYear = player.retirement_year;
 
-    const players = playersByDecade[decade] || [];
-    if (players.length > 0) {
-        // Return a random player from the decade
-        return players[Math.floor(Math.random() * players.length)];
+        let playerDecade;
+        if (playerYear >= 50 && playerYear <= 59) {
+            playerDecade = '1950s';
+        } else if (playerYear >= 60 && playerYear <= 69) {
+            playerDecade = '1960s';
+        } else if (playerYear >= 70 && playerYear <= 79) {
+            playerDecade = '1970s';
+        } else if (playerYear >= 80 && playerYear <= 89) {
+            playerDecade = '1980s';
+        } else if (playerYear >= 90 && playerYear <= 99) {
+            playerDecade = '1990s';
+        } else if (playerYear >= 0 && playerYear <= 9) {
+            playerDecade = '2000s';
+        } else if (playerYear >= 10 && playerYear <= 19) {
+            playerDecade = '2010s';
+        } else if (playerYear >= 20 && playerYear <= 29) {
+            playerDecade = '2020s';
+        }
+
+        return playerDecade === decade;
+    });
+
+    if (playersFromDecade.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersFromDecade.length);
+        return playersFromDecade[randomIndex];
     } else {
-        console.error(`No players found for the selected decade: ${decade}`);
-        return 'Unknown Player';
+        return { name: 'Unknown Player', college: 'Unknown College' };
     }
 }
 
-// Initialize the game
-createNewGame();  // This will create a new game each time
+// Initialize Game and Load Players
+document.addEventListener('DOMContentLoaded', () => {
+    loadPlayersData();
+    createNewGame();
+});
