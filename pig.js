@@ -8,13 +8,34 @@ document.addEventListener('DOMContentLoaded', () => {
   gameID = getGameID(); // Either generate or get from URL
   loadGameData(gameID);
 
-  const submitButton = document.getElementById('submitAnswer');
+  const submitButton = document.getElementById('submitBtn');
   const guessInput = document.getElementById('collegeGuess');
+  const goFishButton = document.getElementById('goFishBtn');
+  const decadeDropdown = document.getElementById('decadeDropdown');
 
-  submitButton.addEventListener('click', () => {
-    const userGuess = guessInput.value.trim().toLowerCase();
-    processGuess(userGuess);
-  });
+  // Ensure elements exist before adding event listeners
+  if (submitButton && guessInput) {
+    submitButton.addEventListener('click', () => {
+      const userGuess = guessInput.value.trim().toLowerCase();
+      processGuess(userGuess);
+    });
+  }
+
+  if (goFishButton) {
+    goFishButton.addEventListener('click', () => {
+      document.getElementById('decadeDropdownContainer').style.display = 'block';
+    });
+  }
+
+  if (decadeDropdown) {
+    decadeDropdown.addEventListener('change', (event) => {
+      const selectedDecade = event.target.value;
+      if (selectedDecade) {
+        displayPlayerFromDecade(selectedDecade);
+        document.getElementById('decadeDropdownContainer').style.display = 'none';
+      }
+    });
+  }
 
   // Real-time updates for the game
   db.collection("games").doc(gameID).onSnapshot((doc) => {
@@ -79,9 +100,24 @@ async function processGuess(guess) {
   document.getElementById('collegeGuess').value = ''; // Clear input
 }
 
-// Get a random player for the trivia question
+// Get a random player for the trivia question (replace with your actual logic)
 function getRandomPlayer() {
   return 'Grant Hill'; // Replace with real random player logic
+}
+
+// Display a random player based on the selected decade
+function displayPlayerFromDecade(decade) {
+  const playersFromDecade = ['1950s', '1960s', '1970s', '1980s', '1990s', '2000s', '2010s', '2020s'].filter(
+    (playerDecade) => playerDecade === decade
+  );
+
+  if (playersFromDecade.length > 0) {
+    const randomPlayer = playersFromDecade[Math.floor(Math.random() * playersFromDecade.length)];
+    currentQuestion = randomPlayer;
+    document.getElementById('playerQuestion').textContent = `Where did ${randomPlayer} go to college?`;
+  } else {
+    document.getElementById('playerQuestion').textContent = 'No players found from this decade.';
+  }
 }
 
 // Update the UI based on game data
@@ -89,10 +125,13 @@ function updateGameUI(gameData) {
   currentPlayer = gameData.currentTurn;
   document.getElementById('player1Progress').textContent = `Player 1: ${gameData.player1.progress}`;
   document.getElementById('player2Progress').textContent = `Player 2: ${gameData.player2.progress}`;
-  document.getElementById('currentQuestion').textContent = `Where did ${gameData.currentQuestion} go to college?`;
+  document.getElementById('playerQuestion').textContent = `Where did ${gameData.currentQuestion} go to college?`;
 
-  // Display turn indicator
-  document.getElementById('turnIndicator').textContent = currentPlayer === 'player1' ? "Player 1's turn" : "Player 2's turn";
+  if (currentPlayer === 'player1') {
+    document.getElementById('turnIndicator').textContent = "Player 1's turn";
+  } else {
+    document.getElementById('turnIndicator').textContent = "Player 2's turn";
+  }
 
   checkForWinner(gameData);
 }
