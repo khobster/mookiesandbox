@@ -4,7 +4,6 @@ let correctStreak1 = 0;
 let correctStreak2 = 0;
 let player1HasGuessed = false;
 let player2HasGuessed = false;
-let currentDifficultyLevel = 1; // This can be used to control difficulty based on rarity scores
 
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
@@ -27,7 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = doc.data();
             if (data.currentPlayerID) {
                 const storedPlayerID = data.currentPlayerID;
-
+                
+                // Ensure playersData is loaded before trying to find the player
                 if (playersData.length > 0) {
                     currentPlayer = playersData.find(player => player.id === storedPlayerID);
                     if (currentPlayer) {
@@ -38,12 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-
-            // Sync the turn state across both players' screens
-            const turnIndicator = document.getElementById('turnIndicator');
-            if (turnIndicator) {
-                turnIndicator.textContent = data.currentTurn === 1 ? "Player 1's turn" : "Player 2's turn";
-            }
         }
     });
 });
@@ -53,16 +47,7 @@ function loadPlayersData() {
         .then(response => response.json())
         .then(data => {
             playersData = data;
-
-            // Use Plunko's method to sort players by rarity score and filter based on difficulty
-            playersData.sort((a, b) => a.rarity_score - b.rarity_score);
-            playersData = playersData.filter(player => 
-                player.rarity_score <= currentDifficultyLevel || 
-                (player.games_played > 500 && player.retirement_year < 2000)
-            );
-
-            // Start a new round or sync with existing data
-            startNewRound();
+            startNewRound();  
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
@@ -74,23 +59,34 @@ function startNewRound() {
     player1HasGuessed = false;
     player2HasGuessed = false;
 
-    displayRandomPlayerWithRarity(); // Use the Plunko player selection technique
+    // Check if the current game in Firebase already has a player
+    gameRef.get().then((doc) => {
+        if (doc.exists && doc.data().currentPlayerID) {
+            const storedPlayerID = doc.data().currentPlayerID;
+            currentPlayer = playersData.find(player => player.id === storedPlayerID);
+
+            if (currentPlayer) {
+                displayPlayer(currentPlayer);
+            } else {
+                displayRandomPlayerByRarity();
+            }
+        } else {
+            displayRandomPlayerByRarity();
+        }
+    }).catch((error) => {
+        console.error("Error getting game data from Firebase: ", error);
+    });
 }
 
-// Using Plunko's method to display a player based on rarity score
-function displayRandomPlayerWithRarity() {
-    if (playersData.length > 0) {
-        const eligiblePlayers = playersData.filter(player => player.rarity_score <= currentDifficultyLevel);
-        const randomIndex = Math.floor(Math.random() * eligiblePlayers.length);
-        currentPlayer = eligiblePlayers[randomIndex];
+function displayRandomPlayerByRarity() {
+    const weightedPlayers = playersData.filter(player => player.rarity_score <= 5);
+    const randomIndex = Math.floor(Math.random() * weightedPlayers.length);
+    currentPlayer = weightedPlayers[randomIndex];
 
-        // Store the current player's ID in Firebase so both players get the same question
-        gameRef.set({ currentPlayerID: currentPlayer.id, currentTurn: 1 });
+    // Store the current player's ID in Firebase so both players get the same question
+    gameRef.set({ currentPlayerID: currentPlayer.id });
 
-        displayPlayer(currentPlayer);
-    } else {
-        console.log("No data available");
-    }
+    displayPlayer(currentPlayer);
 }
 
 function displayPlayer(player) {
@@ -111,6 +107,7 @@ function displayPlayer(player) {
 
         document.getElementById('result').textContent = '';
         document.getElementById('result').className = '';
+        document.getElementById('turnIndicator').textContent = "Player 1's turn";
     } else {
         console.error("Player name or image element not found");
     }
@@ -131,31 +128,22 @@ function handlePlayerGuess(playerNumber) {
     // Clear the input field
     guessInput.value = '';
 
-    // Mark the player's guess as completed
     if (playerNumber === 1) {
         player1HasGuessed = true;
-        gameRef.update({ currentTurn: 2 });
+        document.getElementById('turnIndicator').textContent = "Player 2's turn";
     } else {
         player2HasGuessed = true;
     }
 
-    // If both players have guessed, start a new round
     if (player1HasGuessed && player2HasGuessed) {
         setTimeout(() => {
-            startNewRound();  // Start a new round after both players have guessed
-        }, 2000);  // Wait 2 seconds before showing the next player
+            startNewRound();
+        }, 2000);
     }
 }
 
 function updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement) {
     if (isCorrect) {
-        if (playerNumber === 1) {
-            correctStreak1++;
-            document.getElementById('player1Progress').textContent = `Player 1: Correct!`;
-        } else {
-            correctStreak2++;
-            document.getElementById('player2Progress').textContent = `Player 2: Correct!`;
-        }
         resultElement.textContent = "Correct!";
         resultElement.className = 'correct';
         correctSound.play();
@@ -171,3 +159,36 @@ function isCloseMatch(guess, answer) {
     let simpleAnswer = answer.trim().toLowerCase();
     return simpleAnswer.includes(simpleGuess);
 }
+
+function showSuggestions(input) {
+    const suggestionsContainer = document.getElementById('suggestions');
+    suggestionsContainer.innerHTML = '';
+    
+    if (input.length === 0) {
+        return;
+    }
+    
+    const suggestions = Array.from(new Set(playersData
+        .map(player => player.college)
+        .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
+        .slice(0, 5);
+        
+    suggestions.forEach(suggestion => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.textContent = suggestion;
+        suggestionItem.classList.add('suggestion-item');
+        suggestionItem.addEventListener('click', () => {
+            document.getElementById('collegeGuess1').value = suggestion;
+            suggestionsContainer.innerHTML = '';
+        });
+        suggestionsContainer.appendChild(suggestionItem);
+    });
+}
+
+document.getElementById('collegeGuess1').addEventListener('input', (e) => {
+    showSuggestions(e.target.value);
+});
+
+document.getElementById('collegeGuess2').addEventListener('input', (e) => {
+    showSuggestions(e.target.value);
+});
