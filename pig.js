@@ -47,9 +47,13 @@ function createNewGame() {
     }).then(docRef => {
         gameId = docRef.id;
         const shareableUrl = `${window.location.origin}/pig.html?gameId=${gameId}`;
-
-        // Redirect to the new game URL with the gameId
-        window.location.href = shareableUrl;
+        
+        // Display the shareable link
+        gameUrlInput.value = shareableUrl;
+        shareLinkDiv.style.display = 'block';
+        
+        // Setup the game
+        setupGame(gameId);
     }).catch(error => console.error("Error creating game:", error));
 }
 
@@ -137,3 +141,19 @@ function getNextLetter(progress) {
     if (!progress.includes('I')) return 'I';
     return 'PIG';
 }
+
+// Function to copy the game URL to clipboard
+function copyGameUrl() {
+    gameUrlInput.select();
+    document.execCommand('copy');
+    alert('Game URL copied to clipboard!');
+}
+
+// Check if there's a gameId in the URL when the page loads
+window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameIdFromUrl = urlParams.get('gameId');
+    if (gameIdFromUrl) {
+        setupGame(gameIdFromUrl);
+    }
+};
