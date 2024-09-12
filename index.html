@@ -106,15 +106,14 @@
     })
     .then((docRef) => {
         console.log('New game created with ID:', docRef.id);
-        // Redirect to the game page with the new game ID
-        const gameUrl = `pig.html?gameId=${docRef.id}`;
-        console.log('Redirecting to:', gameUrl);
-        window.location.href = gameUrl;
+        // Store the game ID in localStorage
+        localStorage.setItem('pigGameId', docRef.id);
+        // Redirect to the game page
+        window.location.href = 'pig.html';
     })
     .catch((error) => {
         console.error('Error creating game:', error);
-        console.error('Error details:', error.code, error.message);
-        alert('There was an error creating the game. Please check the console for details.');
+        alert('There was an error creating the game. Please try again.');
     });
 });
    </script>
