@@ -1,3 +1,4 @@
+// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDicI1nKcrMDaaYkL_8q70yj1mM05tW5Ak",
   authDomain: "mookie-pig-challenge.firebaseapp.com",
@@ -43,6 +44,7 @@ fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_tes
     .catch(error => console.error('Error loading players data:', error));
 
 function createNewGame() {
+    console.log("Attempting to create a new game...");
     db.collection('pigGames').add({
         currentPlayer: 1,
         player1Progress: '',
@@ -50,10 +52,15 @@ function createNewGame() {
         currentQuestion: '',
         gameStatus: 'waiting'
     }).then(docRef => {
+        console.log("Game created successfully with ID:", docRef.id);
         gameId = docRef.id;
         alert(`Game created! Share this ID with your friend: ${gameId}`);
         setupGame(gameId);
-    }).catch(error => console.error("Error creating game:", error));
+    }).catch(error => {
+        console.error("Error creating game:", error);
+        console.error("Error details:", error.code, error.message);
+        alert("Error creating game. Please check console for details.");
+    });
 }
 
 function joinGame() {
