@@ -1,22 +1,19 @@
 let playersData = [];
+let gameRef;
+let gameId;
 let currentPlayer = null;
-let correctStreak1 = 0;
-let correctStreak2 = 0;
+let player1Progress = '';
+let player2Progress = '';
 let player1HasGuessed = false;
 let player2HasGuessed = false;
 
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
-// Firebase reference to the game data
-let gameRef;
-let gameId;
-
-// Extract gameId from URL (only once here in pig.js)
-const urlParams = new URLSearchParams(window.location.search);
-gameId = urlParams.get('gameId');
-
 document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    gameId = urlParams.get('gameId');
+
     if (gameId) {
         gameRef = db.collection('games').doc(gameId);
         loadGameData();
@@ -27,12 +24,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn1 = document.getElementById('submitBtn1');
     const submitBtn2 = document.getElementById('submitBtn2');
 
-    submitBtn1.addEventListener('click', () => handlePlayerGuess(1));
-    submitBtn2.addEventListener('click', () => handlePlayerGuess(2));
+    if (submitBtn1 && submitBtn2) {
+        submitBtn1.addEventListener('click', () => handlePlayerGuess(1));
+        submitBtn2.addEventListener('click', () => handlePlayerGuess(2));
+    } else {
+        console.error("Submit buttons not found in the DOM");
+    }
+
+    loadPlayersData();
 });
 
+function loadPlayersData() {
+    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
+        .then(response => response.json())
+        .then(data => {
+            playersData = data;
+            displayRandomPlayer();
+        })
+        .catch(error => {
+            console.error('Error loading JSON:', error);
+            document.getElementById('playerQuestion').textContent = 'Error loading player data.';
+        });
+}
+
 function loadGameData() {
-    // Log gameId to verify it exists in URL
     console.log("Attempting to load game with gameId:", gameId);
 
     gameRef.get().then((doc) => {
@@ -40,9 +55,18 @@ function loadGameData() {
             const gameData = doc.data();
             console.log("Game data loaded successfully:", gameData);
 
-            // Initialize the game based on the loaded game data
             document.getElementById('playerQuestion').textContent = gameData.currentQuestion || 'Where did the player go to college?';
             document.getElementById('turnIndicator').textContent = gameData.currentTurn === 'player1' ? "Player 1's turn" : "Player 2's turn";
+            
+            player1Progress = gameData.player1.progress || '';
+            player2Progress = gameData.player2.progress || '';
+            updateProgressDisplay();
+
+            if (gameData.currentPlayer) {
+                displayPlayer(gameData.currentPlayer);
+            } else {
+                displayRandomPlayer();
+            }
         } else {
             console.error(`No such game found with gameId: ${gameId}`);
         }
@@ -55,56 +79,151 @@ function handlePlayerGuess(playerNumber) {
     const guessInput = document.getElementById(`collegeGuess${playerNumber}`);
     const guess = guessInput.value.trim().toLowerCase();
     const resultElement = document.getElementById('result');
-    let isCorrect = false;
 
     if (currentPlayer) {
-        isCorrect = isCloseMatch(guess, currentPlayer.college || 'No College');
-    }
+        const isCorrect = isCloseMatch(guess, currentPlayer.college || 'No College');
+        updateResult(isCorrect, playerNumber, resultElement);
 
-    updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement);
+        guessInput.value = '';
 
-    // Clear the input field
-    guessInput.value = '';
+        if (playerNumber === 1) {
+            player1HasGuessed = true;
+            document.getElementById('turnIndicator').textContent = "Player 2's turn";
+        } else {
+            player2HasGuessed = true;
+        }
 
-    if (playerNumber === 1) {
-        player1HasGuessed = true;
-        document.getElementById('turnIndicator').textContent = "Player 2's turn";
+        if (player1HasGuessed && player2HasGuessed) {
+            setTimeout(() => {
+                startNewRound();
+            }, 2000);
+        }
+
+        gameRef.update({
+            [`player${playerNumber}.lastAnswer`]: guess,
+            currentTurn: playerNumber === 1 ? 'player2' : 'player1'
+        });
     } else {
-        player2HasGuessed = true;
-    }
-
-    if (player1HasGuessed && player2HasGuessed) {
-        setTimeout(() => {
-            startNewRound();
-        }, 2000);
+        console.error("No current player data available");
     }
 }
 
-function updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement) {
+function updateResult(isCorrect, playerNumber, resultElement) {
     if (isCorrect) {
-        resultElement.textContent = "Correct!";
+        resultElement.textContent = `Player ${playerNumber}: Correct!`;
         resultElement.className = 'correct';
         correctSound.play();
     } else {
-        resultElement.textContent = "Wrong answer. Try again!";
+        resultElement.textContent = `Player ${playerNumber}: Wrong answer.`;
         resultElement.className = 'incorrect';
         wrongSound.play();
+        
+        if (playerNumber === 1) {
+            player1Progress += getNextLetter(player1Progress);
+        } else {
+            player2Progress += getNextLetter(player2Progress);
+        }
+        
+        updateProgressDisplay();
+        
+        gameRef.update({
+            [`player${playerNumber}.progress`]: playerNumber === 1 ? player1Progress : player2Progress
+        });
+
+        if (player1Progress === 'PIG' || player2Progress === 'PIG') {
+            endGame();
+        }
     }
 }
 
 function isCloseMatch(guess, answer) {
+    if (!guess.trim()) return false;
+
     let simpleGuess = guess.trim().toLowerCase();
     let simpleAnswer = answer.trim().toLowerCase();
+
+    const noCollegePhrases = ["didntgotocollege", "didnotgotocollege", "nocollege"];
+
+    if (noCollegePhrases.includes(simpleGuess.replace(/\s/g, '')) && simpleAnswer === '') {
+        return true;
+    }
+
+    if (simpleAnswer === 'unc' && (simpleGuess === 'north carolina' || simpleGuess === 'carolina')) {
+        return true;
+    }
+
     return simpleAnswer.includes(simpleGuess);
 }
 
-function showSuggestions(input) {
-    const suggestionsContainer = document.getElementById('suggestions');
+function getNextLetter(progress) {
+    if (!progress.includes('P')) return 'P';
+    if (!progress.includes('I')) return 'I';
+    return 'G';
+}
+
+function updateProgressDisplay() {
+    document.getElementById('player1Progress').textContent = `Player 1: ${player1Progress}`;
+    document.getElementById('player2Progress').textContent = `Player 2: ${player2Progress}`;
+}
+
+function startNewRound() {
+    player1HasGuessed = false;
+    player2HasGuessed = false;
+    document.getElementById('result').textContent = '';
+    document.getElementById('turnIndicator').textContent = "Player 1's turn";
+    displayRandomPlayer();
+}
+
+function displayRandomPlayer() {
+    if (playersData.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersData.length);
+        currentPlayer = playersData[randomIndex];
+        displayPlayer(currentPlayer);
+        
+        gameRef.update({
+            currentPlayer: currentPlayer,
+            currentQuestion: `Where did ${currentPlayer.name} go to college?`
+        });
+    } else {
+        console.log("No player data available");
+    }
+}
+
+function displayPlayer(player) {
+    document.getElementById('playerName').textContent = player.name;
+    const playerImage = document.getElementById('playerImage');
+    playerImage.src = player.image_url || 'stilllife.png';
+    playerImage.onerror = function() {
+        this.onerror = null;
+        this.src = 'stilllife.png';
+    };
+    document.getElementById('collegeGuess1').value = '';
+    document.getElementById('collegeGuess2').value = '';
+    document.getElementById('result').textContent = '';
+    document.getElementById('result').className = '';
+}
+
+function endGame() {
+    const winner = player1Progress === 'PIG' ? 'Player 2' : 'Player 1';
+    document.getElementById('result').textContent = `Game Over! ${winner} wins!`;
+    document.getElementById('submitBtn1').disabled = true;
+    document.getElementById('submitBtn2').disabled = true;
+}
+
+// Add event listeners for college guess inputs
+document.getElementById('collegeGuess1').addEventListener('input', (e) => {
+    showSuggestions(e.target.value, 'suggestions1');
+});
+
+document.getElementById('collegeGuess2').addEventListener('input', (e) => {
+    showSuggestions(e.target.value, 'suggestions2');
+});
+
+function showSuggestions(input, containerId) {
+    const suggestionsContainer = document.getElementById(containerId);
     suggestionsContainer.innerHTML = '';
     
-    if (input.length === 0) {
-        return;
-    }
+    if (input.length === 0) return;
     
     const suggestions = Array.from(new Set(playersData
         .map(player => player.college)
@@ -116,40 +235,9 @@ function showSuggestions(input) {
         suggestionItem.textContent = suggestion;
         suggestionItem.classList.add('suggestion-item');
         suggestionItem.addEventListener('click', () => {
-            document.getElementById('collegeGuess1').value = suggestion;
+            document.getElementById(containerId.replace('suggestions', 'collegeGuess')).value = suggestion;
             suggestionsContainer.innerHTML = '';
         });
         suggestionsContainer.appendChild(suggestionItem);
     });
 }
-
-document.getElementById('collegeGuess1').addEventListener('input', (e) => {
-    showSuggestions(e.target.value);
-});
-
-document.getElementById('collegeGuess2').addEventListener('input', (e) => {
-    showSuggestions(e.target.value);
-});
-
-// Game creation logic when pigLink is clicked
-document.getElementById('pigLink').addEventListener('click', () => {
-  console.log("Attempting to create a new game...");
-
-  db.collection('games').add({
-    currentQuestion: 'Where did the player go to college?',  // Example question
-    currentTurn: 'player1',  // Player 1 starts
-    player1: { lastAnswer: '', progress: '' },
-    player2: { lastAnswer: '', progress: '' }
-  })
-  .then((docRef) => {
-    // Log game creation success and ID
-    console.log('New game created successfully with ID:', docRef.id);
-    const gameId = docRef.id;
-    window.location.href = `pig.html?gameId=${gameId}`;
-  })
-  .catch((error) => {
-    // Log any errors that occur during game creation
-    console.error('Error creating game in Firestore:', error);
-    alert('Error creating game. Please check Firebase initialization.');
-  });
-});
