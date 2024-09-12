@@ -15,10 +15,7 @@ let currentPlayer;
 let playersData = [];
 
 // DOM Elements
-const joinGameBtn = document.getElementById('joinGameBtn');
-const gameIdInput = document.getElementById('gameIdInput');
 const shareInfo = document.getElementById('shareInfo');
-const joinGameArea = document.getElementById('joinGame');
 const gameArea = document.getElementById('gameArea');
 const currentQuestionEl = document.getElementById('currentQuestion');
 const currentPlayerEl = document.getElementById('currentPlayer');
@@ -29,7 +26,6 @@ const player2SubmitBtn = document.getElementById('player2Submit');
 const resultEl = document.getElementById('result');
 
 // Event Listeners
-if (joinGameBtn) joinGameBtn.addEventListener('click', joinExistingGame);
 if (player1SubmitBtn) player1SubmitBtn.addEventListener('click', () => submitGuess(1));
 if (player2SubmitBtn) player2SubmitBtn.addEventListener('click', () => submitGuess(2));
 
@@ -48,46 +44,46 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gameId) {
         setupGame(gameId);
     } else {
-        createNewGame();
+        console.error("No gameId found in URL");
+        alert("No game ID found. Please start a new game from the main page.");
+        window.location.href = 'https://www.mookie.click';
     }
 });
 
-function createNewGame() {
-    console.log("Creating a new PIG game...");
-    db.collection('pigGames').add({
-        currentPlayer: 1,
-        player1Progress: '',
-        player2Progress: '',
-        currentQuestion: '',
-        gameStatus: 'waiting',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    })
-    .then((docRef) => {
-        console.log('New game created with ID:', docRef.id);
-        gameId = docRef.id;
-        setupGame(gameId);
-    })
-    .catch((error) => {
-        console.error('Error creating game:', error);
-        alert('There was an error creating the game. Please try again.');
+function setupGame(id) {
+    gameId = id;
+    console.log("Setting up game with ID:", gameId);
+    
+    const gameUrl = `${window.location.origin}${window.location.pathname}?gameId=${gameId}`;
+    const gameUrlInput = document.getElementById('gameUrlInput');
+    if (gameUrlInput) gameUrlInput.value = gameUrl;
+    
+    if (shareInfo) shareInfo.style.display = 'block';
+    if (gameArea) gameArea.style.display = 'block';
+    
+    db.collection('pigGames').doc(gameId).get().then(doc => {
+        if (doc.exists) {
+            console.log("Game data found:", doc.data());
+            updateGameState(doc.data());
+            setupRealtimeListener();
+        } else {
+            console.error("Game not found");
+            alert("Game not found. Please check the URL or create a new game.");
+            window.location.href = 'https://www.mookie.click';
+        }
+    }).catch(error => {
+        console.error("Error getting game:", error);
     });
 }
 
-function setupGame(id) {
-    gameId = id;
-    const gameUrl = `${window.location.origin}${window.location.pathname}?gameId=${gameId}`;
-    document.getElementById('gameUrlInput').value = gameUrl;
-    shareInfo.style.display = 'block';
-    gameArea.style.display = 'block';
-    if (joinGameArea) joinGameArea.style.display = 'none';
-    
+function setupRealtimeListener() {
     db.collection('pigGames').doc(gameId)
         .onSnapshot(doc => {
             if (doc.exists) {
                 updateGameState(doc.data());
             } else {
-                console.error("Game not found");
-                alert("Game not found. Please check the URL or create a new game.");
+                console.error("Game no longer exists");
+                alert("This game has been deleted or does not exist.");
                 window.location.href = 'https://www.mookie.click';
             }
         }, error => {
@@ -95,12 +91,15 @@ function setupGame(id) {
         });
 }
 
-function joinExistingGame() {
-    const inputGameId = gameIdInput.value.trim();
-    if (inputGameId) {
-        setupGame(inputGameId);
-    } else {
-        alert("Please enter a valid Game ID.");
+function updateGameState(gameData) {
+    currentPlayer = gameData.currentPlayer;
+    if (currentPlayerEl) currentPlayerEl.textContent = `Current Turn: Player ${currentPlayer}`;
+    if (player1ProgressEl) player1ProgressEl.textContent = gameData.player1Progress;
+    if (player2ProgressEl) player2ProgressEl.textContent = gameData.player2Progress;
+    if (currentQuestionEl) currentQuestionEl.textContent = gameData.currentQuestion || "Waiting for question...";
+
+    if (gameData.gameStatus === 'waiting' && gameData.player1Progress === '' && gameData.player2Progress === '') {
+        startNewRound();
     }
 }
 
@@ -108,7 +107,9 @@ function joinExistingGame() {
 
 function copyGameUrl() {
     const gameUrlInput = document.getElementById('gameUrlInput');
-    gameUrlInput.select();
-    document.execCommand('copy');
-    alert('Game link copied to clipboard!');
+    if (gameUrlInput) {
+        gameUrlInput.select();
+        document.execCommand('copy');
+        alert('Game link copied to clipboard!');
+    }
 }
