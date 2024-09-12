@@ -1,4 +1,3 @@
-// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDicI1nKcrMDaaYkL_8q70yj1mM05tW5Ak",
   authDomain: "mookie-pig-challenge.firebaseapp.com",
@@ -54,7 +53,21 @@ function createNewGame() {
     }).then(docRef => {
         console.log("Game created successfully with ID:", docRef.id);
         gameId = docRef.id;
-        alert(`Game created! Share this ID with your friend: ${gameId}`);
+        const gameUrl = `${window.location.origin}${window.location.pathname}?gameId=${gameId}`;
+        
+        // Update URL without reloading the page
+        window.history.pushState({}, '', gameUrl);
+        
+        // Display game ID and URL for sharing
+        const shareInfo = `
+            <h3>Game created!</h3>
+            <p>Share this link with your friend:</p>
+            <input type="text" value="${gameUrl}" id="gameUrlInput" readonly>
+            <button onclick="copyGameUrl()">Copy Link</button>
+        `;
+        document.getElementById('shareInfo').innerHTML = shareInfo;
+        document.getElementById('shareInfo').style.display = 'block';
+        
         setupGame(gameId);
     }).catch(error => {
         console.error("Error creating game:", error);
@@ -64,11 +77,17 @@ function createNewGame() {
 }
 
 function joinGame() {
-    gameId = gameIdInput.value.trim();
+    const urlParams = new URLSearchParams(window.location.search);
+    gameId = urlParams.get('gameId');
+    
+    if (!gameId) {
+        gameId = gameIdInput.value.trim();
+    }
+    
     if (gameId) {
         setupGame(gameId);
     } else {
-        alert("Please enter a valid Game ID");
+        alert("Please enter a valid Game ID or use a valid game link.");
     }
 }
 
@@ -176,3 +195,20 @@ function resetGame() {
     gameArea.style.display = 'none';
     gameIdInput.value = '';
 }
+
+function copyGameUrl() {
+    const gameUrlInput = document.getElementById('gameUrlInput');
+    gameUrlInput.select();
+    document.execCommand('copy');
+    alert('Game link copied to clipboard!');
+}
+
+// Check for existing game ID in URL on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlGameId = urlParams.get('gameId');
+    if (urlGameId) {
+        gameId = urlGameId;
+        setupGame(gameId);
+    }
+});
