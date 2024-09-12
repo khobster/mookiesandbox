@@ -130,3 +130,26 @@ document.getElementById('collegeGuess1').addEventListener('input', (e) => {
 document.getElementById('collegeGuess2').addEventListener('input', (e) => {
     showSuggestions(e.target.value);
 });
+
+// Game creation logic when pigLink is clicked
+document.getElementById('pigLink').addEventListener('click', () => {
+  console.log("Attempting to create a new game...");
+
+  db.collection('games').add({
+    currentQuestion: 'Where did the player go to college?',  // Example question
+    currentTurn: 'player1',  // Player 1 starts
+    player1: { lastAnswer: '', progress: '' },
+    player2: { lastAnswer: '', progress: '' }
+  })
+  .then((docRef) => {
+    // Log game creation success and ID
+    console.log('New game created successfully with ID:', docRef.id);
+    const gameId = docRef.id;
+    window.location.href = `pig.html?gameId=${gameId}`;
+  })
+  .catch((error) => {
+    // Log any errors that occur during game creation
+    console.error('Error creating game in Firestore:', error);
+    alert('Error creating game. Please check Firebase initialization.');
+  });
+});
