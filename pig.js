@@ -24,20 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
     gameRef.onSnapshot((doc) => {
         if (doc.exists) {
             const data = doc.data();
-            if (data.currentPlayerID) {
-                const storedPlayerID = data.currentPlayerID;
-                
-                // Ensure playersData is loaded before trying to find the player
-                if (playersData.length > 0) {
-                    currentPlayer = playersData.find(player => player.id === storedPlayerID);
-                    if (currentPlayer) {
-                        displayPlayer(currentPlayer);
-                    } else {
-                        console.error("Player with stored ID not found. Starting a new round.");
-                        startNewRound();
-                    }
-                }
-            }
+            const turn = data.turn;
+            const player1Guesses = data.player1Guesses;
+            const player2Guesses = data.player2Guesses;
+
+            // Update player turns and UI
+            document.getElementById('turnIndicator').textContent = turn === 1 ? "Player 1's turn" : "Player 2's turn";
+
+            // Load guesses
+            if (player1Guesses) document.getElementById('collegeGuess1').value = player1Guesses;
+            if (player2Guesses) document.getElementById('collegeGuess2').value = player2Guesses;
         }
     });
 });
@@ -59,7 +55,6 @@ function startNewRound() {
     player1HasGuessed = false;
     player2HasGuessed = false;
 
-    // Check if the current game in Firebase already has a player
     gameRef.get().then((doc) => {
         if (doc.exists && doc.data().currentPlayerID) {
             const storedPlayerID = doc.data().currentPlayerID;
@@ -83,7 +78,6 @@ function displayRandomPlayerByRarity() {
     const randomIndex = Math.floor(Math.random() * weightedPlayers.length);
     currentPlayer = weightedPlayers[randomIndex];
 
-    // Store the current player's ID in Firebase so both players get the same question
     gameRef.set({ currentPlayerID: currentPlayer.id });
 
     displayPlayer(currentPlayer);
@@ -93,56 +87,55 @@ function displayPlayer(player) {
     const playerNameElement = document.getElementById('playerName');
     const playerImageElement = document.getElementById('playerImage');
 
-    if (playerNameElement && playerImageElement) {
-        playerNameElement.textContent = player.name;
+    playerNameElement.textContent = player.name;
 
-        playerImageElement.src = 'stilllife.png';
-        if (player.image_url) {
-            playerImageElement.src = player.image_url;
-            playerImageElement.onerror = function () {
-                this.onerror = null;
-                this.src = 'stilllife.png';
-            };
-        }
-
-        document.getElementById('result').textContent = '';
-        document.getElementById('result').className = '';
-        document.getElementById('turnIndicator').textContent = "Player 1's turn";
-    } else {
-        console.error("Player name or image element not found");
+    playerImageElement.src = 'stilllife.png';
+    if (player.image_url) {
+        playerImageElement.src = player.image_url;
+        playerImageElement.onerror = function () {
+            this.onerror = null;
+            this.src = 'stilllife.png';
+        };
     }
+
+    document.getElementById('result').textContent = '';
+    document.getElementById('turnIndicator').textContent = "Player 1's turn";
 }
 
 function handlePlayerGuess(playerNumber) {
     const guessInput = document.getElementById(`collegeGuess${playerNumber}`);
     const guess = guessInput.value.trim().toLowerCase();
-    const resultElement = document.getElementById('result');
-    let isCorrect = false;
+  
+    gameRef.get().then((doc) => {
+        if (doc.exists) {
+            const data = doc.data();
+            const currentTurn = data.turn;
 
-    if (currentPlayer) {
-        isCorrect = isCloseMatch(guess, currentPlayer.college || 'No College');
-    }
+            if (currentTurn === playerNumber) {
+                const isCorrect = isCloseMatch(guess, currentPlayer.college || 'No College');
 
-    updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement);
+                const updateData = {
+                    [`player${playerNumber}Guesses`]: guess,
+                    turn: currentTurn === 1 ? 2 : 1
+                };
 
-    // Clear the input field
-    guessInput.value = '';
+                gameRef.update(updateData).then(() => {
+                    if (isCorrect) {
+                        updateStreakAndDisplayResult(true, playerNumber);
+                    } else {
+                        updateStreakAndDisplayResult(false, playerNumber);
+                    }
 
-    if (playerNumber === 1) {
-        player1HasGuessed = true;
-        document.getElementById('turnIndicator').textContent = "Player 2's turn";
-    } else {
-        player2HasGuessed = true;
-    }
-
-    if (player1HasGuessed && player2HasGuessed) {
-        setTimeout(() => {
-            startNewRound();
-        }, 2000);
-    }
+                    guessInput.value = '';
+                });
+            }
+        }
+    });
 }
 
-function updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement) {
+function updateStreakAndDisplayResult(isCorrect, playerNumber) {
+    const resultElement = document.getElementById('result');
+
     if (isCorrect) {
         resultElement.textContent = "Correct!";
         resultElement.className = 'correct';
@@ -155,30 +148,26 @@ function updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement) {
 }
 
 function isCloseMatch(guess, answer) {
-    let simpleGuess = guess.trim().toLowerCase();
-    let simpleAnswer = answer.trim().toLowerCase();
-    return simpleAnswer.includes(simpleGuess);
+    return answer.toLowerCase().includes(guess.toLowerCase());
 }
 
-function showSuggestions(input) {
-    const suggestionsContainer = document.getElementById('suggestions');
+function showSuggestions(input, playerNumber) {
+    const suggestionsContainer = document.getElementById(`suggestions${playerNumber}`);
     suggestionsContainer.innerHTML = '';
-    
-    if (input.length === 0) {
-        return;
-    }
-    
+
+    if (input.length === 0) return;
+
     const suggestions = Array.from(new Set(playersData
         .map(player => player.college)
-        .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
-        .slice(0, 5);
-        
+        .filter(college => college.toLowerCase().includes(input.toLowerCase()))
+    )).slice(0, 5);
+
     suggestions.forEach(suggestion => {
         const suggestionItem = document.createElement('div');
         suggestionItem.textContent = suggestion;
         suggestionItem.classList.add('suggestion-item');
         suggestionItem.addEventListener('click', () => {
-            document.getElementById('collegeGuess1').value = suggestion;
+            document.getElementById(`collegeGuess${playerNumber}`).value = suggestion;
             suggestionsContainer.innerHTML = '';
         });
         suggestionsContainer.appendChild(suggestionItem);
@@ -186,9 +175,9 @@ function showSuggestions(input) {
 }
 
 document.getElementById('collegeGuess1').addEventListener('input', (e) => {
-    showSuggestions(e.target.value);
+    showSuggestions(e.target.value, 1);
 });
 
 document.getElementById('collegeGuess2').addEventListener('input', (e) => {
-    showSuggestions(e.target.value);
+    showSuggestions(e.target.value, 2);
 });
