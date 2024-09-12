@@ -91,35 +91,27 @@
    <script src="plunko.js"></script>
 
     <script>
-   document.getElementById('pigLink').addEventListener('click', () => {
-    console.log("Attempting to create a new game...");
+   document.getElementById('pigLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    console.log("Creating a new PIG game...");
     
     // Create a new game in Firestore
-    db.collection('games').add({
-        currentQuestion: 'Where did the player go to college?',
-        currentTurn: 'player1',
-        player1: { lastAnswer: '', progress: '' },
-        player2: { lastAnswer: '', progress: '' },
-        currentPlayer: null,
-        gameStarted: false,
+    db.collection('pigGames').add({
+        currentPlayer: 1,
+        player1Progress: '',
+        player2Progress: '',
+        currentQuestion: '',
+        gameStatus: 'waiting',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     })
     .then((docRef) => {
-        console.log('New game created successfully with ID:', docRef.id);
-        const gameId = docRef.id;
-        
-        // Confirm that the document exists before redirecting
-        return db.collection('games').doc(gameId).get().then((doc) => {
-            if (doc.exists) {
-                window.location.href = `pig.html?gameId=${gameId}`;
-            } else {
-                throw new Error("Game document not found after creation");
-            }
-        });
+        console.log('New game created with ID:', docRef.id);
+        // Redirect to the game page with the new game ID
+        window.location.href = `pig.html?gameId=${docRef.id}`;
     })
     .catch((error) => {
-        console.error('Error creating or confirming game:', error);
-        alert('Error creating game. Please try again.');
+        console.error('Error creating game:', error);
+        alert('There was an error creating the game. Please try again.');
     });
 });
    </script>
