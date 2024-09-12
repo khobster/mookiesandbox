@@ -52,16 +52,24 @@ function createNewGame() {
         gameUrlInput.value = shareableUrl;
         shareLinkDiv.style.display = 'block';
         
-        // Setup the game
-        setupGame(gameId);
+        // Hide the "Start New Game" button
+        newGameBtn.style.display = 'none';
+        
+        // Add event listener for the "Start Game" button
+        const startGameBtn = document.createElement('button');
+        startGameBtn.textContent = 'Start Game';
+        startGameBtn.addEventListener('click', () => {
+            setupGame(gameId);
+        });
+        setupArea.appendChild(startGameBtn);
     }).catch(error => console.error("Error creating game:", error));
 }
 
-// Function to setup the game after the page has loaded
+// Function to setup the game
 function setupGame(id) {
     gameId = id;
-    setupArea.style.display = 'none';  // Hide the setup area
-    gameArea.style.display = 'block';  // Show the game area
+    setupArea.style.display = 'none';
+    gameArea.style.display = 'block';
 
     // Listen for updates to the game document in Firestore
     db.collection('pigGames').doc(gameId)
@@ -71,11 +79,14 @@ function setupGame(id) {
             } else {
                 console.error("Game not found");
                 alert("Game not found. Returning to the main page.");
-                window.location.href = 'index.html';  // Redirect if game not found
+                window.location.href = 'index.html';
             }
         }, error => {
             console.error("Error listening to game updates:", error);
         });
+    
+    // Initialize the game state
+    startNewRound();
 }
 
 // Function to update the game state
@@ -85,6 +96,18 @@ function updateGameState(gameData) {
     document.getElementById('player1Progress').textContent = gameData.player1Progress;
     document.getElementById('player2Progress').textContent = gameData.player2Progress;
     document.getElementById('currentQuestion').textContent = gameData.currentQuestion || "Waiting for question...";
+}
+
+// Function to start a new round
+function startNewRound() {
+    // Select a random question from your playersData
+    const randomIndex = Math.floor(Math.random() * playersData.length);
+    const selectedPlayer = playersData[randomIndex];
+    
+    db.collection('pigGames').doc(gameId).update({
+        currentQuestion: selectedPlayer.name,
+        correctAnswer: selectedPlayer.college
+    }).catch(error => console.error("Error starting new round:", error));
 }
 
 // Function to handle player guesses
