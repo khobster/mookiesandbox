@@ -14,6 +14,8 @@ const db = firebase.firestore();
 let gameId;
 let currentPlayer;
 let playersData = [];
+let currentQuestion;
+let currentAnswer;
 
 // DOM Elements
 const newGameBtn = document.getElementById('newGameBtn');
@@ -42,6 +44,11 @@ function createNewGame() {
         player1Progress: '',
         player2Progress: '',
         currentQuestion: '',
+        correctAnswer: '',
+        player1Answered: false,
+        player2Answered: false,
+        player1Guess: '',
+        player2Guess: '',
         gameStatus: 'waiting',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(docRef => {
@@ -96,17 +103,32 @@ function updateGameState(gameData) {
     document.getElementById('player1Progress').textContent = gameData.player1Progress;
     document.getElementById('player2Progress').textContent = gameData.player2Progress;
     document.getElementById('currentQuestion').textContent = gameData.currentQuestion || "Waiting for question...";
+    
+    currentQuestion = gameData.currentQuestion;
+    currentAnswer = gameData.correctAnswer;
+
+    // Enable/disable submit buttons based on whether the player has answered
+    player1SubmitBtn.disabled = gameData.player1Answered;
+    player2SubmitBtn.disabled = gameData.player2Answered;
+
+    // Check if both players have answered and start a new round if needed
+    if (gameData.player1Answered && gameData.player2Answered) {
+        setTimeout(startNewRound, 2000); // Wait 2 seconds before starting a new round
+    }
 }
 
-// Function to start a new round
 function startNewRound() {
-    // Select a random question from your playersData
     const randomIndex = Math.floor(Math.random() * playersData.length);
     const selectedPlayer = playersData[randomIndex];
     
     db.collection('pigGames').doc(gameId).update({
         currentQuestion: selectedPlayer.name,
-        correctAnswer: selectedPlayer.college
+        correctAnswer: selectedPlayer.college,
+        player1Answered: false,
+        player2Answered: false,
+        player1Guess: '',
+        player2Guess: '',
+        currentPlayer: 1 // Reset to player 1 for each new question
     }).catch(error => console.error("Error starting new round:", error));
 }
 
@@ -115,48 +137,52 @@ player1SubmitBtn.addEventListener('click', () => submitGuess(1));
 player2SubmitBtn.addEventListener('click', () => submitGuess(2));
 
 function submitGuess(playerNum) {
-    if (currentPlayer !== playerNum) {
-        alert("It's not your turn!");
-        return;
-    }
-
     const guessInput = document.getElementById(`player${playerNum}Input`);
     const guess = guessInput.value.trim().toLowerCase();
 
     db.collection('pigGames').doc(gameId).get().then(doc => {
         const gameData = doc.data();
-        const isCorrect = isCloseMatch(guess, gameData.correctAnswer);
-        updateGameAfterGuess(playerNum, isCorrect, gameData);
+        updateGameAfterGuess(playerNum, guess, gameData);
         guessInput.value = '';
     });
 }
 
-function isCloseMatch(guess, answer) {
-    answer = answer.toLowerCase();
-    return answer.includes(guess);
-}
+function updateGameAfterGuess(playerNum, guess, gameData) {
+    let updates = {
+        [`player${playerNum}Answered`]: true,
+        [`player${playerNum}Guess`]: guess,
+        currentPlayer: playerNum === 1 ? 2 : 1
+    };
 
-function updateGameAfterGuess(playerNum, isCorrect, gameData) {
-    let updates = { currentPlayer: playerNum === 1 ? 2 : 1 };
-    
-    if (!isCorrect) {
-        const progressKey = `player${playerNum}Progress`;
-        const newProgress = getNextLetter(gameData[progressKey]);
-        updates[progressKey] = newProgress;
+    if (gameData.player1Answered && playerNum === 2) {
+        // Both players have answered, evaluate the round
+        const player1Correct = isCloseMatch(gameData.player1Guess, gameData.correctAnswer);
+        const player2Correct = isCloseMatch(guess, gameData.correctAnswer);
 
-        if (newProgress === 'PIG') {
+        if (!player1Correct && player2Correct) {
+            updates.player1Progress = getNextLetter(gameData.player1Progress);
+        } else if (player1Correct && !player2Correct) {
+            updates.player2Progress = getNextLetter(gameData.player2Progress);
+        }
+
+        // Check for game end
+        if (updates.player1Progress === 'PIG' || updates.player2Progress === 'PIG') {
             updates.gameStatus = 'ended';
-            updates.winner = playerNum === 1 ? 2 : 1;
+            updates.winner = updates.player1Progress === 'PIG' ? 2 : 1;
         }
     }
 
     db.collection('pigGames').doc(gameId).update(updates).then(() => {
         if (updates.gameStatus === 'ended') {
             alert(`Game Over! Player ${updates.winner} wins!`);
-        } else if (isCorrect) {
-            startNewRound();
         }
     });
+}
+
+function isCloseMatch(guess, answer) {
+    guess = guess.toLowerCase();
+    answer = answer.toLowerCase();
+    return answer.includes(guess);
 }
 
 function getNextLetter(progress) {
