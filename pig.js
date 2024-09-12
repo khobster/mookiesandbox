@@ -4,7 +4,6 @@ let correctStreak1 = 0;
 let correctStreak2 = 0;
 let player1HasGuessed = false;
 let player2HasGuessed = false;
-let currentTurn = 1;  // Track current turn
 
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
@@ -21,16 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn1.addEventListener('click', () => handlePlayerGuess(1));
     submitBtn2.addEventListener('click', () => handlePlayerGuess(2));
 
-    // Listen for changes in the game data in Firebase (sync both player and turn)
+    // Listen for changes in the game data in Firebase
     gameRef.onSnapshot((doc) => {
         if (doc.exists) {
             const data = doc.data();
             if (data.currentPlayerID) {
                 const storedPlayerID = data.currentPlayerID;
-                const storedTurn = data.currentTurn;
-
-                // Sync turn between players
-                updateTurnIndicator(storedTurn);
 
                 // Ensure that playersData is loaded before trying to find the player
                 if (playersData.length > 0) {
@@ -43,15 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
+
+            // Sync the turn state across both players' screens
+            const turnIndicator = document.getElementById('turnIndicator');
+            if (turnIndicator) {
+                turnIndicator.textContent = data.currentTurn === 1 ? "Player 1's turn" : "Player 2's turn";
+            }
         }
     });
-
-    // Wire up autocomplete suggestions
-    const collegeGuess1 = document.getElementById('collegeGuess1');
-    const collegeGuess2 = document.getElementById('collegeGuess2');
-
-    collegeGuess1.addEventListener('input', (e) => showSuggestions(e.target.value, 1));
-    collegeGuess2.addEventListener('input', (e) => showSuggestions(e.target.value, 2));
 });
 
 function loadPlayersData() {
@@ -59,7 +53,11 @@ function loadPlayersData() {
         .then(response => response.json())
         .then(data => {
             playersData = data;
-            playersData.sort((a, b) => a.rarity_score - b.rarity_score);  // Sort players by rarity score
+
+            // Ensure playersData is sorted consistently
+            playersData.sort((a, b) => a.id - b.id);
+
+            // Start a new round or sync with existing data
             startNewRound();
         })
         .catch(error => {
@@ -72,6 +70,7 @@ function startNewRound() {
     player1HasGuessed = false;
     player2HasGuessed = false;
 
+    // Check if the current game in Firebase already has a player
     gameRef.get().then((doc) => {
         if (doc.exists && doc.data().currentPlayerID) {
             const storedPlayerID = doc.data().currentPlayerID;
@@ -80,9 +79,11 @@ function startNewRound() {
             if (currentPlayer) {
                 displayPlayer(currentPlayer);
             } else {
+                // If the player is not found, start a new round
                 displayRandomPlayer();
             }
         } else {
+            // If no player is stored, start a new round and save the new player to Firebase
             displayRandomPlayer();
         }
     }).catch((error) => {
@@ -95,11 +96,10 @@ function displayRandomPlayer() {
         const randomIndex = Math.floor(Math.random() * playersData.length);
         currentPlayer = playersData[randomIndex];
 
-        // Store the current player's ID and reset the turn to Player 1
+        // Store the current player's ID in Firebase so both players get the same question
         gameRef.set({ currentPlayerID: currentPlayer.id, currentTurn: 1 });
 
         displayPlayer(currentPlayer);
-        updateTurnIndicator(1);  // Start with Player 1
     } else {
         console.log("No data available");
     }
@@ -139,24 +139,23 @@ function handlePlayerGuess(playerNumber) {
     }
 
     updateStreakAndDisplayResult(isCorrect, playerNumber, resultElement);
+
+    // Clear the input field
     guessInput.value = '';
 
+    // Mark the player's guess as completed
     if (playerNumber === 1) {
         player1HasGuessed = true;
-        currentTurn = 2;
+        gameRef.update({ currentTurn: 2 });
     } else {
         player2HasGuessed = true;
-        currentTurn = 1;
     }
-
-    // Sync turn to Firebase
-    gameRef.update({ currentTurn: currentTurn });
 
     // If both players have guessed, start a new round
     if (player1HasGuessed && player2HasGuessed) {
         setTimeout(() => {
             startNewRound();  // Start a new round after both players have guessed
-        }, 2000);
+        }, 2000);  // Wait 2 seconds before showing the next player
     }
 }
 
@@ -183,42 +182,4 @@ function isCloseMatch(guess, answer) {
     let simpleGuess = guess.trim().toLowerCase();
     let simpleAnswer = answer.trim().toLowerCase();
     return simpleAnswer.includes(simpleGuess);
-}
-
-// Update the turn indicator
-function updateTurnIndicator(turn) {
-    const turnIndicator = document.getElementById('turnIndicator');
-    if (turn === 1) {
-        turnIndicator.textContent = "Player 1's turn";
-    } else {
-        turnIndicator.textContent = "Player 2's turn";
-    }
-}
-
-// Autocomplete suggestions
-function showSuggestions(input, playerNumber) {
-    const suggestionsContainer = document.getElementById(`suggestions${playerNumber}`);
-    if (suggestionsContainer) {
-        suggestionsContainer.innerHTML = '';
-        if (input.length === 0) {
-            return;
-        }
-        const suggestions = Array.from(new Set(playersData
-            .map(player => player.college)
-            .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
-            .slice(0, 5);
-        suggestions.forEach(suggestion => {
-            const suggestionItem = document.createElement('div');
-            suggestionItem.textContent = suggestion;
-            suggestionItem.classList.add('suggestion-item');
-            suggestionItem.addEventListener('click', () => {
-                const collegeGuess = document.getElementById(`collegeGuess${playerNumber}`);
-                if (collegeGuess) {
-                    collegeGuess.value = suggestion;
-                }
-                suggestionsContainer.innerHTML = '';
-            });
-            suggestionsContainer.appendChild(suggestionItem);
-        });
-    }
 }
