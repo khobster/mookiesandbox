@@ -25,6 +25,7 @@ const player2ProgressEl = document.getElementById('player2Progress');
 const player1SubmitBtn = document.getElementById('player1Submit');
 const player2SubmitBtn = document.getElementById('player2Submit');
 const resultEl = document.getElementById('result');
+const gameUrlInput = document.getElementById('gameUrlInput');  // For displaying the shareable link
 
 // Event Listeners
 newGameBtn.addEventListener('click', createNewGame);
@@ -48,9 +49,21 @@ function createNewGame() {
         gameStatus: 'waiting'
     }).then(docRef => {
         gameId = docRef.id;
-        alert(`Game created! Share this ID with your friend: ${gameId}`);
+        const shareableUrl = `${window.location.origin}/pig.html?gameId=${gameId}`;
+        
+        // Display the shareable link
+        gameUrlInput.value = shareableUrl;
+        document.getElementById('shareLink').style.display = 'block';
+        
         setupGame(gameId);
     }).catch(error => console.error("Error creating game:", error));
+}
+
+// Function to copy the shareable link
+function copyGameUrl() {
+    gameUrlInput.select();
+    document.execCommand('copy');
+    alert('Game link copied to clipboard!');
 }
 
 function setupGame(id) {
@@ -155,4 +168,5 @@ function getNextLetter(progress) {
 function resetGame() {
     setupArea.style.display = 'block';
     gameArea.style.display = 'none';
+    gameUrlInput.value = '';
 }
