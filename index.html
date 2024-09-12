@@ -107,11 +107,14 @@
     .then((docRef) => {
         console.log('New game created with ID:', docRef.id);
         // Redirect to the game page with the new game ID
-        window.location.href = `pig.html?gameId=${docRef.id}`;
+        const gameUrl = `pig.html?gameId=${docRef.id}`;
+        console.log('Redirecting to:', gameUrl);
+        window.location.href = gameUrl;
     })
     .catch((error) => {
         console.error('Error creating game:', error);
-        alert('There was an error creating the game. Please try again.');
+        console.error('Error details:', error.code, error.message);
+        alert('There was an error creating the game. Please check the console for details.');
     });
 });
    </script>
