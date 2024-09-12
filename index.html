@@ -94,7 +94,7 @@
    document.getElementById('pigLink').addEventListener('click', (e) => {
     e.preventDefault();
     console.log("Creating a new PIG game...");
-    
+
     // Create a new game in Firestore
     db.collection('pigGames').add({
         currentPlayer: 1,
@@ -106,15 +106,19 @@
     })
     .then((docRef) => {
         console.log('New game created with ID:', docRef.id);
-        // Store the game ID in localStorage
+        
+        // Save the game ID in localStorage for the current player
         localStorage.setItem('pigGameId', docRef.id);
-        // Redirect to the game page with the gameId in the URL
-        const gameUrl = `pig.html?gameId=${docRef.id}`;
+
+        // Generate the shareable game URL
+        const gameUrl = `${window.location.origin}/pig.html?gameId=${docRef.id}`;
+        console.log('Game URL generated:', gameUrl);
+
+        // Redirect to the game page with the new gameId in the URL
         window.location.href = gameUrl;
     })
     .catch((error) => {
         console.error('Error creating game:', error);
-        alert('There was an error creating the game. Please try again.');
     });
 });
    </script>
