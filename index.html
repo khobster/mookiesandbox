@@ -91,25 +91,30 @@
    <script src="plunko.js"></script>
 
     <script>
-  document.getElementById('pigLink').addEventListener('click', () => {
-    // Create a new game in Firestore
-    db.collection('games').add({
-      currentQuestion: '',
-      currentTurn: 'player1',  // Player 1 starts
-      player1: { lastAnswer: '', progress: '' },
-      player2: { lastAnswer: '', progress: '' }
-    })
-    .then((docRef) => {
-      // Game created successfully, now redirect to pig.html with gameId
-      const gameId = docRef.id;
-      window.location.href = `pig.html?gameId=${gameId}`;
-    })
-    .catch((error) => {
-      console.error('Error creating game:', error);
-      alert('There was an error creating the game. Please try again.');
-    });
-  });
-</script>
+   document.getElementById('pigLink').addEventListener('click', () => {
+       console.log("Attempting to create a new game...");
+
+       // Create a new game in Firestore
+       db.collection('games').add({
+           currentQuestion: 'Where did the player go to college?',  // Add a default question
+           currentTurn: 'player1',  // Player 1 starts
+           player1: { lastAnswer: '', progress: '' },
+           player2: { lastAnswer: '', progress: '' },
+           currentPlayer: null,  // Add this to store the current player data
+           gameStarted: false,   // Add this to track if the game has started
+           createdAt: firebase.firestore.FieldValue.serverTimestamp() // Add creation timestamp
+       })
+       .then((docRef) => {
+           console.log('New game created successfully with ID:', docRef.id);
+           const gameId = docRef.id;
+           window.location.href = `pig.html?gameId=${gameId}`;
+       })
+       .catch((error) => {
+           console.error('Error creating game in Firestore:', error);
+           alert('Error creating game. Please check Firebase initialization.');
+       });
+   });
+   </script>
 
    <!-- Popup for MOOKIE challenge -->
    <div id="mookiePopup" class="popup">
