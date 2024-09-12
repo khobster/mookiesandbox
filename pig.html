@@ -56,35 +56,5 @@
   </div>
 
   <script src="pig.js"></script>
-
-  <script>
-    // Retrieve gameId from the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const gameId = urlParams.get('gameId');
-
-    if (gameId) {
-      const gameRef = db.collection('games').doc(gameId);
-
-      // Log gameId to ensure it's retrieved properly
-      console.log("Attempting to load game with gameId:", gameId);
-
-      gameRef.get().then((doc) => {
-        if (doc.exists) {
-          const gameData = doc.data();
-          console.log("Game data loaded successfully:", gameData);
-
-          // Initialize the game based on the loaded game data
-          document.getElementById('playerQuestion').textContent = gameData.currentQuestion || 'Where did the player go to college?';
-          document.getElementById('turnIndicator').textContent = gameData.currentTurn === 'player1' ? "Player 1's turn" : "Player 2's turn";
-        } else {
-          console.error(`No such game found with gameId: ${gameId}`);
-        }
-      }).catch((error) => {
-        console.error("Error loading game:", error);
-      });
-    } else {
-      console.error("No gameId found in the URL!");
-    }
-  </script>
 </body>
 </html>
