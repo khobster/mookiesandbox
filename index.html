@@ -108,8 +108,9 @@
         console.log('New game created with ID:', docRef.id);
         // Store the game ID in localStorage
         localStorage.setItem('pigGameId', docRef.id);
-        // Redirect to the game page
-        window.location.href = 'pig.html';
+        // Redirect to the game page with the gameId in the URL
+        const gameUrl = `pig.html?gameId=${docRef.id}`;
+        window.location.href = gameUrl;
     })
     .catch((error) => {
         console.error('Error creating game:', error);
