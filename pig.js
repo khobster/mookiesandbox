@@ -26,10 +26,17 @@ const player1SubmitBtn = document.getElementById('player1Submit');
 const player2SubmitBtn = document.getElementById('player2Submit');
 const gameUrlInput = document.getElementById('gameUrlInput');  // For displaying the shareable link
 
-// Event Listeners
-newGameBtn.addEventListener('click', createNewGame);
-player1SubmitBtn.addEventListener('click', () => submitGuess(1));
-player2SubmitBtn.addEventListener('click', () => submitGuess(2));
+// Check if there's a gameId in the URL (this will be empty initially)
+const urlParams = new URLSearchParams(window.location.search);
+gameId = urlParams.get('gameId');
+
+if (gameId) {
+    // If there's a gameId in the URL, automatically set up the game (for second player)
+    setupGame(gameId);
+} else {
+    // No gameId yet, show the "Start New Game" button
+    newGameBtn.addEventListener('click', createNewGame);
+}
 
 // Load players data
 fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
@@ -39,6 +46,7 @@ fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_tes
     })
     .catch(error => console.error('Error loading players data:', error));
 
+// Function to create a new game when "Start New Game" is clicked
 function createNewGame() {
     db.collection('pigGames').add({
         currentPlayer: 1,
@@ -54,7 +62,7 @@ function createNewGame() {
         gameUrlInput.value = shareableUrl;
         document.getElementById('shareLink').style.display = 'block';
 
-        setupGame(gameId);
+        setupGame(gameId);  // Now, set up the game with the newly created gameId
     }).catch(error => console.error("Error creating game:", error));
 }
 
@@ -167,5 +175,4 @@ function getNextLetter(progress) {
 function resetGame() {
     setupArea.style.display = 'block';
     gameArea.style.display = 'none';
-    gameUrlInput.value = '';
 }
