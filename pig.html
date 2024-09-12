@@ -9,14 +9,17 @@
 <body>
     <h1>🐷</h1>
     
-    <div id="setupArea">
-        <button id="newGameBtn">Start New Game</button>
-        <div id="shareInfo" style="display:none;"></div>
-        <div id="joinGame">
-            <p>Or join an existing game:</p>
-            <input type="text" id="gameIdInput" placeholder="Enter Game ID or use URL">
-            <button id="joinGameBtn">Join Game</button>
-        </div>
+    <div id="shareInfo" style="display:none;">
+        <h3>Game created!</h3>
+        <p>Share this link with your friend:</p>
+        <input type="text" id="gameUrlInput" readonly>
+        <button onclick="copyGameUrl()">Copy Link</button>
+    </div>
+
+    <div id="joinGame" style="display:none;">
+        <h3>Join an existing game:</h3>
+        <input type="text" id="gameIdInput" placeholder="Enter Game ID">
+        <button id="joinGameBtn">Join Game</button>
     </div>
 
     <div id="gameArea" style="display:none;">
