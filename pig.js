@@ -24,19 +24,7 @@ const player1ProgressEl = document.getElementById('player1Progress');
 const player2ProgressEl = document.getElementById('player2Progress');
 const player1SubmitBtn = document.getElementById('player1Submit');
 const player2SubmitBtn = document.getElementById('player2Submit');
-const resultEl = document.getElementById('result');
 const gameUrlInput = document.getElementById('gameUrlInput');  // For displaying the shareable link
-
-// Check if the page is loaded with a gameId in the URL
-const urlParams = new URLSearchParams(window.location.search);
-gameId = urlParams.get('gameId');
-
-// If there's a gameId in the URL, automatically join that game
-if (gameId) {
-    // Hide the "Start New Game" button
-    newGameBtn.style.display = 'none';
-    setupGame(gameId);  // Join the existing game using the gameId from the URL
-}
 
 // Event Listeners
 newGameBtn.addEventListener('click', createNewGame);
@@ -62,10 +50,10 @@ function createNewGame() {
         gameId = docRef.id;
         const shareableUrl = `${window.location.origin}/pig.html?gameId=${gameId}`;
         
-        // Display the shareable link
+        // Display the shareable link after the game is created
         gameUrlInput.value = shareableUrl;
         document.getElementById('shareLink').style.display = 'block';
-        
+
         setupGame(gameId);
     }).catch(error => console.error("Error creating game:", error));
 }
@@ -79,8 +67,8 @@ function copyGameUrl() {
 
 function setupGame(id) {
     gameId = id;
-    setupArea.style.display = 'none';
-    gameArea.style.display = 'block';
+    setupArea.style.display = 'none';  // Hide the setup area
+    gameArea.style.display = 'block';  // Show the game area
     
     db.collection('pigGames').doc(gameId)
         .onSnapshot(doc => {
@@ -88,8 +76,8 @@ function setupGame(id) {
                 updateGameState(doc.data());
             } else {
                 console.error("Game not found");
-                alert("Game not found. Returning to setup.");
-                resetGame();
+                alert("Game not found. Returning to the main page.");
+                window.location.href = 'index.html';  // Redirect if game not found
             }
         }, error => {
             console.error("Error listening to game updates:", error);
