@@ -18,7 +18,7 @@ let playersData = [];
 const joinGameBtn = document.getElementById('joinGameBtn');
 const gameIdInput = document.getElementById('gameIdInput');
 const shareInfo = document.getElementById('shareInfo');
-const joinGame = document.getElementById('joinGame');
+const joinGameArea = document.getElementById('joinGame');
 const gameArea = document.getElementById('gameArea');
 const currentQuestionEl = document.getElementById('currentQuestion');
 const currentPlayerEl = document.getElementById('currentPlayer');
@@ -29,9 +29,9 @@ const player2SubmitBtn = document.getElementById('player2Submit');
 const resultEl = document.getElementById('result');
 
 // Event Listeners
-joinGameBtn.addEventListener('click', joinGame);
-player1SubmitBtn.addEventListener('click', () => submitGuess(1));
-player2SubmitBtn.addEventListener('click', () => submitGuess(2));
+if (joinGameBtn) joinGameBtn.addEventListener('click', joinExistingGame);
+if (player1SubmitBtn) player1SubmitBtn.addEventListener('click', () => submitGuess(1));
+if (player2SubmitBtn) player2SubmitBtn.addEventListener('click', () => submitGuess(2));
 
 // Load players data
 fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
@@ -48,9 +48,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gameId) {
         setupGame(gameId);
     } else {
-        joinGame.style.display = 'block';
+        createNewGame();
     }
 });
+
+function createNewGame() {
+    console.log("Creating a new PIG game...");
+    db.collection('pigGames').add({
+        currentPlayer: 1,
+        player1Progress: '',
+        player2Progress: '',
+        currentQuestion: '',
+        gameStatus: 'waiting',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    .then((docRef) => {
+        console.log('New game created with ID:', docRef.id);
+        gameId = docRef.id;
+        setupGame(gameId);
+    })
+    .catch((error) => {
+        console.error('Error creating game:', error);
+        alert('There was an error creating the game. Please try again.');
+    });
+}
 
 function setupGame(id) {
     gameId = id;
@@ -58,6 +79,7 @@ function setupGame(id) {
     document.getElementById('gameUrlInput').value = gameUrl;
     shareInfo.style.display = 'block';
     gameArea.style.display = 'block';
+    if (joinGameArea) joinGameArea.style.display = 'none';
     
     db.collection('pigGames').doc(gameId)
         .onSnapshot(doc => {
@@ -66,18 +88,17 @@ function setupGame(id) {
             } else {
                 console.error("Game not found");
                 alert("Game not found. Please check the URL or create a new game.");
-                window.location.href = 'mookie.click';
+                window.location.href = 'https://www.mookie.click';
             }
         }, error => {
             console.error("Error listening to game updates:", error);
         });
 }
 
-function joinGame() {
-    gameId = gameIdInput.value.trim();
-    if (gameId) {
-        setupGame(gameId);
-        joinGame.style.display = 'none';
+function joinExistingGame() {
+    const inputGameId = gameIdInput.value.trim();
+    if (inputGameId) {
+        setupGame(inputGameId);
     } else {
         alert("Please enter a valid Game ID.");
     }
