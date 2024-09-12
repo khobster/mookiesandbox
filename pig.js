@@ -12,7 +12,7 @@ const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/
 let gameRef;
 let gameId;
 
-// Extract gameId from URL
+// Extract gameId from URL (only once here in pig.js)
 const urlParams = new URLSearchParams(window.location.search);
 gameId = urlParams.get('gameId');
 
