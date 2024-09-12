@@ -18,25 +18,12 @@ let playersData = [];
 const newGameBtn = document.getElementById('newGameBtn');
 const setupArea = document.getElementById('setupArea');
 const gameArea = document.getElementById('gameArea');
-const currentQuestionEl = document.getElementById('currentQuestion');
-const currentPlayerEl = document.getElementById('currentPlayer');
-const player1ProgressEl = document.getElementById('player1Progress');
-const player2ProgressEl = document.getElementById('player2Progress');
+const gameUrlInput = document.getElementById('gameUrlInput');
 const player1SubmitBtn = document.getElementById('player1Submit');
 const player2SubmitBtn = document.getElementById('player2Submit');
-const gameUrlInput = document.getElementById('gameUrlInput');  // For displaying the shareable link
 
-// Check if there's a gameId in the URL (this will be empty initially)
-const urlParams = new URLSearchParams(window.location.search);
-gameId = urlParams.get('gameId');
-
-if (gameId) {
-    // If there's a gameId in the URL, automatically set up the game (for second player)
-    setupGame(gameId);
-} else {
-    // No gameId yet, show the "Start New Game" button
-    newGameBtn.addEventListener('click', createNewGame);
-}
+// Event Listener for starting a new game
+newGameBtn.addEventListener('click', createNewGame);
 
 // Load players data
 fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
@@ -46,14 +33,15 @@ fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_tes
     })
     .catch(error => console.error('Error loading players data:', error));
 
-// Function to create a new game when "Start New Game" is clicked
+// Function to create a new game
 function createNewGame() {
     db.collection('pigGames').add({
         currentPlayer: 1,
         player1Progress: '',
         player2Progress: '',
         currentQuestion: '',
-        gameStatus: 'waiting'
+        gameStatus: 'waiting',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(docRef => {
         gameId = docRef.id;
         const shareableUrl = `${window.location.origin}/pig.html?gameId=${gameId}`;
@@ -62,7 +50,7 @@ function createNewGame() {
         gameUrlInput.value = shareableUrl;
         document.getElementById('shareLink').style.display = 'block';
 
-        setupGame(gameId);  // Now, set up the game with the newly created gameId
+        setupGame(gameId);  // Set up the game after creation
     }).catch(error => console.error("Error creating game:", error));
 }
 
@@ -77,14 +65,15 @@ function setupGame(id) {
     gameId = id;
     setupArea.style.display = 'none';  // Hide the setup area
     gameArea.style.display = 'block';  // Show the game area
-    
+
+    // Listen for updates to the game document in Firestore
     db.collection('pigGames').doc(gameId)
         .onSnapshot(doc => {
             if (doc.exists) {
                 updateGameState(doc.data());
             } else {
                 console.error("Game not found");
-                alert("Game not found. Returning to the main page.");
+                alert("Game not found. Please try again.");
                 window.location.href = 'index.html';  // Redirect if game not found
             }
         }, error => {
@@ -92,29 +81,18 @@ function setupGame(id) {
         });
 }
 
+// Function to update the game state
 function updateGameState(gameData) {
     currentPlayer = gameData.currentPlayer;
-    currentPlayerEl.textContent = `Current Turn: Player ${currentPlayer}`;
-    player1ProgressEl.textContent = gameData.player1Progress;
-    player2ProgressEl.textContent = gameData.player2Progress;
-    currentQuestionEl.textContent = gameData.currentQuestion || "Waiting for question...";
-
-    if (gameData.gameStatus === 'waiting' && gameData.player1Progress === '' && gameData.player2Progress === '') {
-        startNewRound();
-    }
+    document.getElementById('currentPlayer').textContent = `Current Turn: Player ${currentPlayer}`;
+    document.getElementById('player1Progress').textContent = gameData.player1Progress;
+    document.getElementById('player2Progress').textContent = gameData.player2Progress;
+    document.getElementById('currentQuestion').textContent = gameData.currentQuestion || "Waiting for question...";
 }
 
-function startNewRound() {
-    if (playersData.length > 0) {
-        const randomPlayer = playersData[Math.floor(Math.random() * playersData.length)];
-        const question = `Where did ${randomPlayer.name} go to college?`;
-        db.collection('pigGames').doc(gameId).update({
-            currentQuestion: question,
-            correctAnswer: randomPlayer.college || 'No College',
-            gameStatus: 'active'
-        });
-    }
-}
+// Function to handle player guesses
+player1SubmitBtn.addEventListener('click', () => submitGuess(1));
+player2SubmitBtn.addEventListener('click', () => submitGuess(2));
 
 function submitGuess(playerNum) {
     if (currentPlayer !== playerNum) {
@@ -124,11 +102,10 @@ function submitGuess(playerNum) {
 
     const guessInput = document.getElementById(`player${playerNum}Input`);
     const guess = guessInput.value.trim().toLowerCase();
-    
+
     db.collection('pigGames').doc(gameId).get().then(doc => {
         const gameData = doc.data();
         const isCorrect = isCloseMatch(guess, gameData.correctAnswer);
-        
         updateGameAfterGuess(playerNum, isCorrect, gameData);
         guessInput.value = '';
     });
@@ -136,15 +113,12 @@ function submitGuess(playerNum) {
 
 function isCloseMatch(guess, answer) {
     answer = answer.toLowerCase();
-    if (answer === '' && ['no college', 'didnt go to college'].includes(guess)) return true;
     return answer.includes(guess);
 }
 
 function updateGameAfterGuess(playerNum, isCorrect, gameData) {
-    let updates = {
-        currentPlayer: playerNum === 1 ? 2 : 1
-    };
-
+    let updates = { currentPlayer: playerNum === 1 ? 2 : 1 };
+    
     if (!isCorrect) {
         const progressKey = `player${playerNum}Progress`;
         const newProgress = getNextLetter(gameData[progressKey]);
@@ -159,7 +133,6 @@ function updateGameAfterGuess(playerNum, isCorrect, gameData) {
     db.collection('pigGames').doc(gameId).update(updates).then(() => {
         if (updates.gameStatus === 'ended') {
             alert(`Game Over! Player ${updates.winner} wins!`);
-            resetGame();
         } else if (isCorrect) {
             startNewRound();
         }
@@ -170,9 +143,4 @@ function getNextLetter(progress) {
     if (!progress.includes('P')) return 'P';
     if (!progress.includes('I')) return 'I';
     return 'PIG';
-}
-
-function resetGame() {
-    setupArea.style.display = 'block';
-    gameArea.style.display = 'none';
 }
