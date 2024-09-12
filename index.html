@@ -92,35 +92,11 @@
 
     <script>
    document.getElementById('pigLink').addEventListener('click', (e) => {
-    e.preventDefault();
-    console.log("Creating a new PIG game...");
-
-    // Create a new game in Firestore
-    db.collection('pigGames').add({
-        currentPlayer: 1,
-        player1Progress: '',
-        player2Progress: '',
-        currentQuestion: '',
-        gameStatus: 'waiting',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    })
-    .then((docRef) => {
-        console.log('New game created with ID:', docRef.id);
-        
-        // Save the game ID in localStorage for the current player
-        localStorage.setItem('pigGameId', docRef.id);
-
-        // Generate the shareable game URL
-        const gameUrl = `${window.location.origin}/pig.html?gameId=${docRef.id}`;
-        console.log('Game URL generated:', gameUrl);
-
-        // Redirect to the game page with the new gameId in the URL
-        window.location.href = gameUrl;
-    })
-    .catch((error) => {
-        console.error('Error creating game:', error);
+        e.preventDefault();
+        console.log("Redirecting to PIG game setup...");
+        // Redirect to pig.html without any gameId
+        window.location.href = 'pig.html';
     });
-});
    </script>
 
    <!-- Popup for MOOKIE challenge -->
