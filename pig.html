@@ -3,27 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIG</title>
+    <title>PIG Game</title>
     <link rel="stylesheet" href="pig.css">
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        #gameArea { display: none; }
-        .player { margin: 20px 0; }
-        #currentPlayer { font-weight: bold; }
-    </style>
 </head>
 <body>
-    <h1>🐷</h1>
+    <h1>PIG Game</h1>
     
     <div id="setupArea">
         <button id="newGameBtn">Start New Game</button>
-        <div id="joinGame" style="display:none;">
-            <input type="text" id="gameIdInput" placeholder="Enter Game ID">
+        <div id="shareInfo" style="display:none;"></div>
+        <div id="joinGame">
+            <p>Or join an existing game:</p>
+            <input type="text" id="gameIdInput" placeholder="Enter Game ID or use URL">
             <button id="joinGameBtn">Join Game</button>
         </div>
     </div>
 
-    <div id="gameArea">
+    <div id="gameArea" style="display:none;">
         <h2 id="currentQuestion"></h2>
         <div id="currentPlayer"></div>
         <div class="player">
@@ -40,10 +36,10 @@
         </div>
         <div id="result"></div>
     </div>
-
+    
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <script src="pig.js"></script>
 </body>
