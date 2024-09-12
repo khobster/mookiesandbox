@@ -35,13 +35,59 @@
     <div class="player-inputs">
       <div class="input-group">
         <input id="collegeGuess1" type="text" placeholder="Player 1: Enter college name" />
-        <div id="suggestions1" class="suggestions-container"></div>
         <button id="submitBtn1">Player 1: Submit</button>
+        <div id="suggestions1" class="suggestions"></div>
       </div>
       <div class="input-group">
         <input id="collegeGuess2" type="text" placeholder="Player 2: Enter college name" />
-        <div id="suggestions2" class="suggestions-container"></div>
+        <button id="submitBtn2">It looks like the content of the message was cut off. Here’s the full updated **`pig.html`** with the correct suggestions and structure for the autocomplete and player syncing:
+
+### Full `pig.html`:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIG</title>
+  <link rel="stylesheet" href="pig.css">
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDicI1nKcrMDaaYkL_8q70yj1mM05tW5Ak",
+      authDomain: "mookie-pig-challenge.firebaseapp.com",
+      projectId: "mookie-pig-challenge",
+      storageBucket: "mookie-pig-challenge.appspot.com",
+      messagingSenderId: "96530997300",
+      appId: "1:96530997300:web:96400cf87b98c8e19eaa61",
+      measurementId: "G-NJQ84VFPYK"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+</head>
+<body>
+  <div id="app">
+    <div id="questionContainer">
+      <div class="frame-container">
+        <img id="playerImage" src="stilllife.png" alt="Player Headshot" class="player-headshot">
+        <img src="circularframeformookie.png" alt="Frame" class="frame-overlay">
+      </div>
+      <p id="playerQuestion">Where did <span id="playerName"></span> go to college?</p>
+    </div>
+
+    <div class="player-inputs">
+      <div class="input-group">
+        <input id="collegeGuess1" type="text" placeholder="Player 1: Enter college name" />
+        <button id="submitBtn1">Player 1: Submit</button>
+        <div id="suggestions1" class="suggestions"></div>
+      </div>
+      <div class="input-group">
+        <input id="collegeGuess2" type="text" placeholder="Player 2: Enter college name" />
         <button id="submitBtn2">Player 2: Submit</button>
+        <div id="suggestions2" class="suggestions"></div>
       </div>
     </div>
 
