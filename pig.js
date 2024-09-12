@@ -25,24 +25,28 @@ const player2SubmitBtn = document.getElementById('player2Submit');
 const resultEl = document.getElementById('result');
 
 // Event Listeners
-player1SubmitBtn.addEventListener('click', () => submitGuess(1));
-player2SubmitBtn.addEventListener('click', () => submitGuess(2));
+if (player1SubmitBtn) player1SubmitBtn.addEventListener('click', () => submitGuess(1));
+if (player2SubmitBtn) player2SubmitBtn.addEventListener('click', () => submitGuess(2));
 
 // Load players data
 fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
     .then(response => response.json())
     .then(data => {
         playersData = data;
+        console.log('Players data loaded successfully');
     })
     .catch(error => console.error('Error loading players data:', error));
 
 // Initialize game on page load
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded');
     const urlParams = new URLSearchParams(window.location.search);
     gameId = urlParams.get('gameId');
+    console.log('Game ID from URL:', gameId);
     if (gameId) {
         setupGame(gameId);
     } else {
+        console.error("No game ID found in URL");
         alert("No game ID found. Please start a new game from the main page.");
         window.location.href = 'https://www.mookie.click';
     }
@@ -50,16 +54,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function setupGame(id) {
     gameId = id;
+    console.log('Setting up game with ID:', gameId);
     const gameUrl = `${window.location.origin}${window.location.pathname}?gameId=${gameId}`;
-    gameUrlInput.value = gameUrl;
+    if (gameUrlInput) {
+        gameUrlInput.value = gameUrl;
+        console.log('Game URL set in input field');
+    } else {
+        console.error('gameUrlInput element not found');
+    }
     
+    db.collection('pigGames').doc(gameId).get()
+        .then(doc => {
+            if (doc.exists) {
+                console.log('Game data found:', doc.data());
+                updateGameState(doc.data());
+                setupRealtimeListener();
+            } else {
+                console.error('Game not found in Firestore');
+                alert("Game not found. Please check the URL or create a new game.");
+                window.location.href = 'https://www.mookie.click';
+            }
+        })
+        .catch(error => {
+            console.error('Error getting game:', error);
+            alert("Error retrieving game data. Please try again.");
+        });
+}
+
+function setupRealtimeListener() {
+    console.log('Setting up realtime listener for game:', gameId);
     db.collection('pigGames').doc(gameId)
         .onSnapshot(doc => {
             if (doc.exists) {
+                console.log('Realtime update received:', doc.data());
                 updateGameState(doc.data());
             } else {
-                console.error("Game not found");
-                alert("Game not found. Please check the URL or create a new game.");
+                console.error("Game no longer exists");
+                alert("This game has been deleted or does not exist.");
                 window.location.href = 'https://www.mookie.click';
             }
         }, error => {
@@ -68,11 +99,12 @@ function setupGame(id) {
 }
 
 function updateGameState(gameData) {
+    console.log('Updating game state:', gameData);
     currentPlayer = gameData.currentPlayer;
-    currentPlayerEl.textContent = `Current Turn: Player ${currentPlayer}`;
-    player1ProgressEl.textContent = gameData.player1Progress;
-    player2ProgressEl.textContent = gameData.player2Progress;
-    currentQuestionEl.textContent = gameData.currentQuestion || "Waiting for question...";
+    if (currentPlayerEl) currentPlayerEl.textContent = `Current Turn: Player ${currentPlayer}`;
+    if (player1ProgressEl) player1ProgressEl.textContent = gameData.player1Progress;
+    if (player2ProgressEl) player2ProgressEl.textContent = gameData.player2Progress;
+    if (currentQuestionEl) currentQuestionEl.textContent = gameData.currentQuestion || "Waiting for question...";
 
     if (gameData.gameStatus === 'waiting' && gameData.player1Progress === '' && gameData.player2Progress === '') {
         startNewRound();
@@ -80,6 +112,7 @@ function updateGameState(gameData) {
 }
 
 function startNewRound() {
+    console.log('Starting new round');
     if (playersData.length > 0) {
         const randomPlayer = playersData[Math.floor(Math.random() * playersData.length)];
         const question = `Where did ${randomPlayer.name} go to college?`;
@@ -87,11 +120,18 @@ function startNewRound() {
             currentQuestion: question,
             correctAnswer: randomPlayer.college || 'No College',
             gameStatus: 'active'
+        }).then(() => {
+            console.log('New round started with question:', question);
+        }).catch(error => {
+            console.error('Error starting new round:', error);
         });
+    } else {
+        console.error('No player data available');
     }
 }
 
 function submitGuess(playerNum) {
+    console.log(`Player ${playerNum} submitting guess`);
     if (currentPlayer !== playerNum) {
         alert("It's not your turn!");
         return;
@@ -103,9 +143,12 @@ function submitGuess(playerNum) {
     db.collection('pigGames').doc(gameId).get().then(doc => {
         const gameData = doc.data();
         const isCorrect = isCloseMatch(guess, gameData.correctAnswer);
+        console.log(`Guess: ${guess}, Correct Answer: ${gameData.correctAnswer}, Is Correct: ${isCorrect}`);
         
         updateGameAfterGuess(playerNum, isCorrect, gameData);
         guessInput.value = '';
+    }).catch(error => {
+        console.error('Error submitting guess:', error);
     });
 }
 
@@ -116,6 +159,7 @@ function isCloseMatch(guess, answer) {
 }
 
 function updateGameAfterGuess(playerNum, isCorrect, gameData) {
+    console.log(`Updating game after guess: Player ${playerNum}, Correct: ${isCorrect}`);
     let updates = {
         currentPlayer: playerNum === 1 ? 2 : 1
     };
@@ -132,11 +176,14 @@ function updateGameAfterGuess(playerNum, isCorrect, gameData) {
     }
 
     db.collection('pigGames').doc(gameId).update(updates).then(() => {
+        console.log('Game updated after guess:', updates);
         if (updates.gameStatus === 'ended') {
             alert(`Game Over! Player ${updates.winner} wins!`);
         } else if (isCorrect) {
             startNewRound();
         }
+    }).catch(error => {
+        console.error('Error updating game after guess:', error);
     });
 }
 
@@ -147,7 +194,11 @@ function getNextLetter(progress) {
 }
 
 function copyGameUrl() {
-    gameUrlInput.select();
-    document.execCommand('copy');
-    alert('Game link copied to clipboard!');
+    if (gameUrlInput) {
+        gameUrlInput.select();
+        document.execCommand('copy');
+        alert('Game link copied to clipboard!');
+    } else {
+        console.error('gameUrlInput element not found');
+    }
 }
