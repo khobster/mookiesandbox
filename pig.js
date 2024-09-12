@@ -1,3 +1,4 @@
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDicI1nKcrMDaaYkL_8q70yj1mM05tW5Ak",
   authDomain: "mookie-pig-challenge.firebaseapp.com",
@@ -7,6 +8,7 @@ const firebaseConfig = {
   appId: "1:96530997300:web:96400cf87b98c8e19eaa61",
   measurementId: "G-NJQ84VFPYK"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -19,6 +21,7 @@ const newGameBtn = document.getElementById('newGameBtn');
 const setupArea = document.getElementById('setupArea');
 const gameArea = document.getElementById('gameArea');
 const gameUrlInput = document.getElementById('gameUrlInput');
+const shareLinkDiv = document.getElementById('shareLink');
 const player1SubmitBtn = document.getElementById('player1Submit');
 const player2SubmitBtn = document.getElementById('player2Submit');
 
@@ -45,22 +48,13 @@ function createNewGame() {
     }).then(docRef => {
         gameId = docRef.id;
         const shareableUrl = `${window.location.origin}/pig.html?gameId=${gameId}`;
-        
-        // Display the shareable link after the game is created
-        gameUrlInput.value = shareableUrl;
-        document.getElementById('shareLink').style.display = 'block';
 
-        setupGame(gameId);  // Set up the game after creation
+        // Redirect to the new game URL with the gameId
+        window.location.href = shareableUrl;
     }).catch(error => console.error("Error creating game:", error));
 }
 
-// Function to copy the shareable link
-function copyGameUrl() {
-    gameUrlInput.select();
-    document.execCommand('copy');
-    alert('Game link copied to clipboard!');
-}
-
+// Function to setup the game after the page has loaded
 function setupGame(id) {
     gameId = id;
     setupArea.style.display = 'none';  // Hide the setup area
@@ -73,7 +67,7 @@ function setupGame(id) {
                 updateGameState(doc.data());
             } else {
                 console.error("Game not found");
-                alert("Game not found. Please try again.");
+                alert("Game not found. Returning to the main page.");
                 window.location.href = 'index.html';  // Redirect if game not found
             }
         }, error => {
