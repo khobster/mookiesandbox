@@ -4,6 +4,7 @@ let correctStreak1 = 0;
 let correctStreak2 = 0;
 let player1HasGuessed = false;
 let player2HasGuessed = false;
+let currentDifficultyLevel = 1; // This can be used to control difficulty based on rarity scores
 
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
@@ -27,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.currentPlayerID) {
                 const storedPlayerID = data.currentPlayerID;
 
-                // Ensure that playersData is loaded before trying to find the player
                 if (playersData.length > 0) {
                     currentPlayer = playersData.find(player => player.id === storedPlayerID);
                     if (currentPlayer) {
@@ -54,8 +54,12 @@ function loadPlayersData() {
         .then(data => {
             playersData = data;
 
-            // Ensure playersData is sorted consistently
-            playersData.sort((a, b) => a.id - b.id);
+            // Use Plunko's method to sort players by rarity score and filter based on difficulty
+            playersData.sort((a, b) => a.rarity_score - b.rarity_score);
+            playersData = playersData.filter(player => 
+                player.rarity_score <= currentDifficultyLevel || 
+                (player.games_played > 500 && player.retirement_year < 2000)
+            );
 
             // Start a new round or sync with existing data
             startNewRound();
@@ -70,31 +74,15 @@ function startNewRound() {
     player1HasGuessed = false;
     player2HasGuessed = false;
 
-    // Check if the current game in Firebase already has a player
-    gameRef.get().then((doc) => {
-        if (doc.exists && doc.data().currentPlayerID) {
-            const storedPlayerID = doc.data().currentPlayerID;
-            currentPlayer = playersData.find(player => player.id === storedPlayerID);
-
-            if (currentPlayer) {
-                displayPlayer(currentPlayer);
-            } else {
-                // If the player is not found, start a new round
-                displayRandomPlayer();
-            }
-        } else {
-            // If no player is stored, start a new round and save the new player to Firebase
-            displayRandomPlayer();
-        }
-    }).catch((error) => {
-        console.error("Error getting game data from Firebase: ", error);
-    });
+    displayRandomPlayerWithRarity(); // Use the Plunko player selection technique
 }
 
-function displayRandomPlayer() {
+// Using Plunko's method to display a player based on rarity score
+function displayRandomPlayerWithRarity() {
     if (playersData.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersData.length);
-        currentPlayer = playersData[randomIndex];
+        const eligiblePlayers = playersData.filter(player => player.rarity_score <= currentDifficultyLevel);
+        const randomIndex = Math.floor(Math.random() * eligiblePlayers.length);
+        currentPlayer = eligiblePlayers[randomIndex];
 
         // Store the current player's ID in Firebase so both players get the same question
         gameRef.set({ currentPlayerID: currentPlayer.id, currentTurn: 1 });
