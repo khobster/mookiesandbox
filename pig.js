@@ -10,6 +10,9 @@ let player2HasGuessed = false;
 const correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
 const wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
 
+let maxRetries = 3;
+let retryCount = 0;
+
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     gameId = urlParams.get('gameId');
@@ -17,8 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gameId) {
         gameRef = db.collection('games').doc(gameId);
         loadGameData();
+        setupRealtimeListeners();
     } else {
         console.error("No gameId found in the URL!");
+        alert("No game ID found. Returning to the main page.");
+        window.location.href = 'index.html';
     }
 
     const submitBtn1 = document.getElementById('submitBtn1');
@@ -39,7 +45,6 @@ function loadPlayersData() {
         .then(response => response.json())
         .then(data => {
             playersData = data;
-            displayRandomPlayer();
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
@@ -55,24 +60,66 @@ function loadGameData() {
             const gameData = doc.data();
             console.log("Game data loaded successfully:", gameData);
 
-            document.getElementById('playerQuestion').textContent = gameData.currentQuestion || 'Where did the player go to college?';
-            document.getElementById('turnIndicator').textContent = gameData.currentTurn === 'player1' ? "Player 1's turn" : "Player 2's turn";
-            
-            player1Progress = gameData.player1.progress || '';
-            player2Progress = gameData.player2.progress || '';
-            updateProgressDisplay();
+            updateGameDisplay(gameData);
 
-            if (gameData.currentPlayer) {
-                displayPlayer(gameData.currentPlayer);
-            } else {
-                displayRandomPlayer();
+            if (!gameData.currentPlayer) {
+                selectAndUpdateCurrentPlayer();
             }
         } else {
             console.error(`No such game found with gameId: ${gameId}`);
+            if (retryCount < maxRetries) {
+                retryCount++;
+                console.log(`Retrying... Attempt ${retryCount} of ${maxRetries}`);
+                setTimeout(loadGameData, 1000); // Wait 1 second before retrying
+            } else {
+                alert("Unable to load the game. Returning to the main page.");
+                window.location.href = 'index.html';
+            }
         }
     }).catch((error) => {
         console.error("Error loading game:", error);
+        alert("An error occurred while loading the game. Please try again.");
+        window.location.href = 'index.html';
     });
+}
+
+function updateGameDisplay(gameData) {
+    document.getElementById('playerQuestion').textContent = gameData.currentQuestion || 'Where did the player go to college?';
+    document.getElementById('turnIndicator').textContent = gameData.currentTurn === 'player1' ? "Player 1's turn" : "Player 2's turn";
+    
+    player1Progress = gameData.player1.progress || '';
+    player2Progress = gameData.player2.progress || '';
+    updateProgressDisplay();
+
+    if (gameData.currentPlayer) {
+        displayPlayer(gameData.currentPlayer);
+    }
+}
+
+function setupRealtimeListeners() {
+    gameRef.onSnapshot((doc) => {
+        if (doc.exists) {
+            const gameData = doc.data();
+            updateGameDisplay(gameData);
+        } else {
+            console.error("Game document no longer exists!");
+        }
+    });
+}
+
+function selectAndUpdateCurrentPlayer() {
+    if (playersData.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playersData.length);
+        currentPlayer = playersData[randomIndex];
+        gameRef.update({
+            currentPlayer: currentPlayer,
+            currentQuestion: `Where did ${currentPlayer.name} go to college?`
+        }).catch(error => {
+            console.error("Error updating current player:", error);
+        });
+    } else {
+        console.error("No player data available");
+    }
 }
 
 function handlePlayerGuess(playerNumber) {
@@ -88,7 +135,6 @@ function handlePlayerGuess(playerNumber) {
 
         if (playerNumber === 1) {
             player1HasGuessed = true;
-            document.getElementById('turnIndicator').textContent = "Player 2's turn";
         } else {
             player2HasGuessed = true;
         }
@@ -102,6 +148,8 @@ function handlePlayerGuess(playerNumber) {
         gameRef.update({
             [`player${playerNumber}.lastAnswer`]: guess,
             currentTurn: playerNumber === 1 ? 'player2' : 'player1'
+        }).catch(error => {
+            console.error("Error updating game state:", error);
         });
     } else {
         console.error("No current player data available");
@@ -128,6 +176,9 @@ function updateResult(isCorrect, playerNumber, resultElement) {
         
         gameRef.update({
             [`player${playerNumber}.progress`]: playerNumber === 1 ? player1Progress : player2Progress
+        }).catch(error => {
+            console.error("Error updating game state:", error);
+            alert("An error occurred while updating the game. The game state may be inconsistent.");
         });
 
         if (player1Progress === 'PIG' || player2Progress === 'PIG') {
@@ -171,22 +222,7 @@ function startNewRound() {
     player2HasGuessed = false;
     document.getElementById('result').textContent = '';
     document.getElementById('turnIndicator').textContent = "Player 1's turn";
-    displayRandomPlayer();
-}
-
-function displayRandomPlayer() {
-    if (playersData.length > 0) {
-        const randomIndex = Math.floor(Math.random() * playersData.length);
-        currentPlayer = playersData[randomIndex];
-        displayPlayer(currentPlayer);
-        
-        gameRef.update({
-            currentPlayer: currentPlayer,
-            currentQuestion: `Where did ${currentPlayer.name} go to college?`
-        });
-    } else {
-        console.log("No player data available");
-    }
+    selectAndUpdateCurrentPlayer();
 }
 
 function displayPlayer(player) {
@@ -208,6 +244,13 @@ function endGame() {
     document.getElementById('result').textContent = `Game Over! ${winner} wins!`;
     document.getElementById('submitBtn1').disabled = true;
     document.getElementById('submitBtn2').disabled = true;
+    
+    gameRef.update({
+        gameEnded: true,
+        winner: winner
+    }).catch(error => {
+        console.error("Error updating game end state:", error);
+    });
 }
 
 // Add event listeners for college guess inputs
