@@ -37,15 +37,24 @@ fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_tes
     })
     .catch(error => console.error('Error loading players data:', error));
 
+// Function to extract gameId from URL query parameters
+function getGameIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('gameId');
+}
+
 // Initialize game on page load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM fully loaded');
-    gameId = localStorage.getItem('pigGameId');
-    console.log('Game ID from localStorage:', gameId);
+    
+    // Get gameId from URL, not localStorage
+    gameId = getGameIdFromUrl();
+    console.log('Game ID from URL:', gameId);
+    
     if (gameId) {
         setupGame(gameId);
     } else {
-        console.error("No game ID found in localStorage");
+        console.error("No game ID found in URL");
         alert("No game ID found. Please start a new game from the main page.");
         window.location.href = 'https://www.mookie.click';
     }
@@ -54,14 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupGame(id) {
     gameId = id;
     console.log('Setting up game with ID:', gameId);
+
+    // Create the shareable game URL
     const gameUrl = `${window.location.origin}${window.location.pathname}?gameId=${gameId}`;
     if (gameUrlInput) {
-        gameUrlInput.value = gameUrl;
+        gameUrlInput.value = gameUrl;  // Set the input to the correct URL
         console.log('Game URL set in input field');
     } else {
         console.error('gameUrlInput element not found');
     }
-    
+
+    // Fetch the game data from Firestore
     db.collection('pigGames').doc(gameId).get()
         .then(doc => {
             if (doc.exists) {
@@ -192,8 +204,11 @@ function getNextLetter(progress) {
     return 'PIG';
 }
 
+// Function to copy the shareable game URL
 function copyGameUrl() {
+    const gameUrl = `${window.location.origin}${window.location.pathname}?gameId=${gameId}`;
     if (gameUrlInput) {
+        gameUrlInput.value = gameUrl;  // Set the input to the correct URL
         gameUrlInput.select();
         document.execCommand('copy');
         alert('Game link copied to clipboard!');
