@@ -40,13 +40,12 @@ fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_tes
 // Initialize game on page load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM fully loaded');
-    const urlParams = new URLSearchParams(window.location.search);
-    gameId = urlParams.get('gameId');
-    console.log('Game ID from URL:', gameId);
+    gameId = localStorage.getItem('pigGameId');
+    console.log('Game ID from localStorage:', gameId);
     if (gameId) {
         setupGame(gameId);
     } else {
-        console.error("No game ID found in URL");
+        console.error("No game ID found in localStorage");
         alert("No game ID found. Please start a new game from the main page.");
         window.location.href = 'https://www.mookie.click';
     }
