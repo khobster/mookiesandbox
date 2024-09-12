@@ -27,6 +27,17 @@ const player2SubmitBtn = document.getElementById('player2Submit');
 const resultEl = document.getElementById('result');
 const gameUrlInput = document.getElementById('gameUrlInput');  // For displaying the shareable link
 
+// Check if the page is loaded with a gameId in the URL
+const urlParams = new URLSearchParams(window.location.search);
+gameId = urlParams.get('gameId');
+
+// If there's a gameId in the URL, automatically join that game
+if (gameId) {
+    // Hide the "Start New Game" button
+    newGameBtn.style.display = 'none';
+    setupGame(gameId);  // Join the existing game using the gameId from the URL
+}
+
 // Event Listeners
 newGameBtn.addEventListener('click', createNewGame);
 player1SubmitBtn.addEventListener('click', () => submitGuess(1));
