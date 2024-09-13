@@ -57,6 +57,10 @@ function createNewGame() {
     const gameUrl = `${window.location.origin}${window.location.pathname}?gameId=${gameId}`;
     if (gameUrlInput) gameUrlInput.value = gameUrl;
     if (shareLinkDiv) shareLinkDiv.style.display = 'block';
+
+    // Start the game listener for the first player
+    setupGame(gameId);
+
   })
   .catch(error => console.error("Error creating new game:", error));
 }
