@@ -101,7 +101,10 @@ function updateGameState(gameData) {
     document.getElementById('player1Progress').textContent = gameData.player1Progress;
     document.getElementById('player2Progress').textContent = gameData.player2Progress;
     document.getElementById('currentQuestion').textContent = gameData.currentQuestion || "Waiting for question...";
-    document.getElementById('cumulativeRarityScore').textContent = `Score: ${Math.round(gameData.cumulativeRarityScore)}`;
+    
+    // Ensure the score is a number and round it
+    const score = isNaN(gameData.cumulativeRarityScore) ? 0 : Math.round(gameData.cumulativeRarityScore);
+    document.getElementById('cumulativeRarityScore').textContent = `Score: ${score}`;
     
     currentQuestion = gameData.currentQuestion;
     currentAnswer = gameData.correctAnswer;
@@ -176,7 +179,7 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
 
         if (player1Correct || player2Correct) {
             const player = playersData.find(p => p.name === gameData.currentQuestion);
-            if (player) {
+            if (player && !isNaN(player.rarity_score)) {
                 cumulativeRarityScore += player.rarity_score;
                 updates.cumulativeRarityScore = cumulativeRarityScore;
             }
