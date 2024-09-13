@@ -30,9 +30,11 @@ newGameBtn.addEventListener('click', createNewGame);
 
 // Load players data
 function loadPlayersData() {
+    console.log("Loading players data...");
     fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
         .then(response => response.json())
         .then(data => {
+            console.log("Players data loaded successfully. Count:", data.length);
             playersData = data;
             playersData.sort((a, b) => a.rarity_score - b.rarity_score);
             const urlParams = new URLSearchParams(window.location.search);
@@ -49,6 +51,7 @@ function loadPlayersData() {
 
 // Function to create a new game
 function createNewGame() {
+    console.log("Creating new game...");
     db.collection('pigGames').add({
         currentPlayer: 1,
         player1Progress: '',
@@ -63,6 +66,7 @@ function createNewGame() {
         cumulativeRarityScore: 0,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(docRef => {
+        console.log("New game created with ID:", docRef.id);
         gameId = docRef.id;
         const shareableUrl = `${window.location.origin}/pig.html?gameId=${gameId}`;
         
@@ -85,6 +89,7 @@ function createNewGame() {
 
 // Function to setup the game
 function setupGame(id) {
+    console.log("Setting up game with ID:", id);
     gameId = id;
     setupArea.style.display = 'none';
     gameArea.style.display = 'block';
@@ -93,6 +98,7 @@ function setupGame(id) {
     db.collection('pigGames').doc(gameId)
         .onSnapshot(doc => {
             if (doc.exists) {
+                console.log("Game state updated:", doc.data());
                 updateGameState(doc.data());
             } else {
                 console.error("Game not found");
@@ -109,6 +115,7 @@ function setupGame(id) {
 
 // Function to update the game state
 function updateGameState(gameData) {
+    console.log("Updating game state:", gameData);
     currentPlayer = gameData.currentPlayer;
     document.getElementById('currentPlayer').textContent = `Current Turn: Player ${currentPlayer}`;
     document.getElementById('player1Progress').textContent = gameData.player1Progress;
@@ -122,12 +129,15 @@ function updateGameState(gameData) {
 
     // Check if both players have answered and start a new round if needed
     if (gameData.player1Answered && gameData.player2Answered) {
+        console.log("Both players have answered. Starting new round in 2 seconds.");
         setTimeout(startNewRound, 2000); // Wait 2 seconds before starting a new round
     }
 }
 
 function startNewRound() {
+    console.log("Starting new round");
     const selectedPlayer = selectPlayerByRarity();
+    console.log("Selected player:", selectedPlayer.name);
     
     db.collection('pigGames').doc(gameId).update({
         currentQuestion: selectedPlayer.name,
@@ -160,6 +170,7 @@ player1SubmitBtn.addEventListener('click', () => submitGuess(1));
 player2SubmitBtn.addEventListener('click', () => submitGuess(2));
 
 function submitGuess(playerNum) {
+    console.log("Submitting guess for Player", playerNum);
     const guessInput = document.getElementById(`player${playerNum}Input`);
     const guess = guessInput.value.trim().toLowerCase();
 
@@ -171,6 +182,7 @@ function submitGuess(playerNum) {
 }
 
 function updateGameAfterGuess(playerNum, guess, gameData) {
+    console.log(`Updating game after guess. Player: ${playerNum}, Guess: ${guess}`);
     let updates = {
         [`player${playerNum}Answered`]: true,
         [`player${playerNum}Guess`]: guess,
@@ -178,9 +190,11 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
     };
 
     const isCorrect = isCloseMatch(guess, gameData.correctAnswer);
+    console.log(`Guess is correct: ${isCorrect}`);
 
     if (gameData.player1Answered && playerNum === 2) {
         // Both players have answered, evaluate the round
+        console.log("Both players have answered. Evaluating round.");
         const player1Correct = isCloseMatch(gameData.player1Guess, gameData.correctAnswer);
         const player2Correct = isCloseMatch(guess, gameData.correctAnswer);
 
@@ -196,6 +210,7 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
             if (player) {
                 cumulativeRarityScore += player.rarity_score;
                 updates.cumulativeRarityScore = cumulativeRarityScore;
+                console.log(`Updated cumulative rarity score: ${cumulativeRarityScore}`);
             }
         }
 
@@ -203,6 +218,7 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
         if (updates.player1Progress === 'PIG' || updates.player2Progress === 'PIG') {
             updates.gameStatus = 'ended';
             updates.winner = updates.player1Progress === 'PIG' ? 2 : 1;
+            console.log(`Game ended. Winner: Player ${updates.winner}`);
         }
     }
 
@@ -211,6 +227,7 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
             alert(`Game Over! Player ${updates.winner} wins!`);
         } else if (isCorrect) {
             // If the guess was correct, start a new round
+            console.log("Correct guess. Starting new round in 1 second.");
             setTimeout(startNewRound, 1000);
         }
     });
@@ -237,6 +254,7 @@ function copyGameUrl() {
 
 // Autocomplete functionality
 function showSuggestions(input) {
+    console.log("Showing suggestions for input:", input);
     const suggestionsContainer = document.getElementById('suggestions');
     if (suggestionsContainer) {
         suggestionsContainer.innerHTML = '';
@@ -247,6 +265,7 @@ function showSuggestions(input) {
             .map(player => player.college)
             .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
             .slice(0, 5);
+        console.log("Suggestions:", suggestions);
         suggestions.forEach(suggestion => {
             const suggestionItem = document.createElement('div');
             suggestionItem.textContent = suggestion;
@@ -265,6 +284,7 @@ function showSuggestions(input) {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM fully loaded. Initializing game...");
     loadPlayersData();
 
     const collegeGuess = document.getElementById('collegeGuess');
@@ -279,9 +299,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Check if there's a gameId in the URL when the page loads
 window.onload = function() {
+    console.log("Window loaded. Checking for gameId in URL...");
     const urlParams = new URLSearchParams(window.location.search);
     const gameIdFromUrl = urlParams.get('gameId');
     if (gameIdFromUrl) {
+        console.log("GameId found in URL:", gameIdFromUrl);
         setupGame(gameIdFromUrl);
+    } else {
+        console.log("No gameId found in URL. Ready for new game.");
     }
 };
