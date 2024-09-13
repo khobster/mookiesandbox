@@ -16,7 +16,8 @@ let currentPlayer;
 let playersData = [];
 let currentQuestion;
 let currentAnswer;
-let currentDifficultyLevel = 1; // Starting difficulty level
+let currentDifficultyLevel = 1;
+let playerId;
 
 // DOM Elements
 const newGameBtn = document.getElementById('newGameBtn');
@@ -39,8 +40,8 @@ fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_tes
     })
     .catch(error => console.error('Error loading players data:', error));
 
-// Function to create a new game
 function createNewGame() {
+    const player1Id = generatePlayerId();
     db.collection('pigGames').add({
         currentPlayer: 1,
         player1Progress: '',
@@ -52,9 +53,13 @@ function createNewGame() {
         player1Guess: '',
         player2Guess: '',
         gameStatus: 'waiting',
+        player1Id: player1Id,
+        player2Id: null,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(docRef => {
         gameId = docRef.id;
+        playerId = player1Id;
+        localStorage.setItem('playerId', playerId);
         const shareableUrl = `${window.location.origin}/pig.html?gameId=${gameId}`;
         
         gameUrlInput.value = shareableUrl;
@@ -71,9 +76,37 @@ function createNewGame() {
     }).catch(error => console.error("Error creating game:", error));
 }
 
-// Function to setup the game
 function setupGame(id) {
     gameId = id;
+    playerId = localStorage.getItem('playerId');
+    
+    if (!playerId) {
+        playerId = generatePlayerId();
+        localStorage.setItem('playerId', playerId);
+    }
+
+    db.collection('pigGames').doc(gameId).get().then(doc => {
+        if (doc.exists) {
+            const gameData = doc.data();
+            if (!gameData.player2Id && gameData.player1Id !== playerId) {
+                // This is player 2 joining
+                db.collection('pigGames').doc(gameId).update({
+                    player2Id: playerId,
+                    gameStatus: 'active'
+                });
+            }
+            startGameListener();
+        } else {
+            console.error("Game not found");
+            alert("Game not found. Returning to the main page.");
+            window.location.href = 'index.html';
+        }
+    }).catch(error => {
+        console.error("Error setting up game:", error);
+    });
+}
+
+function startGameListener() {
     setupArea.style.display = 'none';
     gameArea.style.display = 'block';
 
@@ -93,7 +126,6 @@ function setupGame(id) {
     startNewRound();
 }
 
-// Function to update the game state
 function updateGameState(gameData) {
     currentPlayer = gameData.currentPlayer;
     document.getElementById('currentPlayer').textContent = `Current Turn: Player ${currentPlayer}`;
@@ -104,23 +136,36 @@ function updateGameState(gameData) {
     currentQuestion = gameData.currentQuestion;
     currentAnswer = gameData.correctAnswer;
 
-    player1SubmitBtn.disabled = gameData.player1Answered;
-    player2SubmitBtn.disabled = gameData.player2Answered;
+    const isPlayer1 = playerId === gameData.player1Id;
+    const isCurrentPlayer = (isPlayer1 && currentPlayer === 1) || (!isPlayer1 && currentPlayer === 2);
+
+    const player1Input = document.getElementById('player1Input');
+    const player2Input = document.getElementById('player2Input');
+    const player1Container = player1Input.closest('.player');
+    const player2Container = player2Input.closest('.player');
+
+    player1Input.disabled = !isPlayer1 || !isCurrentPlayer || gameData.player1Answered;
+    player2Input.disabled = isPlayer1 || !isCurrentPlayer || gameData.player2Answered;
+    player1SubmitBtn.disabled = !isPlayer1 || !isCurrentPlayer || gameData.player1Answered;
+    player2SubmitBtn.disabled = isPlayer1 || !isCurrentPlayer || gameData.player2Answered;
+
+    player1Container.classList.toggle('active-player', currentPlayer === 1);
+    player2Container.classList.toggle('active-player', currentPlayer === 2);
 
     if (gameData.player1Answered && gameData.player2Answered) {
         setTimeout(startNewRound, 2000);
     }
 
-    // Check if the game has ended
     if (gameData.gameStatus === 'ended') {
         alert(`Game Over! Player ${gameData.winner} wins!`);
-        // You might want to add some code here to reset the game or return to the main menu
     }
 }
 
 function startNewRound() {
     const selectedPlayer = selectPlayerByDifficulty();
     
+    resetInputs();
+
     db.collection('pigGames').doc(gameId).update({
         currentQuestion: selectedPlayer.name,
         correctAnswer: selectedPlayer.college,
@@ -146,7 +191,6 @@ function selectPlayerByDifficulty() {
     return eligiblePlayers[Math.floor(Math.random() * eligiblePlayers.length)];
 }
 
-// Function to handle player guesses
 player1SubmitBtn.addEventListener('click', () => submitGuess(1));
 player2SubmitBtn.addEventListener('click', () => submitGuess(2));
 
@@ -179,10 +223,8 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
         }
 
         if (player1Correct || player2Correct) {
-            // Increase difficulty slightly for correct answers
             currentDifficultyLevel += 0.1;
         } else {
-            // Decrease difficulty slightly for incorrect answers
             currentDifficultyLevel = Math.max(1, currentDifficultyLevel - 0.05);
         }
 
@@ -232,7 +274,7 @@ function getNextLetter(progress) {
     if (!progress.includes('P')) return 'P';
     if (!progress.includes('I')) return progress + 'I';
     if (!progress.includes('G')) return progress + 'G';
-    return progress; // This should never happen in a normal game
+    return progress;
 }
 
 function copyGameUrl() {
@@ -269,6 +311,17 @@ function showSuggestions(input, playerNum) {
     }
 }
 
+function resetInputs() {
+    const player1Input = document.getElementById('player1Input');
+    const player2Input = document.getElementById('player2Input');
+    player1Input.value = '';
+    player2Input.value = '';
+}
+
+function generatePlayerId() {
+    return Math.random().toString(36).substr(2, 9);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const player1Input = document.getElementById('player1Input');
     const player2Input = document.getElementById('player2Input');
@@ -291,5 +344,7 @@ window.onload = function() {
     const gameIdFromUrl = urlParams.get('gameId');
     if (gameIdFromUrl) {
         setupGame(gameIdFromUrl);
+    } else {
+        newGameBtn.style.display = 'block';
     }
 };
