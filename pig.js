@@ -172,7 +172,7 @@ function updateGameState(gameData) {
 
     if (gameData.gameStatus === 'ended') {
         const winnerText = gameData.winner === (isPlayer1 ? 1 : 2) ? "You win!" : "Your opponent wins!";
-        alert(`Game Over! ${winnerText}`);
+        showFeedbackMessage(`Game Over! ${winnerText}`);
     }
 }
 
@@ -226,14 +226,20 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
         currentPlayer: playerNum === 1 ? 2 : 1
     };
 
-    if (gameData.player1Answered && playerNum === 2) {
+    if (gameData.player1Answered && gameData.player2Answered) {
         const player1Correct = isCloseMatch(gameData.player1Guess, gameData.correctAnswer);
-        const player2Correct = isCloseMatch(guess, gameData.correctAnswer);
+        const player2Correct = isCloseMatch(gameData.player2Guess, gameData.correctAnswer);
 
         if (!player1Correct && player2Correct) {
             updates.player1Progress = getNextLetter(gameData.player1Progress);
+            showFeedbackMessage('Your opponent answered correctly. You get a letter!');
         } else if (player1Correct && !player2Correct) {
             updates.player2Progress = getNextLetter(gameData.player2Progress);
+            showFeedbackMessage('You answered correctly. Your opponent gets a letter!');
+        } else if (!player1Correct && !player2Correct) {
+            showFeedbackMessage('Both players answered incorrectly.');
+        } else {
+            showFeedbackMessage('Both players answered correctly.');
         }
 
         if (player1Correct || player2Correct) {
@@ -252,7 +258,7 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
         if (updates.gameStatus === 'ended') {
             const isPlayer1 = playerId === gameData.player1Id;
             const winnerText = updates.winner === (isPlayer1 ? 1 : 2) ? "You win!" : "Your opponent wins!";
-            alert(`Game Over! ${winnerText}`);
+            showFeedbackMessage(`Game Over! ${winnerText}`);
         }
     });
 }
@@ -345,6 +351,18 @@ function generatePlayerId() {
     return Math.random().toString(36).substr(2, 9);
 }
 
+// Function to display feedback messages
+function showFeedbackMessage(message) {
+    const feedbackMessage = document.getElementById('feedbackMessage');
+    if (feedbackMessage) {
+        feedbackMessage.textContent = message;
+        feedbackMessage.classList.add('show');
+        setTimeout(() => {
+            feedbackMessage.classList.remove('show');
+        }, 3000); // Hide after 3 seconds
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     newGameBtn = document.getElementById('newGameBtn');
     setupArea = document.getElementById('setupArea');
@@ -379,6 +397,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (player2SubmitBtn) {
         player2SubmitBtn.addEventListener('click', () => submitGuess(2));
+    }
+
+    // Ensure the feedbackMessage element exists
+    const feedbackMessage = document.getElementById('feedbackMessage');
+    if (!feedbackMessage) {
+        const feedbackDiv = document.createElement('div');
+        feedbackDiv.id = 'feedbackMessage';
+        document.body.prepend(feedbackDiv);
     }
 
     // Game initialization
