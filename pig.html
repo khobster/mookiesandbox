@@ -2,53 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>HORSE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="horse.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIG Game</title>
-    <link rel="stylesheet" href="pig.css">
 </head>
 <body>
-    <div id="setupArea">
-        <h1>Welcome to PIG!</h1>
-        <div>
+
+    <div id="mainContainer">
+        <h1>HORSE</h1>
+        
+        <div id="setupArea">
             <button id="newGameBtn">Start New Game</button>
+            <div id="shareLink" style="display: none;">
+                <input type="text" id="gameUrlInput" readonly>
+                <button id="copyGameUrl">Copy Link</button>
+            </div>
+            <!-- Add Start Game Button -->
+            <button id="startGameBtn" style="display: none;">Start Game</button>
         </div>
-        <div id="shareLink" style="display: none;">
-            <h2>Share this link with your opponent:</h2>
-            <input type="text" id="gameUrlInput" readonly>
-            <button id="copyGameUrl">Copy Link</button>
-            <!-- Hidden "Link Copied!" message -->
-            <div id="copiedMessage" class="copied-message">Link Copied!</div>
+        
+        <div id="gameArea" style="display: none;">
+            <div id="feedbackMessage"></div>
+            <h2 id="currentQuestion"></h2>
+            <!-- Player Image -->
+            <img id="playerImage" src="" alt="Player Image" class="player-image">
+            <!-- End of Player Image -->
+            <div id="currentPlayer"></div>
+            <div id="playersContainer">
+                <div class="player">
+                    <h3 id="player1Label">You</h3>
+                    <p>Progress: <span id="player1Progress"></span></p>
+                    <input type="text" id="player1Input" placeholder="Enter college">
+                    <div id="suggestions1" class="suggestions"></div>
+                    <button id="player1Submit">Submit</button>
+                </div>
+                <div class="player">
+                    <h3 id="player2Label">Your Opponent</h3>
+                    <p>Progress: <span id="player2Progress"></span></p>
+                </div>
+            </div>
+            <div id="result"></div>
         </div>
-        <button id="startGameBtn" style="display: none;">Start Game</button>
     </div>
-
-    <div id="gameArea" style="display: none;">
-        <h2>Current Question:</h2>
-        <div id="currentQuestion"></div>
-        <div class="player-image-container">
-            <img id="playerImage" src="" alt="Player Image">
-        </div>
-        <p id="currentPlayer"></p>
-
-        <div class="player" id="player1Area">
-            <label id="player1Label">Player 1</label>
-            <input type="text" id="player1Input" placeholder="Enter your guess">
-            <div id="suggestions1" class="suggestions"></div>
-            <button id="player1Submit">Submit</button>
-            <p>Progress: <span id="player1Progress"></span></p>
-        </div>
-
-        <div class="player opponent" id="player2Area">
-            <label id="player2Label">Player 2</label>
-            <input type="text" id="player2Input" placeholder="Enter your guess" class="opponent-field">
-            <div id="suggestions2" class="suggestions opponent-field"></div>
-            <button id="player2Submit" class="opponent-field">Submit</button>
-            <p>Progress: <span id="player2Progress"></span></p>
-        </div>
-
-        <div id="feedbackMessage" class="feedback-message"></div>
-    </div>
-
-    <script src="pig.js"></script>
+    
+    <!-- Firebase and Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="horse.js"></script>
 </body>
 </html>
