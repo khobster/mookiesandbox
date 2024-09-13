@@ -17,6 +17,7 @@ let playersData = [];
 let currentQuestion;
 let currentAnswer;
 let cumulativeRarityScore = 0;
+let currentDifficultyLevel = 1;
 
 // DOM Elements
 const newGameBtn = document.getElementById('newGameBtn');
@@ -31,13 +32,24 @@ const player2SubmitBtn = document.getElementById('player2Submit');
 newGameBtn.addEventListener('click', createNewGame);
 
 // Load players data
-fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
-    .then(response => response.json())
-    .then(data => {
-        playersData = data;
-        playersData.sort((a, b) => a.rarity_score - b.rarity_score);
-    })
-    .catch(error => console.error('Error loading players data:', error));
+function loadPlayersData() {
+    fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
+        .then(response => response.json())
+        .then(data => {
+            playersData = data;
+            playersData.sort((a, b) => a.rarity_score - b.rarity_score);
+            playersData = playersData.filter(player => player.rarity_score <= currentDifficultyLevel || (player.games_played > 500 && player.retirement_year < 2000));
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameIdFromUrl = urlParams.get('gameId');
+            if (gameIdFromUrl) {
+                setupGame(gameIdFromUrl);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading JSON:', error);
+            document.getElementById('currentQuestion').textContent = 'Error loading player data.';
+        });
+}
 
 // Function to create a new game
 function createNewGame() {
@@ -58,14 +70,11 @@ function createNewGame() {
         gameId = docRef.id;
         const shareableUrl = `${window.location.origin}/pig.html?gameId=${gameId}`;
         
-        // Display the shareable link
         gameUrlInput.value = shareableUrl;
         shareLinkDiv.style.display = 'block';
         
-        // Hide the "Start New Game" button
         newGameBtn.style.display = 'none';
         
-        // Add event listener for the "Start Game" button
         const startGameBtn = document.createElement('button');
         startGameBtn.textContent = 'Start Game';
         startGameBtn.addEventListener('click', () => {
@@ -81,7 +90,6 @@ function setupGame(id) {
     setupArea.style.display = 'none';
     gameArea.style.display = 'block';
 
-    // Listen for updates to the game document in Firestore
     db.collection('pigGames').doc(gameId)
         .onSnapshot(doc => {
             if (doc.exists) {
@@ -95,7 +103,6 @@ function setupGame(id) {
             console.error("Error listening to game updates:", error);
         });
     
-    // Initialize the game state
     startNewRound();
 }
 
@@ -111,13 +118,11 @@ function updateGameState(gameData) {
     currentQuestion = gameData.currentQuestion;
     currentAnswer = gameData.correctAnswer;
 
-    // Enable/disable submit buttons based on whether the player has answered
     player1SubmitBtn.disabled = gameData.player1Answered;
     player2SubmitBtn.disabled = gameData.player2Answered;
 
-    // Check if both players have answered and start a new round if needed
     if (gameData.player1Answered && gameData.player2Answered) {
-        setTimeout(startNewRound, 2000); // Wait 2 seconds before starting a new round
+        setTimeout(startNewRound, 2000);
     }
 }
 
@@ -131,11 +136,10 @@ function startNewRound() {
         player2Answered: false,
         player1Guess: '',
         player2Guess: '',
-        currentPlayer: 1 // Reset to player 1 for each new question
+        currentPlayer: 1
     }).catch(error => console.error("Error starting new round:", error));
 }
 
-// Function to select a player based on rarity score
 function selectPlayerByRarity() {
     const totalRarity = playersData.reduce((sum, player) => sum + player.rarity_score, 0);
     let randomValue = Math.random() * totalRarity;
@@ -147,7 +151,7 @@ function selectPlayerByRarity() {
         }
     }
     
-    return playersData[playersData.length - 1]; // Fallback to last player if something goes wrong
+    return playersData[playersData.length - 1];
 }
 
 // Function to handle player guesses
@@ -173,7 +177,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
     };
 
     if (gameData.player1Answered && playerNum === 2) {
-        // Both players have answered, evaluate the round
         const player1Correct = isCloseMatch(gameData.player1Guess, gameData.correctAnswer);
         const player2Correct = isCloseMatch(guess, gameData.correctAnswer);
 
@@ -183,7 +186,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
             updates.player2Progress = getNextLetter(gameData.player2Progress);
         }
 
-        // Update cumulative rarity score
         if (player1Correct || player2Correct) {
             const player = playersData.find(p => p.name === gameData.currentQuestion);
             if (player) {
@@ -192,7 +194,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
             }
         }
 
-        // Check for game end
         if (updates.player1Progress === 'PIG' || updates.player2Progress === 'PIG') {
             updates.gameStatus = 'ended';
             updates.winner = updates.player1Progress === 'PIG' ? 2 : 1;
@@ -207,9 +208,32 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
 }
 
 function isCloseMatch(guess, answer) {
-    guess = guess.toLowerCase().trim();
-    answer = answer.toLowerCase().trim();
-    return answer.includes(guess);
+    if (!guess.trim()) {
+        return false;
+    }
+
+    let simpleGuess = guess.trim().toLowerCase();
+    let simpleAnswer = answer.trim().toLowerCase();
+
+    let normalizedGuess = simpleGuess.replace(/[^a-zA-Z0-9]/g, '');
+
+    const noCollegePhrases = [
+        "didntgotocollege",
+        "didnotgotocollege",
+        "hedidntgotocollege",
+        "hedidnotgotocollege",
+        "nocollege",
+    ];
+
+    if (noCollegePhrases.includes(normalizedGuess) && simpleAnswer === '') {
+        return true;
+    }
+
+    if (simpleAnswer === 'unc' && (simpleGuess === 'north carolina' || simpleGuess === 'carolina')) {
+        return true;
+    }
+
+    return simpleAnswer.includes(simpleGuess);
 }
 
 function getNextLetter(progress) {
@@ -218,14 +242,12 @@ function getNextLetter(progress) {
     return 'PIG';
 }
 
-// Function to copy the game URL to clipboard
 function copyGameUrl() {
     gameUrlInput.select();
     document.execCommand('copy');
     alert('Game URL copied to clipboard!');
 }
 
-// Autocomplete functionality
 function showSuggestions(input) {
     const suggestionsContainer = document.getElementById('suggestions');
     if (suggestionsContainer) {
@@ -253,8 +275,9 @@ function showSuggestions(input) {
     }
 }
 
-// Event listeners
 document.addEventListener('DOMContentLoaded', () => {
+    loadPlayersData();
+
     const collegeGuess = document.getElementById('collegeGuess');
     if (collegeGuess) {
         collegeGuess.addEventListener('input', (e) => {
@@ -263,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Check if there's a gameId in the URL when the page loads
 window.onload = function() {
     const urlParams = new URLSearchParams(window.location.search);
     const gameIdFromUrl = urlParams.get('gameId');
