@@ -110,6 +110,12 @@ function updateGameState(gameData) {
     if (gameData.player1Answered && gameData.player2Answered) {
         setTimeout(startNewRound, 2000);
     }
+
+    // Check if the game has ended
+    if (gameData.gameStatus === 'ended') {
+        alert(`Game Over! Player ${gameData.winner} wins!`);
+        // You might want to add some code here to reset the game or return to the main menu
+    }
 }
 
 function startNewRound() {
@@ -224,8 +230,9 @@ function isCloseMatch(guess, answer) {
 
 function getNextLetter(progress) {
     if (!progress.includes('P')) return 'P';
-    if (!progress.includes('I')) return 'I';
-    return 'PIG';
+    if (!progress.includes('I')) return progress + 'I';
+    if (!progress.includes('G')) return progress + 'G';
+    return progress; // This should never happen in a normal game
 }
 
 function copyGameUrl() {
