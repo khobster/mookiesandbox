@@ -228,9 +228,9 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
             currentDifficultyLevel = Math.max(1, currentDifficultyLevel - 0.05);
         }
 
-        if (updates.player1Progress === 'PIG' || updates.player2Progress === 'PIG') {
+        if (updates.player1Progress === 'HORSE' || updates.player2Progress === 'HORSE') {
             updates.gameStatus = 'ended';
-            updates.winner = updates.player1Progress === 'PIG' ? 2 : 1;
+            updates.winner = updates.player1Progress === 'HORSE' ? 2 : 1;
         }
     }
 
@@ -271,9 +271,11 @@ function isCloseMatch(guess, answer) {
 }
 
 function getNextLetter(progress) {
-    if (!progress.includes('P')) return 'P';
-    if (!progress.includes('I')) return progress + 'I';
-    if (!progress.includes('G')) return progress + 'G';
+    if (!progress.includes('H')) return 'H';
+    if (!progress.includes('O')) return progress + 'O';
+    if (!progress.includes('R')) return progress + 'R';
+    if (!progress.includes('S')) return progress + 'S';
+    if (!progress.includes('E')) return progress + 'E';
     return progress;
 }
 
