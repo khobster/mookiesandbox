@@ -37,7 +37,7 @@ function createNewGame() {
   playerId = generatePlayerId();
   const selectedPlayer = selectPlayerByDifficulty();
 
-  db.collection('pigGames').add({
+  db.collection('horseGames').add({
     player1Id: playerId,
     player2Id: null,
     currentQuestion: selectedPlayer.name,
@@ -58,31 +58,27 @@ function createNewGame() {
     if (gameUrlInput) gameUrlInput.value = gameUrl;
     if (shareLinkDiv) shareLinkDiv.style.display = 'block';
 
-    // Display the Start Game button
     if (startGameBtn) {
       startGameBtn.style.display = 'block';
     }
 
-    // Hide the New Game button
     if (newGameBtn) {
       newGameBtn.style.display = 'none';
     }
-
   })
   .catch(error => console.error("Error creating new game:", error));
 }
 
 function setupGame(id) {
   gameId = id;
-  // Use existing playerId if set, otherwise generate a new one
   playerId = playerId || generatePlayerId();
 
-  db.collection('pigGames').doc(gameId).get()
+  db.collection('horseGames').doc(gameId).get()
     .then(doc => {
       if (doc.exists) {
         const gameData = doc.data();
         if (!gameData.player2Id && playerId !== gameData.player1Id) {
-          db.collection('pigGames').doc(gameId).update({
+          db.collection('horseGames').doc(gameId).update({
             player2Id: playerId,
             gameStatus: 'started'
           }).then(() => {
@@ -102,7 +98,7 @@ function startGameListener() {
   if (setupArea) setupArea.style.display = 'none';
   if (gameArea) gameArea.style.display = 'block';
 
-  db.collection('pigGames').doc(gameId)
+  db.collection('horseGames').doc(gameId)
     .onSnapshot(doc => {
       if (doc.exists) {
         updateGameState(doc.data());
@@ -147,7 +143,6 @@ function updateGameState(gameData) {
   currentQuestion = gameData.currentQuestion;
   currentAnswer = gameData.correctAnswer;
 
-  // Display the player's image
   displayPlayerImage(currentQuestion);
 
   const isCurrentPlayer = (isPlayer1 && currentPlayer === 1) || (!isPlayer1 && currentPlayer === 2);
@@ -184,7 +179,7 @@ function startNewRound() {
   
   resetInputs();
 
-  db.collection('pigGames').doc(gameId).update({
+  db.collection('horseGames').doc(gameId).update({
     currentQuestion: selectedPlayer.name,
     correctAnswer: selectedPlayer.college,
     player1Answered: false,
@@ -194,7 +189,6 @@ function startNewRound() {
     currentPlayer: 1
   }).catch(error => console.error("Error starting new round:", error));
 
-  // Display the new player's image
   displayPlayerImage(selectedPlayer.name);
 }
 
@@ -215,14 +209,13 @@ function selectPlayerByDifficulty() {
 function displayPlayerImage(playerName) {
   const player = playersData.find(p => p.name === playerName);
   if (player && playerImageElement) {
-    const defaultImage = 'stilllife.png'; // Path to your placeholder image
+    const defaultImage = 'stilllife.png'; // Placeholder image
 
     playerImageElement.src = defaultImage; // Set default initially
 
     if (player.image_url) {
       playerImageElement.src = player.image_url;
 
-      // Handle image loading error
       playerImageElement.onerror = function() {
         playerImageElement.onerror = null;
         playerImageElement.src = defaultImage;
@@ -236,7 +229,7 @@ function submitGuess(playerNum) {
   const guess = guessInput ? guessInput.value.trim() : '';
   if (!guess) return;
 
-  db.collection('pigGames').doc(gameId).get()
+  db.collection('horseGames').doc(gameId).get()
     .then(doc => {
       if (doc.exists) {
         const gameData = doc.data();
@@ -256,14 +249,12 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
   let otherPlayerAnsweredField = playerNum === 1 ? 'player2Answered' : 'player1Answered';
   let otherPlayerGuessField = playerNum === 1 ? 'player2Guess' : 'player1Guess';
 
-  // Player will only get a letter if they answer incorrectly and the other player answers correctly
   if (!isCorrect && gameData[otherPlayerAnsweredField] && isCloseMatch(gameData[otherPlayerGuessField], currentAnswer)) {
     const currentProgress = gameData[progressField];
     const nextLetter = getNextLetter(currentProgress);
     if (nextLetter) {
       gameData[progressField] = currentProgress + nextLetter;
     } else {
-      // Game over
       gameData.gameStatus = 'ended';
       gameData.winner = playerNum === 1 ? 2 : 1;
     }
@@ -273,10 +264,9 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
   gameData[guessField] = guess;
   gameData.currentPlayer = playerNum === 1 ? 2 : 1;
 
-  db.collection('pigGames').doc(gameId).update(gameData)
+  db.collection('horseGames').doc(gameId).update(gameData)
     .catch(error => console.error("Error updating game after guess:", error));
 
-  // Play sound effects
   if (isCorrect) {
     correctSound.play();
   } else {
@@ -289,26 +279,24 @@ function isCloseMatch(guess, answer) {
 }
 
 function getNextLetter(progress) {
-  const letters = ['P', 'I', 'G'];
+  const letters = ['H', 'O', 'R', 'S', 'E'];
   return letters[progress.length] || null;
 }
 
-// Function to copy the game URL to the clipboard
 function copyGameUrl() {
   if (gameUrlInput) {
     gameUrlInput.select();
-    gameUrlInput.setSelectionRange(0, 99999); // For mobile devices
+    gameUrlInput.setSelectionRange(0, 99999);
 
     try {
       const successful = document.execCommand('copy');
       if (successful) {
-        // Add animation instead of alert
         showFeedbackMessage("Link copied!");
       } else {
-        alert("Failed to copy the URL. Please copy it manually.");
+        alert("Failed to copy the link. Please copy it manually.");
       }
     } catch (err) {
-      alert("Your browser does not support copying to clipboard. Please copy the link manually.");
+      alert("Your browser does not support copying. Please copy the link manually.");
     }
   }
 }
@@ -358,11 +346,10 @@ function showFeedbackMessage(message) {
     feedbackMessage.classList.add('show');
     setTimeout(() => {
       feedbackMessage.classList.remove('show');
-    }, 3000); // Hide after 3 seconds
+    }, 3000);
   }
 }
 
-// Initialize sound effects and event listeners
 document.addEventListener('DOMContentLoaded', () => {
   correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
   wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
@@ -387,7 +374,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Event listener for the Copy Link button
   const copyGameUrlBtn = document.getElementById('copyGameUrl');
   if (copyGameUrlBtn) {
     copyGameUrlBtn.addEventListener('click', copyGameUrl);
@@ -416,7 +402,6 @@ document.addEventListener('DOMContentLoaded', () => {
     player2SubmitBtn.addEventListener('click', () => submitGuess(2));
   }
 
-  // Game initialization
   const urlParams = new URLSearchParams(window.location.search);
   const gameIdFromUrl = urlParams.get('gameId');
   if (gameIdFromUrl) {
