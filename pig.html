@@ -28,6 +28,12 @@
         .suggestion-item:hover {
             background-color: #f0f0f0;
         }
+        .active-player {
+            background-color: #e0f7fa;
+            border: 2px solid #00bcd4;
+            padding: 10px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -45,14 +51,14 @@
         <h2 id="currentQuestion"></h2>
         <div id="currentPlayer"></div>
         <div class="player">
-            <h3>Player 1</h3>
+            <h3 id="player1Label">You</h3>
             <p>Progress: <span id="player1Progress"></span></p>
             <input type="text" id="player1Input" placeholder="Enter college">
             <div id="suggestions1" class="suggestions"></div>
             <button id="player1Submit">Submit</button>
         </div>
         <div class="player">
-            <h3>Player 2</h3>
+            <h3 id="player2Label">Your Opponent</h3>
             <p>Progress: <span id="player2Progress"></span></p>
             <input type="text" id="player2Input" placeholder="Enter college">
             <div id="suggestions2" class="suggestions"></div>
