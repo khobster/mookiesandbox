@@ -70,14 +70,11 @@ function createNewGame() {
         gameId = docRef.id;
         const shareableUrl = `${window.location.origin}/pig.html?gameId=${gameId}`;
         
-        // Display the shareable link
         gameUrlInput.value = shareableUrl;
         shareLinkDiv.style.display = 'block';
         
-        // Hide the "Start New Game" button
         newGameBtn.style.display = 'none';
         
-        // Add event listener for the "Start Game" button
         const startGameBtn = document.createElement('button');
         startGameBtn.textContent = 'Start Game';
         startGameBtn.addEventListener('click', () => {
@@ -94,7 +91,6 @@ function setupGame(id) {
     setupArea.style.display = 'none';
     gameArea.style.display = 'block';
 
-    // Listen for updates to the game document in Firestore
     db.collection('pigGames').doc(gameId)
         .onSnapshot(doc => {
             if (doc.exists) {
@@ -109,7 +105,6 @@ function setupGame(id) {
             console.error("Error listening to game updates:", error);
         });
     
-    // Initialize the game state
     startNewRound();
 }
 
@@ -123,14 +118,12 @@ function updateGameState(gameData) {
     document.getElementById('currentQuestion').textContent = gameData.currentQuestion || "Waiting for question...";
     document.getElementById('cumulativeRarityScore').textContent = `Score: ${Math.round(gameData.cumulativeRarityScore)}`;
     
-    // Enable/disable submit buttons based on whether the player has answered
     player1SubmitBtn.disabled = gameData.player1Answered;
     player2SubmitBtn.disabled = gameData.player2Answered;
 
-    // Check if both players have answered and start a new round if needed
     if (gameData.player1Answered && gameData.player2Answered) {
         console.log("Both players have answered. Starting new round in 2 seconds.");
-        setTimeout(startNewRound, 2000); // Wait 2 seconds before starting a new round
+        setTimeout(startNewRound, 2000);
     }
 }
 
@@ -146,7 +139,7 @@ function startNewRound() {
         player2Answered: false,
         player1Guess: '',
         player2Guess: '',
-        currentPlayer: 1 // Reset to player 1 for each new question
+        currentPlayer: 1
     }).catch(error => console.error("Error starting new round:", error));
 }
 
@@ -162,7 +155,7 @@ function selectPlayerByRarity() {
         }
     }
     
-    return playersData[playersData.length - 1]; // Fallback to last player if something goes wrong
+    return playersData[playersData.length - 1];
 }
 
 // Function to handle player guesses
@@ -193,7 +186,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
     console.log(`Guess is correct: ${isCorrect}`);
 
     if (gameData.player1Answered && playerNum === 2) {
-        // Both players have answered, evaluate the round
         console.log("Both players have answered. Evaluating round.");
         const player1Correct = isCloseMatch(gameData.player1Guess, gameData.correctAnswer);
         const player2Correct = isCloseMatch(guess, gameData.correctAnswer);
@@ -204,7 +196,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
             updates.player2Progress = getNextLetter(gameData.player2Progress);
         }
 
-        // Update cumulative rarity score
         if (player1Correct || player2Correct) {
             const player = playersData.find(p => p.name === gameData.currentQuestion);
             if (player) {
@@ -214,7 +205,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
             }
         }
 
-        // Check for game end
         if (updates.player1Progress === 'PIG' || updates.player2Progress === 'PIG') {
             updates.gameStatus = 'ended';
             updates.winner = updates.player1Progress === 'PIG' ? 2 : 1;
@@ -226,7 +216,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
         if (updates.gameStatus === 'ended') {
             alert(`Game Over! Player ${updates.winner} wins!`);
         } else if (isCorrect) {
-            // If the guess was correct, start a new round
             console.log("Correct guess. Starting new round in 1 second.");
             setTimeout(startNewRound, 1000);
         }
@@ -245,7 +234,6 @@ function getNextLetter(progress) {
     return 'PIG';
 }
 
-// Function to copy the game URL to clipboard
 function copyGameUrl() {
     gameUrlInput.select();
     document.execCommand('copy');
@@ -293,8 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showSuggestions(e.target.value);
         });
     }
-
-    // Other event listeners can be added here if needed
 });
 
 // Check if there's a gameId in the URL when the page loads
