@@ -246,7 +246,7 @@ function showSuggestions(input, playerNum) {
         }
         const suggestions = Array.from(new Set(playersData
             .map(player => player.college)
-            .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
+            .filter(college => college && college.toLowerCase().includes(input.toLowerCase()))))
             .slice(0, 5);
         if (suggestions.length > 0) {
             suggestionsContainer.style.display = 'block';
