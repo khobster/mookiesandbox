@@ -215,9 +215,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
     db.collection('pigGames').doc(gameId).update(updates).then(() => {
         if (updates.gameStatus === 'ended') {
             alert(`Game Over! Player ${updates.winner} wins!`);
-        } else if (isCorrect) {
-            console.log("Correct guess. Starting new round in 1 second.");
-            setTimeout(startNewRound, 1000);
         }
     });
 }
