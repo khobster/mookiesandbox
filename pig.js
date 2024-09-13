@@ -128,15 +128,27 @@ function startGameListener() {
 
 function updateGameState(gameData) {
     currentPlayer = gameData.currentPlayer;
-    document.getElementById('currentPlayer').textContent = `Current Turn: Player ${currentPlayer}`;
+    const isPlayer1 = playerId === gameData.player1Id;
+
+    // Update current player text
+    let currentPlayerText = isPlayer1 ? 
+        (currentPlayer === 1 ? "Your Turn" : "Your Opponent's Turn") :
+        (currentPlayer === 2 ? "Your Turn" : "Your Opponent's Turn");
+    document.getElementById('currentPlayer').textContent = currentPlayerText;
+
+    // Update progress labels
+    const player1Label = isPlayer1 ? "You" : "Your Opponent";
+    const player2Label = isPlayer1 ? "Your Opponent" : "You";
+    document.getElementById('player1Label').textContent = player1Label;
+    document.getElementById('player2Label').textContent = player2Label;
     document.getElementById('player1Progress').textContent = gameData.player1Progress;
     document.getElementById('player2Progress').textContent = gameData.player2Progress;
+
     document.getElementById('currentQuestion').textContent = gameData.currentQuestion || "Waiting for question...";
     
     currentQuestion = gameData.currentQuestion;
     currentAnswer = gameData.correctAnswer;
 
-    const isPlayer1 = playerId === gameData.player1Id;
     const isCurrentPlayer = (isPlayer1 && currentPlayer === 1) || (!isPlayer1 && currentPlayer === 2);
 
     const player1Input = document.getElementById('player1Input');
@@ -157,7 +169,8 @@ function updateGameState(gameData) {
     }
 
     if (gameData.gameStatus === 'ended') {
-        alert(`Game Over! Player ${gameData.winner} wins!`);
+        const winnerText = gameData.winner === (isPlayer1 ? 1 : 2) ? "You win!" : "Your opponent wins!";
+        alert(`Game Over! ${winnerText}`);
     }
 }
 
@@ -236,7 +249,9 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
 
     db.collection('pigGames').doc(gameId).update(updates).then(() => {
         if (updates.gameStatus === 'ended') {
-            alert(`Game Over! Player ${updates.winner} wins!`);
+            const isPlayer1 = playerId === gameData.player1Id;
+            const winnerText = updates.winner === (isPlayer1 ? 1 : 2) ? "You win!" : "Your opponent wins!";
+            alert(`Game Over! ${winnerText}`);
         }
     });
 }
