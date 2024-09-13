@@ -194,3 +194,19 @@ button:active {
 .incorrect {
   color: red;
 }
+
+/* Mobile Optimization */
+@media only screen and (max-width: 600px) {
+  #playersContainer {
+    flex-direction: column;
+  }
+
+  .player {
+    width: 100%;
+  }
+
+  /* Hide the opponent's input field and submit button */
+  #player2Input, #player2Submit {
+    display: none;
+  }
+}
