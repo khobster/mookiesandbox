@@ -289,11 +289,22 @@ function getNextLetter(progress) {
   return letters[progress.length] || null;
 }
 
+// Function to copy the game URL to the clipboard
 function copyGameUrl() {
   if (gameUrlInput) {
     gameUrlInput.select();
-    document.execCommand('copy');
-    alert("Game URL copied to clipboard!");
+    gameUrlInput.setSelectionRange(0, 99999); // For mobile devices
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        alert("Game URL copied to clipboard!");
+      } else {
+        alert("Failed to copy the URL. Please copy it manually.");
+      }
+    } catch (err) {
+      alert("Your browser does not support copying to clipboard. Please copy the link manually.");
+    }
   }
 }
 
@@ -369,6 +380,12 @@ document.addEventListener('DOMContentLoaded', () => {
     startGameBtn.addEventListener('click', () => {
       setupGame(gameId);
     });
+  }
+
+  // Event listener for the Copy Link button
+  const copyGameUrlBtn = document.getElementById('copyGameUrl');
+  if (copyGameUrlBtn) {
+    copyGameUrlBtn.addEventListener('click', copyGameUrl);
   }
 
   const player1Input = document.getElementById('player1Input');
