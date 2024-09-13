@@ -1,52 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIG</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        #gameArea { display: none; }
-        .player { margin: 20px 0; }
-        #currentPlayer { font-weight: bold; }
-        #shareLink { display: none; }  /* Initially hide the shareable link */
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIG</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #gameArea { display: none; }
+        .player { margin: 20px 0; }
+        #currentPlayer { font-weight: bold; }
+        #shareLink { display: none; }  /* Initially hide the shareable link */
+        .suggestions {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd;
+            max-height: 150px;
+            overflow-y: auto;
+            width: 200px;
+            text-align: left;
+            display: none;
+        }
+        .suggestion-item {
+            padding: 5px;
+            cursor: pointer;
+        }
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+        #cumulativeRarityScore {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1> </h1>
-    
-    <!-- Start New Game Area -->
-    <div id="setupArea">
-        <button id="newGameBtn">Start New Game</button>  <!-- Start New Game Button -->
-        <div id="shareLink" style="display: none;">
-        <input type="text" id="gameUrlInput" readonly>
-        <button onclick="copyGameUrl()">Copy Link</button>
-        </div>
-    </div>
-
-    <!-- Game Area -->
-    <div id="gameArea">
-        <h2 id="currentQuestion"></h2>
-        <div id="currentPlayer"></div>
-        <div class="player">
-            <h3>Player 1</h3>
-            <p>Progress: <span id="player1Progress"></span></p>
-            <input type="text" id="player1Input" placeholder="Enter college">
-            <button id="player1Submit">Submit</button>
-        </div>
-        <div class="player">
-            <h3>Player 2</h3>
-            <p>Progress: <span id="player2Progress"></span></p>
-            <input type="text" id="player2Input" placeholder="Enter college">
-            <button id="player2Submit">Submit</button>
-        </div>
-        <div id="result"></div>
-    </div>
-
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
-    <script src="pig.js"></script>
+    <h1>🐷</h1>
+    
+    <!-- Start New Game Area -->
+    <div id="setupArea">
+        <button id="newGameBtn">Start New Game</button>  <!-- Start New Game Button -->
+        <div id="shareLink" style="display: none;">
+            <input type="text" id="gameUrlInput" readonly>
+            <button onclick="copyGameUrl()">Copy Link</button>
+        </div>
+    </div>
+    <!-- Game Area -->
+    <div id="gameArea">
+        <h2 id="currentQuestion"></h2>
+        <div id="currentPlayer"></div>
+        <div id="cumulativeRarityScore"></div>
+        <div class="player">
+            <h3>Player 1</h3>
+            <p>Progress: <span id="player1Progress"></span></p>
+            <input type="text" id="player1Input" placeholder="Enter college">
+            <div id="suggestions1" class="suggestions"></div>
+            <button id="player1Submit">Submit</button>
+        </div>
+        <div class="player">
+            <h3>Player 2</h3>
+            <p>Progress: <span id="player2Progress"></span></p>
+            <input type="text" id="player2Input" placeholder="Enter college">
+            <div id="suggestions2" class="suggestions"></div>
+            <button id="player2Submit">Submit</button>
+        </div>
+        <div id="result"></div>
+    </div>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="pig.js"></script>
 </body>
 </html>
