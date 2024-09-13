@@ -1,22 +1,27 @@
 body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #f6f7f8;
     color: #333;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    text-align: center;
+    margin: 0;
+    padding: 0;
 }
 
 h1 {
-    color: #2c3e50;
+    font-family: 'Georgia', serif;
+    font-size: 2em;
+    margin-top: 20px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+h2, h3 {
+    font-family: 'Georgia', serif;
 }
 
 #setupArea, #gameArea {
-    background-color: #ecf0f1;
-    border-radius: 8px;
+    max-width: 600px;
+    margin: 0 auto;
     padding: 20px;
-    margin-top: 20px;
 }
 
 #gameArea {
@@ -25,66 +30,97 @@ h1 {
 
 .player {
     background-color: #fff;
-    border: 1px solid #bdc3c7;
-    border-radius: 8px;
+    border: 1px solid #dcdcdc;
+    border-radius: 4px;
     padding: 15px;
     margin: 20px 0;
+    text-align: left;
+}
+
+.active-player {
+    border-color: #333;
 }
 
 input[type="text"] {
     padding: 10px;
-    width: 200px;
-    border: 1px solid #bdc3c7;
-    border-radius: 4px;
+    width: calc(100% - 22px); /* Full width minus padding and border */
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    font-size: 1em;
+    margin-bottom: 10px;
 }
 
 button {
-    background-color: #3498db;
-    color: white;
+    background-color: #333;
+    color: #fff;
     border: none;
-    padding: 10px 20px;
-    margin: 10px;
-    border-radius: 4px;
+    padding: 12px 20px;
+    font-size: 1em;
+    border-radius: 2px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    width: 100%;
 }
 
 button:hover {
-    background-color: #2980b9;
+    background-color: #555;
+}
+
+button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
 }
 
 #currentPlayer {
     font-weight: bold;
     font-size: 1.2em;
     margin: 20px 0;
-    color: #e74c3c;
 }
 
 #currentQuestion {
-    font-size: 1.3em;
+    font-size: 1.5em;
     margin: 20px 0;
-    color: #2c3e50;
 }
 
-#result {
-    font-weight: bold;
-    margin-top: 20px;
+.suggestions {
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    width: calc(100% - 2px); /* Full width minus borders */
+    z-index: 1000;
 }
 
-.correct {
-    color: #27ae60;
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
 }
 
-.incorrect {
-    color: #c0392b;
+.suggestion-item:hover {
+    background-color: #f0f0f0;
 }
 
+/* Feedback Message */
+#feedbackMessage {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    margin: 20px 0;
+    border-radius: 4px;
+    display: none;
+}
+
+#feedbackMessage.show {
+    display: block;
+}
+
+/* Responsive Design */
 @media (max-width: 600px) {
     body {
         padding: 10px;
     }
 
-    input[type="text"] {
-        width: 150px;
+    h1 {
+        font-size: 1.5em;
     }
 }
