@@ -35,6 +35,10 @@ h2, h3 {
     display: none;
 }
 
+#setupArea {
+    margin-top: 20px;
+}
+
 .player {
     background-color: #fff;
     border: 1px solid #dcdcdc;
@@ -129,5 +133,17 @@ button:disabled {
 
     h1 {
         font-size: 1.5em;
+    }
+
+    #mainContainer {
+        padding: 10px;
+    }
+
+    input[type="text"] {
+        width: calc(100% - 22px);
+    }
+
+    button {
+        padding: 10px;
     }
 }
