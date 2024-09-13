@@ -253,7 +253,11 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
   let answeredField = playerNum === 1 ? 'player1Answered' : 'player2Answered';
   let guessField = playerNum === 1 ? 'player1Guess' : 'player2Guess';
 
-  if (!isCorrect) {
+  let otherPlayerAnsweredField = playerNum === 1 ? 'player2Answered' : 'player1Answered';
+  let otherPlayerGuessField = playerNum === 1 ? 'player2Guess' : 'player1Guess';
+
+  // Player will only get a letter if they answer incorrectly and the other player answers correctly
+  if (!isCorrect && gameData[otherPlayerAnsweredField] && isCloseMatch(gameData[otherPlayerGuessField], currentAnswer)) {
     const currentProgress = gameData[progressField];
     const nextLetter = getNextLetter(currentProgress);
     if (nextLetter) {
@@ -285,7 +289,7 @@ function isCloseMatch(guess, answer) {
 }
 
 function getNextLetter(progress) {
-  const letters = ['H', 'O', 'R', 'S', 'E'];
+  const letters = ['P', 'I', 'G'];
   return letters[progress.length] || null;
 }
 
