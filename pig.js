@@ -302,13 +302,23 @@ function copyGameUrl() {
     try {
       const successful = document.execCommand('copy');
       if (successful) {
-        alert("Game URL copied to clipboard!");
+        showCopiedAnimation();
       } else {
         alert("Failed to copy the URL. Please copy it manually.");
       }
     } catch (err) {
       alert("Your browser does not support copying to clipboard. Please copy the link manually.");
     }
+  }
+}
+
+function showCopiedAnimation() {
+  const copiedMessage = document.getElementById('copiedMessage');
+  if (copiedMessage) {
+    copiedMessage.classList.add('show');
+    setTimeout(() => {
+      copiedMessage.classList.remove('show');
+    }, 1500);
   }
 }
 
