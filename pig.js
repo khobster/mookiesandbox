@@ -16,7 +16,7 @@ let currentPlayer;
 let playersData = [];
 let currentQuestion;
 let currentAnswer;
-let cumulativeRarityScore = 0;
+let currentDifficultyLevel = 1; // Starting difficulty level
 
 // DOM Elements
 const newGameBtn = document.getElementById('newGameBtn');
@@ -52,7 +52,6 @@ function createNewGame() {
         player1Guess: '',
         player2Guess: '',
         gameStatus: 'waiting',
-        cumulativeRarityScore: 0,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(docRef => {
         gameId = docRef.id;
@@ -102,10 +101,6 @@ function updateGameState(gameData) {
     document.getElementById('player2Progress').textContent = gameData.player2Progress;
     document.getElementById('currentQuestion').textContent = gameData.currentQuestion || "Waiting for question...";
     
-    // Ensure the score is a number and round it
-    const score = isNaN(gameData.cumulativeRarityScore) ? 0 : Math.round(gameData.cumulativeRarityScore);
-    document.getElementById('cumulativeRarityScore').textContent = `Score: ${score}`;
-    
     currentQuestion = gameData.currentQuestion;
     currentAnswer = gameData.correctAnswer;
 
@@ -118,7 +113,7 @@ function updateGameState(gameData) {
 }
 
 function startNewRound() {
-    const selectedPlayer = selectPlayerByRarity();
+    const selectedPlayer = selectPlayerByDifficulty();
     
     db.collection('pigGames').doc(gameId).update({
         currentQuestion: selectedPlayer.name,
@@ -131,18 +126,18 @@ function startNewRound() {
     }).catch(error => console.error("Error starting new round:", error));
 }
 
-function selectPlayerByRarity() {
-    const totalRarity = playersData.reduce((sum, player) => sum + player.rarity_score, 0);
-    let randomValue = Math.random() * totalRarity;
-    
-    for (let player of playersData) {
-        randomValue -= player.rarity_score;
-        if (randomValue <= 0) {
-            return player;
-        }
+function selectPlayerByDifficulty() {
+    const eligiblePlayers = playersData.filter(player => 
+        player.rarity_score <= currentDifficultyLevel || 
+        (player.games_played > 500 && player.retirement_year < 2000)
+    );
+
+    if (eligiblePlayers.length === 0) {
+        console.error("No eligible players found for the current difficulty level");
+        return playersData[Math.floor(Math.random() * playersData.length)];
     }
-    
-    return playersData[playersData.length - 1];
+
+    return eligiblePlayers[Math.floor(Math.random() * eligiblePlayers.length)];
 }
 
 // Function to handle player guesses
@@ -178,11 +173,11 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
         }
 
         if (player1Correct || player2Correct) {
-            const player = playersData.find(p => p.name === gameData.currentQuestion);
-            if (player && !isNaN(player.rarity_score)) {
-                cumulativeRarityScore += player.rarity_score;
-                updates.cumulativeRarityScore = cumulativeRarityScore;
-            }
+            // Increase difficulty slightly for correct answers
+            currentDifficultyLevel += 0.1;
+        } else {
+            // Decrease difficulty slightly for incorrect answers
+            currentDifficultyLevel = Math.max(1, currentDifficultyLevel - 0.05);
         }
 
         if (updates.player1Progress === 'PIG' || updates.player2Progress === 'PIG') {
