@@ -46,7 +46,7 @@ h1 {
   max-width: 100%;
   height: auto;
   margin: 0 auto 20px auto;
-  border-radius: 50%;
+  border-radius: 8px;
   border: 1px solid #dcdcdc;
 }
 
