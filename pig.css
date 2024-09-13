@@ -1,196 +1,119 @@
 body {
-  font-family: 'Roboto', sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f5f5f5;
+    font-family: 'Roboto', sans-serif;
+    text-align: center;
+    background-color: #f5f5f5;
 }
 
-#mainContainer {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+h1, h2 {
+    color: #333;
 }
 
-h1 {
-  text-align: center;
-  font-size: 3em;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-#setupArea, #gameArea {
-  margin-top: 20px;
-}
-
-#shareLink {
-  margin-top: 10px;
-  text-align: center;
-}
-
-#gameUrlInput {
-  width: 80%;
-  padding: 10px;
-  font-size: 1em;
-}
-
-#currentQuestion {
-  font-size: 1.5em;
-  margin: 20px 0;
-  text-align: center;
-  color: #444;
-}
-
-/* Player Image Styling */
-.player-image {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  margin: 0 auto 20px auto;
-  border-radius: 8px;
-  border: 1px solid #dcdcdc;
-}
-
-#currentPlayer {
-  text-align: center;
-  font-weight: bold;
-  margin-bottom: 20px;
-}
-
-#playersContainer {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-.player {
-  width: 45%;
-  background-color: #fff;
-  padding: 15px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.player.active-player {
-  border: 2px solid #2196F3;
-}
-
-.player h3 {
-  margin-top: 0;
-  color: #555;
-}
-
-.player p {
-  color: #777;
-}
-
-.player input[type="text"] {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 5px;
-  font-size: 1em;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.player button {
-  width: 100%;
-  padding: 10px;
-  font-size: 1em;
-  color: #fff;
-  background: linear-gradient(45deg, #2196F3, #21CBF3);
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.player button:hover {
-  background: linear-gradient(45deg, #21CBF3, #2196F3);
-}
-
-.suggestions {
-  border: 1px solid #ccc;
-  max-height: 100px;
-  overflow-y: auto;
-  background-color: #fff;
-  position: relative;
-  z-index: 10;
-}
-
-.suggestion-item {
-  padding: 5px;
-  cursor: pointer;
-}
-
-.suggestion-item:hover {
-  background-color: #f0f0f0;
-}
-
-#feedbackMessage {
-  display: none;
-  text-align: center;
-  font-size: 1.2em;
-  color: green;
-}
-
-#feedbackMessage.show {
-  display: block;
-}
-
-#result {
-  text-align: center;
-  font-size: 1.2em;
-  margin-top: 20px;
-}
-
-/* Buttons Styles */
 button {
-  font-family: 'Roboto', sans-serif;
-  font-size: 1em;
-  padding: 12px 20px;
-  margin: 5px;
-  color: #fff;
-  background: linear-gradient(45deg, #FF4081, #FF80AB);
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
+    background-color: #ffcc00;
+    color: white;
+    font-size: 18px;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s;
 }
 
 button:hover {
-  background: linear-gradient(45deg, #FF80AB, #FF4081);
-  transform: scale(1.05);
+    transform: scale(1.1);
+    background-color: #ff9900;
 }
 
 button:active {
-  transform: scale(0.95);
+    transform: scale(1.05);
 }
 
-/* Specific Button Styles */
-#newGameBtn, #startGameBtn, #copyGameUrl {
-  width: calc(100% - 20px);
-  margin: 10px auto;
-  display: block;
+input {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin: 10px;
 }
 
-#copyGameUrl {
-  background: linear-gradient(45deg, #4CAF50, #81C784);
+#gameArea {
+    margin-top: 20px;
 }
 
-#copyGameUrl:hover {
-  background: linear-gradient(45deg, #81C784, #4CAF50);
+.player-image-container {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    margin: 0 auto;
+    background-image: url('circularframeformookie.png'); /* Add frame image */
+    background-size: cover;
 }
 
-#copyGameUrl:active {
-  transform: scale(0.95);
+#playerImage {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    margin: 20px;
+    position: absolute;
+    top: 20px;
+    left: 20px;
 }
 
-/* Sound effects feedback */
-.correct {
-  color: green;
+#copiedMessage {
+    display: none;
+    color: #4caf50;
+    font-size: 16px;
+    margin-top: 10px;
+    transition: opacity 0.5s ease-in-out;
 }
 
-.incorrect {
-  color: red;
+.copied-message.show {
+    display: block;
+    opacity: 1;
+    animation: fadeInOut 1.5s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.feedback-message {
+    display: none;
+    color: red;
+    font-size: 20px;
+    margin-top: 20px;
+}
+
+.feedback-message.show {
+    display: block;
+}
+
+.player {
+    margin-bottom: 20px;
+}
+
+.active-player {
+    border: 2px solid #4caf50;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #e0f7fa;
+}
+
+/* Mobile optimization for opponent fields */
+@media only screen and (max-width: 768px) {
+    .opponent-field {
+        display: none;
+    }
+
+    #player2Label {
+        font-size: 18px;
+    }
+
+    #player2Progress {
+        font-size: 16px;
+    }
 }
