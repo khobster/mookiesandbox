@@ -23,7 +23,7 @@ let playerId;
 let newGameBtn, setupArea, gameArea, gameUrlInput, shareLinkDiv, startGameBtn;
 let player1SubmitBtn, player2SubmitBtn;
 let currentQuestionElement, playerImageElement;
-let correctSound, wrongSound; // Sound effects
+let correctSound, wrongSound;
 
 // Load players data
 fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
@@ -119,6 +119,10 @@ function updateGameState(gameData) {
   currentPlayer = gameData.currentPlayer;
   const isPlayer1 = playerId === gameData.player1Id;
 
+  // Determine if it's the current player's turn
+  const isCurrentPlayer = (isPlayer1 && currentPlayer === 1) || (!isPlayer1 && currentPlayer === 2);
+
+  // Update UI for whose turn it is
   let currentPlayerText = isPlayer1 ? 
       (currentPlayer === 1 ? "Your Turn" : "Your Opponent's Turn") :
       (currentPlayer === 2 ? "Your Turn" : "Your Opponent's Turn");
@@ -128,21 +132,35 @@ function updateGameState(gameData) {
     currentPlayerElement.textContent = currentPlayerText;
   }
 
-  const player1Label = isPlayer1 ? "You" : "Your Opponent";
-  const player2Label = isPlayer1 ? "Your Opponent" : "You";
+  // Show only the current player's input and hide the opponent's input on mobile
+  const player1Input = document.getElementById('player1Input');
+  const player1Submit = document.getElementById('player1Submit');
+  const player2Input = document.getElementById('player2Input');
+  const player2Submit = document.getElementById('player2Submit');
+
+  if (isCurrentPlayer) {
+    player1Input.disabled = false;
+    player1Submit.disabled = false;
+    player2Input.style.display = 'none';
+    player2Submit.style.display = 'none';
+  } else {
+    player1Input.disabled = true;
+    player1Submit.disabled = true;
+    player2Input.style.display = 'none'; // Hide for the opposing player
+    player2Submit.style.display = 'none'; // Hide for the opposing player
+  }
+
+  // Keep progress visible for both players
+  const player1Progress = document.getElementById('player1Progress');
+  const player2Progress = document.getElementById('player2Progress');
   
-  const player1LabelElement = document.getElementById('player1Label');
-  const player2LabelElement = document.getElementById('player2Label');
-  const player1ProgressElement = document.getElementById('player1Progress');
-  const player2ProgressElement = document.getElementById('player2Progress');
+  if (player1Progress) player1Progress.textContent = gameData.player1Progress;
+  if (player2Progress) player2Progress.textContent = gameData.player2Progress;
+
+  // Update the current question and player image
   currentQuestionElement = document.getElementById('currentQuestion');
   playerImageElement = document.getElementById('playerImage');
 
-  if (player1LabelElement) player1LabelElement.textContent = player1Label;
-  if (player2LabelElement) player2LabelElement.textContent = player2Label;
-  if (player1ProgressElement) player1ProgressElement.textContent = gameData.player1Progress;
-  if (player2ProgressElement) player2ProgressElement.textContent = gameData.player2Progress;
-  
   if (currentQuestionElement) currentQuestionElement.textContent = gameData.currentQuestion || "Waiting for question...";
   
   currentQuestion = gameData.currentQuestion;
@@ -150,25 +168,6 @@ function updateGameState(gameData) {
 
   // Display the player's image
   displayPlayerImage(currentQuestion);
-
-  const isCurrentPlayer = (isPlayer1 && currentPlayer === 1) || (!isPlayer1 && currentPlayer === 2);
-
-  const player1Input = document.getElementById('player1Input');
-  const player2Input = document.getElementById('player2Input');
-  
-  if (player1Input && player2Input) {
-    const player1Container = player1Input.closest('.player');
-    const player2Container = player2Input.closest('.player');
-
-    player1Input.disabled = !isPlayer1 || !isCurrentPlayer || gameData.player1Answered;
-    player2Input.disabled = isPlayer1 || !isCurrentPlayer || gameData.player2Answered;
-    
-    if (player1SubmitBtn) player1SubmitBtn.disabled = !isPlayer1 || !isCurrentPlayer || gameData.player1Answered;
-    if (player2SubmitBtn) player2SubmitBtn.disabled = isPlayer1 || !isCurrentPlayer || gameData.player2Answered;
-
-    if (player1Container) player1Container.classList.toggle('active-player', currentPlayer === 1);
-    if (player2Container) player2Container.classList.toggle('active-player', currentPlayer === 2);
-  }
 
   if (gameData.player1Answered && gameData.player2Answered) {
     setTimeout(startNewRound, 2000);
