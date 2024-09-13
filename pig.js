@@ -19,7 +19,7 @@ let currentAnswer;
 let currentDifficultyLevel = 1;
 let playerId;
 
-let newGameBtn, setupArea, gameArea, gameUrlInput, shareLinkDiv;
+let newGameBtn, setupArea, gameArea, gameUrlInput, shareLinkDiv, startGameBtn;
 let player1SubmitBtn, player2SubmitBtn;
 let currentQuestionElement, playerImageElement;
 let correctSound, wrongSound; // Sound effects
@@ -58,8 +58,15 @@ function createNewGame() {
     if (gameUrlInput) gameUrlInput.value = gameUrl;
     if (shareLinkDiv) shareLinkDiv.style.display = 'block';
 
-    // Start the game listener for the first player
-    setupGame(gameId);
+    // Display the Start Game button
+    if (startGameBtn) {
+      startGameBtn.style.display = 'block';
+    }
+
+    // Hide the New Game button
+    if (newGameBtn) {
+      newGameBtn.style.display = 'none';
+    }
 
   })
   .catch(error => console.error("Error creating new game:", error));
@@ -67,13 +74,14 @@ function createNewGame() {
 
 function setupGame(id) {
   gameId = id;
-  playerId = generatePlayerId();
-  
+  // Use existing playerId if set, otherwise generate a new one
+  playerId = playerId || generatePlayerId();
+
   db.collection('pigGames').doc(gameId).get()
     .then(doc => {
       if (doc.exists) {
         const gameData = doc.data();
-        if (!gameData.player2Id) {
+        if (!gameData.player2Id && playerId !== gameData.player1Id) {
           db.collection('pigGames').doc(gameId).update({
             player2Id: playerId,
             gameStatus: 'started'
@@ -81,7 +89,7 @@ function setupGame(id) {
             startGameListener();
           });
         } else {
-          alert("Game already has two players.");
+          startGameListener();
         }
       } else {
         alert("Game not found.");
@@ -338,7 +346,7 @@ function showFeedbackMessage(message) {
   }
 }
 
-// Initialize sound effects
+// Initialize sound effects and event listeners
 document.addEventListener('DOMContentLoaded', () => {
   correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
   wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
@@ -348,12 +356,19 @@ document.addEventListener('DOMContentLoaded', () => {
   gameArea = document.getElementById('gameArea');
   gameUrlInput = document.getElementById('gameUrlInput');
   shareLinkDiv = document.getElementById('shareLink');
+  startGameBtn = document.getElementById('startGameBtn');
   player1SubmitBtn = document.getElementById('player1Submit');
   player2SubmitBtn = document.getElementById('player2Submit');
   playerImageElement = document.getElementById('playerImage');
 
   if (newGameBtn) {
     newGameBtn.addEventListener('click', createNewGame);
+  }
+
+  if (startGameBtn) {
+    startGameBtn.addEventListener('click', () => {
+      setupGame(gameId);
+    });
   }
 
   const player1Input = document.getElementById('player1Input');
