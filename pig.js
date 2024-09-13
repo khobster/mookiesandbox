@@ -20,16 +20,7 @@ let currentDifficultyLevel = 1;
 let playerId;
 
 // DOM Elements
-const newGameBtn = document.getElementById('newGameBtn');
-const setupArea = document.getElementById('setupArea');
-const gameArea = document.getElementById('gameArea');
-const gameUrlInput = document.getElementById('gameUrlInput');
-const shareLinkDiv = document.getElementById('shareLink');
-const player1SubmitBtn = document.getElementById('player1Submit');
-const player2SubmitBtn = document.getElementById('player2Submit');
-
-// Event Listener for starting a new game
-newGameBtn.addEventListener('click', createNewGame);
+let newGameBtn, setupArea, gameArea, gameUrlInput, shareLinkDiv, player1SubmitBtn, player2SubmitBtn;
 
 // Load players data
 fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
@@ -62,17 +53,16 @@ function createNewGame() {
         localStorage.setItem('playerId', playerId);
         const shareableUrl = `${window.location.origin}/pig.html?gameId=${gameId}`;
         
-        gameUrlInput.value = shareableUrl;
-        shareLinkDiv.style.display = 'block';
-        
-        newGameBtn.style.display = 'none';
+        if (gameUrlInput) gameUrlInput.value = shareableUrl;
+        if (shareLinkDiv) shareLinkDiv.style.display = 'block';
+        if (newGameBtn) newGameBtn.style.display = 'none';
         
         const startGameBtn = document.createElement('button');
         startGameBtn.textContent = 'Start Game';
         startGameBtn.addEventListener('click', () => {
             setupGame(gameId);
         });
-        setupArea.appendChild(startGameBtn);
+        if (setupArea) setupArea.appendChild(startGameBtn);
     }).catch(error => console.error("Error creating game:", error));
 }
 
@@ -107,8 +97,8 @@ function setupGame(id) {
 }
 
 function startGameListener() {
-    setupArea.style.display = 'none';
-    gameArea.style.display = 'block';
+    if (setupArea) setupArea.style.display = 'none';
+    if (gameArea) gameArea.style.display = 'block';
 
     db.collection('pigGames').doc(gameId)
         .onSnapshot(doc => {
@@ -130,21 +120,29 @@ function updateGameState(gameData) {
     currentPlayer = gameData.currentPlayer;
     const isPlayer1 = playerId === gameData.player1Id;
 
-    // Update current player text
     let currentPlayerText = isPlayer1 ? 
         (currentPlayer === 1 ? "Your Turn" : "Your Opponent's Turn") :
         (currentPlayer === 2 ? "Your Turn" : "Your Opponent's Turn");
-    document.getElementById('currentPlayer').textContent = currentPlayerText;
+    
+    const currentPlayerElement = document.getElementById('currentPlayer');
+    if (currentPlayerElement) {
+        currentPlayerElement.textContent = currentPlayerText;
+    }
 
-    // Update progress labels
     const player1Label = isPlayer1 ? "You" : "Your Opponent";
     const player2Label = isPlayer1 ? "Your Opponent" : "You";
-    document.getElementById('player1Label').textContent = player1Label;
-    document.getElementById('player2Label').textContent = player2Label;
-    document.getElementById('player1Progress').textContent = gameData.player1Progress;
-    document.getElementById('player2Progress').textContent = gameData.player2Progress;
+    
+    const player1LabelElement = document.getElementById('player1Label');
+    const player2LabelElement = document.getElementById('player2Label');
+    const player1ProgressElement = document.getElementById('player1Progress');
+    const player2ProgressElement = document.getElementById('player2Progress');
+    const currentQuestionElement = document.getElementById('currentQuestion');
 
-    document.getElementById('currentQuestion').textContent = gameData.currentQuestion || "Waiting for question...";
+    if (player1LabelElement) player1LabelElement.textContent = player1Label;
+    if (player2LabelElement) player2LabelElement.textContent = player2Label;
+    if (player1ProgressElement) player1ProgressElement.textContent = gameData.player1Progress;
+    if (player2ProgressElement) player2ProgressElement.textContent = gameData.player2Progress;
+    if (currentQuestionElement) currentQuestionElement.textContent = gameData.currentQuestion || "Waiting for question...";
     
     currentQuestion = gameData.currentQuestion;
     currentAnswer = gameData.correctAnswer;
@@ -153,16 +151,20 @@ function updateGameState(gameData) {
 
     const player1Input = document.getElementById('player1Input');
     const player2Input = document.getElementById('player2Input');
-    const player1Container = player1Input.closest('.player');
-    const player2Container = player2Input.closest('.player');
+    
+    if (player1Input && player2Input) {
+        const player1Container = player1Input.closest('.player');
+        const player2Container = player2Input.closest('.player');
 
-    player1Input.disabled = !isPlayer1 || !isCurrentPlayer || gameData.player1Answered;
-    player2Input.disabled = isPlayer1 || !isCurrentPlayer || gameData.player2Answered;
-    player1SubmitBtn.disabled = !isPlayer1 || !isCurrentPlayer || gameData.player1Answered;
-    player2SubmitBtn.disabled = isPlayer1 || !isCurrentPlayer || gameData.player2Answered;
+        player1Input.disabled = !isPlayer1 || !isCurrentPlayer || gameData.player1Answered;
+        player2Input.disabled = isPlayer1 || !isCurrentPlayer || gameData.player2Answered;
+        
+        if (player1SubmitBtn) player1SubmitBtn.disabled = !isPlayer1 || !isCurrentPlayer || gameData.player1Answered;
+        if (player2SubmitBtn) player2SubmitBtn.disabled = isPlayer1 || !isCurrentPlayer || gameData.player2Answered;
 
-    player1Container.classList.toggle('active-player', currentPlayer === 1);
-    player2Container.classList.toggle('active-player', currentPlayer === 2);
+        if (player1Container) player1Container.classList.toggle('active-player', currentPlayer === 1);
+        if (player2Container) player2Container.classList.toggle('active-player', currentPlayer === 2);
+    }
 
     if (gameData.player1Answered && gameData.player2Answered) {
         setTimeout(startNewRound, 2000);
@@ -204,11 +206,10 @@ function selectPlayerByDifficulty() {
     return eligiblePlayers[Math.floor(Math.random() * eligiblePlayers.length)];
 }
 
-player1SubmitBtn.addEventListener('click', () => submitGuess(1));
-player2SubmitBtn.addEventListener('click', () => submitGuess(2));
-
 function submitGuess(playerNum) {
     const guessInput = document.getElementById(`player${playerNum}Input`);
+    if (!guessInput) return;
+
     const guess = guessInput.value.trim().toLowerCase();
 
     db.collection('pigGames').doc(gameId).get().then(doc => {
@@ -295,9 +296,11 @@ function getNextLetter(progress) {
 }
 
 function copyGameUrl() {
-    gameUrlInput.select();
-    document.execCommand('copy');
-    alert('Game URL copied to clipboard!');
+    if (gameUrlInput) {
+        gameUrlInput.select();
+        document.execCommand('copy');
+        alert('Game URL copied to clipboard!');
+    }
 }
 
 function showSuggestions(input, playerNum) {
@@ -319,8 +322,11 @@ function showSuggestions(input, playerNum) {
                 suggestionItem.textContent = suggestion;
                 suggestionItem.classList.add('suggestion-item');
                 suggestionItem.addEventListener('click', () => {
-                    document.getElementById(`player${playerNum}Input`).value = suggestion;
-                    suggestionsContainer.style.display = 'none';
+                    const input = document.getElementById(`player${playerNum}Input`);
+                    if (input) {
+                        input.value = suggestion;
+                        suggestionsContainer.style.display = 'none';
+                    }
                 });
                 suggestionsContainer.appendChild(suggestionItem);
             });
@@ -331,8 +337,8 @@ function showSuggestions(input, playerNum) {
 function resetInputs() {
     const player1Input = document.getElementById('player1Input');
     const player2Input = document.getElementById('player2Input');
-    player1Input.value = '';
-    player2Input.value = '';
+    if (player1Input) player1Input.value = '';
+    if (player2Input) player2Input.value = '';
 }
 
 function generatePlayerId() {
@@ -340,6 +346,18 @@ function generatePlayerId() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    newGameBtn = document.getElementById('newGameBtn');
+    setupArea = document.getElementById('setupArea');
+    gameArea = document.getElementById('gameArea');
+    gameUrlInput = document.getElementById('gameUrlInput');
+    shareLinkDiv = document.getElementById('shareLink');
+    player1SubmitBtn = document.getElementById('player1Submit');
+    player2SubmitBtn = document.getElementById('player2Submit');
+
+    if (newGameBtn) {
+        newGameBtn.addEventListener('click', createNewGame);
+    }
+
     const player1Input = document.getElementById('player1Input');
     const player2Input = document.getElementById('player2Input');
     
@@ -354,14 +372,23 @@ document.addEventListener('DOMContentLoaded', () => {
             showSuggestions(e.target.value, 2);
         });
     }
-});
 
-window.onload = function() {
+    if (player1SubmitBtn) {
+        player1SubmitBtn.addEventListener('click', () => submitGuess(1));
+    }
+
+    if (player2SubmitBtn) {
+        player2SubmitBtn.addEventListener('click', () => submitGuess(2));
+    }
+
+    // Game initialization
     const urlParams = new URLSearchParams(window.location.search);
     const gameIdFromUrl = urlParams.get('gameId');
     if (gameIdFromUrl) {
         setupGame(gameIdFromUrl);
     } else {
-        newGameBtn.style.display = 'block';
+        if (newGameBtn) {
+            newGameBtn.style.display = 'block';
+        }
     }
-};
+});
