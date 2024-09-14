@@ -116,7 +116,6 @@ function updateGameState(gameData) {
   currentPlayer = gameData.currentPlayer;
   const isPlayer1 = playerId === gameData.player1Id;
 
-  // Determine the labels for "You" and "Opponent"
   const isCurrentPlayer = (isPlayer1 && currentPlayer === 1) || (!isPlayer1 && currentPlayer === 2);
 
   let currentPlayerText = isPlayer1
@@ -128,7 +127,6 @@ function updateGameState(gameData) {
     currentPlayerElement.textContent = currentPlayerText;
   }
 
-  // Display the appropriate input field for the current player
   const player1Input = document.getElementById('player1Input');
   const player1Submit = document.getElementById('player1Submit');
   const player2Input = document.getElementById('player2Input');
@@ -165,17 +163,15 @@ function updateGameState(gameData) {
     player2Submit.style.display = 'none';
   }
 
-  // Display the correct progress based on perspective
   const player1Progress = document.getElementById('player1Progress');
   const player2Progress = document.getElementById('player2Progress');
 
-  // Show the internal scoreboard dynamically based on the player's perspective
   if (isPlayer1) {
-    if (player1Progress) player1Progress.textContent = scoreboard.player1; // You (Player 1)
-    if (player2Progress) player2Progress.textContent = scoreboard.player2; // Opponent (Player 2)
+    if (player1Progress) player1Progress.textContent = scoreboard.player1;
+    if (player2Progress) player2Progress.textContent = scoreboard.player2;
   } else {
-    if (player1Progress) player1Progress.textContent = scoreboard.player2; // Opponent (Player 1)
-    if (player2Progress) player2Progress.textContent = scoreboard.player1; // You (Player 2)
+    if (player1Progress) player1Progress.textContent = scoreboard.player2;
+    if (player2Progress) player2Progress.textContent = scoreboard.player1;
   }
 
   currentQuestionElement = document.getElementById('currentQuestion');
@@ -272,14 +268,12 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
   let otherPlayerAnsweredField = playerNum === 1 ? 'player2Answered' : 'player1Answered';
   let otherPlayerGuessField = playerNum === 1 ? 'player2Guess' : 'player1Guess';
 
-  // Player will get a letter if they answer incorrectly and the other player answers correctly
   if (!isCorrect && gameData[otherPlayerAnsweredField] && isCloseMatch(gameData[otherPlayerGuessField], currentAnswer)) {
     const currentProgress = gameData[progressField];
     const nextLetter = getNextLetter(currentProgress);
     if (nextLetter) {
       gameData[progressField] = currentProgress + nextLetter;
 
-      // Update internal scoreboard based on player
       if (playerNum === 1) {
         scoreboard.player1 = gameData.player1Progress;
       } else {
@@ -340,3 +334,61 @@ function showFeedbackMessage(message) {
     }, 3000);
   }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
+  wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
+
+  newGameBtn = document.getElementById('newGameBtn');
+  setupArea = document.getElementById('setupArea');
+  gameArea = document.getElementById('gameArea');
+  gameUrlInput = document.getElementById('gameUrlInput');
+  shareLinkDiv = document.getElementById('shareLink');
+  startGameBtn = document.getElementById('startGameBtn');
+  player1SubmitBtn = document.getElementById('player1Submit');
+  player2SubmitBtn = document.getElementById('player2Submit');
+  playerImageElement = document.getElementById('playerImage');
+
+  if (newGameBtn) {
+    newGameBtn.addEventListener('click', createNewGame);
+  }
+
+  if (startGameBtn) {
+    startGameBtn.addEventListener('click', () => {
+      setupGame(gameId);
+    });
+  }
+
+  const player1Input = document.getElementById('player1Input');
+  const player2Input = document.getElementById('player2Input');
+  
+  if (player1Input) {
+    player1Input.addEventListener('input', (e) => {
+      showSuggestions(e.target.value, 1);
+    });
+  }
+  
+  if (player2Input) {
+    player2Input.addEventListener('input', (e) => {
+      showSuggestions(e.target.value, 2);
+    });
+  }
+
+  if (player1SubmitBtn) {
+    player1SubmitBtn.addEventListener('click', () => submitGuess(1));
+  }
+
+  if (player2SubmitBtn) {
+    player2SubmitBtn.addEventListener('click', () => submitGuess(2));
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const gameIdFromUrl = urlParams.get('gameId');
+  if (gameIdFromUrl) {
+    setupGame(gameIdFromUrl);
+  } else {
+    if (newGameBtn) {
+      newGameBtn.style.display = 'block';
+    }
+  }
+});
