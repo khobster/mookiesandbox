@@ -36,7 +36,7 @@ fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_tes
 
 function createNewGame() {
   playerId = generatePlayerId();
-  const selectedPlayer = selectPlayerByDifficulty();  // Select player by difficulty
+  const selectedPlayer = selectPlayerByDifficulty();
 
   db.collection('pigGames').add({
     player1Id: playerId,
@@ -208,8 +208,8 @@ function displayPlayerImageWithFrame(playerName) {
 }
 
 function startNewRound() {
-  const selectedPlayer = selectPlayerByDifficulty();  // Select a new player
-
+  const selectedPlayer = selectPlayerByDifficulty();
+  
   resetInputs();
 
   db.collection('pigGames').doc(gameId).update({
