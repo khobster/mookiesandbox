@@ -132,22 +132,24 @@ function updateGameState(gameData) {
     currentPlayerElement.textContent = currentPlayerText;
   }
 
-  // Show only the current player's input and hide the opponent's input on mobile
+  // Only show the current player's input field and submit button
   const player1Input = document.getElementById('player1Input');
   const player1Submit = document.getElementById('player1Submit');
   const player2Input = document.getElementById('player2Input');
   const player2Submit = document.getElementById('player2Submit');
 
   if (isCurrentPlayer) {
-    player1Input.disabled = false;
-    player1Submit.disabled = false;
-    player2Input.style.display = 'none';
-    player2Submit.style.display = 'none';
-  } else {
-    player1Input.disabled = true;
-    player1Submit.disabled = true;
-    player2Input.style.display = 'block'; // Show Player 2's input during their turn
-    player2Submit.style.display = 'block'; // Show Player 2's submit button
+    if (isPlayer1) {
+      player1Input.style.display = 'block';  // Show Player 1's input field
+      player1Submit.style.display = 'block';  // Show Player 1's submit button
+      player2Input.style.display = 'none';    // Hide Player 2's input field
+      player2Submit.style.display = 'none';   // Hide Player 2's submit button
+    } else {
+      player1Input.style.display = 'none';    // Hide Player 1's input field
+      player1Submit.style.display = 'none';   // Hide Player 1's submit button
+      player2Input.style.display = 'block';   // Show Player 2's input field
+      player2Submit.style.display = 'block';  // Show Player 2's submit button
+    }
   }
 
   // Keep progress visible for both players
@@ -166,8 +168,8 @@ function updateGameState(gameData) {
   currentQuestion = gameData.currentQuestion;
   currentAnswer = gameData.correctAnswer;
 
-  // Display the player's image
-  displayPlayerImage(currentQuestion);
+  // Display the player's image with the circular frame
+  displayPlayerImageWithFrame(currentQuestion);
 
   if (gameData.player1Answered && gameData.player2Answered) {
     setTimeout(startNewRound, 2000);
@@ -176,6 +178,32 @@ function updateGameState(gameData) {
   if (gameData.gameStatus === 'ended') {
     const winnerText = gameData.winner === (isPlayer1 ? 1 : 2) ? "You win!" : "Your opponent wins!";
     showFeedbackMessage(`Game Over! ${winnerText}`);
+  }
+}
+
+function displayPlayerImageWithFrame(playerName) {
+  const player = playersData.find(p => p.name === playerName);
+  if (player && playerImageElement) {
+    const defaultImage = 'stilllife.png';  // Path to your placeholder image
+    const frameImage = 'circularframeformookie.png';  // Path to your circular frame image
+
+    // Set the frame background and player image within it
+    playerImageElement.style.backgroundImage = `url(${frameImage})`;  // Apply circular frame
+    playerImageElement.style.backgroundSize = 'cover';
+    playerImageElement.style.borderRadius = '50%';  // Ensure it's circular
+
+    // Set the player's image inside the circular frame
+    if (player.image_url) {
+      playerImageElement.src = player.image_url;
+
+      // Handle image loading error
+      playerImageElement.onerror = function() {
+        playerImageElement.onerror = null;
+        playerImageElement.src = defaultImage;
+      };
+    } else {
+      playerImageElement.src = defaultImage;  // Use default image if no player image is available
+    }
   }
 }
 
@@ -195,40 +223,7 @@ function startNewRound() {
   }).catch(error => console.error("Error starting new round:", error));
 
   // Display the new player's image
-  displayPlayerImage(selectedPlayer.name);
-}
-
-function selectPlayerByDifficulty() {
-  const eligiblePlayers = playersData.filter(player => 
-    player.rarity_score <= currentDifficultyLevel || 
-    (player.games_played > 500 && player.retirement_year < 2000)
-  );
-
-  if (eligiblePlayers.length === 0) {
-    console.error("No eligible players found for the current difficulty level");
-    return playersData[Math.floor(Math.random() * playersData.length)];
-  }
-
-  return eligiblePlayers[Math.floor(Math.random() * eligiblePlayers.length)];
-}
-
-function displayPlayerImage(playerName) {
-  const player = playersData.find(p => p.name === playerName);
-  if (player && playerImageElement) {
-    const defaultImage = 'stilllife.png'; // Path to your placeholder image
-
-    playerImageElement.src = defaultImage; // Set default initially
-
-    if (player.image_url) {
-      playerImageElement.src = player.image_url;
-
-      // Handle image loading error
-      playerImageElement.onerror = function() {
-        playerImageElement.onerror = null;
-        playerImageElement.src = defaultImage;
-      };
-    }
-  }
+  displayPlayerImageWithFrame(selectedPlayer.name);
 }
 
 function submitGuess(playerNum) {
@@ -300,52 +295,6 @@ function isCloseMatch(guess, answer) {
 function getNextLetter(progress) {
   const letters = ['H', 'O', 'R', 'S', 'E'];
   return letters[progress.length] || null;
-}
-
-// Function to copy the game URL to the clipboard
-function copyGameUrl() {
-  if (gameUrlInput) {
-    gameUrlInput.select();
-    gameUrlInput.setSelectionRange(0, 99999); // For mobile devices
-
-    try {
-      const successful = document.execCommand('copy');
-      if (successful) {
-        alert("Game URL copied to clipboard!");
-      } else {
-        alert("Failed to copy the URL. Please copy it manually.");
-      }
-    } catch (err) {
-      alert("Your browser does not support copying to clipboard. Please copy the link manually.");
-    }
-  }
-}
-
-function showSuggestions(input, playerNum) {
-  const suggestionsContainer = document.getElementById(`suggestions${playerNum}`);
-  if (suggestionsContainer) {
-    suggestionsContainer.innerHTML = '';
-    if (input.length === 0) {
-      return;
-    }
-    const suggestions = Array.from(new Set(playersData
-      .map(player => player.college)
-      .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
-      .slice(0, 5);
-    suggestions.forEach(suggestion => {
-      const suggestionItem = document.createElement('div');
-      suggestionItem.textContent = suggestion;
-      suggestionItem.classList.add('suggestion-item');
-      suggestionItem.addEventListener('click', () => {
-        const collegeGuess = document.getElementById(`player${playerNum}Input`);
-        if (collegeGuess) {
-          collegeGuess.value = suggestion;
-        }
-        suggestionsContainer.innerHTML = '';
-      });
-      suggestionsContainer.appendChild(suggestionItem);
-    });
-  }
 }
 
 function resetInputs() {
