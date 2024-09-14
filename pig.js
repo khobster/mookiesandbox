@@ -333,6 +333,17 @@ function showFeedbackMessage(message) {
   }
 }
 
+// Function to copy the game URL to the clipboard
+function copyGameUrl() {
+  if (gameUrlInput) {
+    navigator.clipboard.writeText(gameUrlInput.value).then(function() {
+      alert("Game URL copied to clipboard!");
+    }).catch(function(err) {
+      alert("Failed to copy the URL. Please copy it manually.");
+    });
+  }
+}
+
 // Initialize sound effects and event listeners
 document.addEventListener('DOMContentLoaded', () => {
   correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
