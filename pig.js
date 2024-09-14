@@ -73,6 +73,20 @@ function createNewGame() {
   .catch(error => console.error("Error creating new game:", error));
 }
 
+function selectPlayerByDifficulty() {
+  const eligiblePlayers = playersData.filter(player => 
+    player.rarity_score <= currentDifficultyLevel || 
+    (player.games_played > 500 && player.retirement_year < 2000)
+  );
+
+  if (eligiblePlayers.length === 0) {
+    console.error("No eligible players found for the current difficulty level");
+    return playersData[Math.floor(Math.random() * playersData.length)];
+  }
+
+  return eligiblePlayers[Math.floor(Math.random() * eligiblePlayers.length)];
+}
+
 function setupGame(id) {
   gameId = id;
   // Use existing playerId if set, otherwise generate a new one
