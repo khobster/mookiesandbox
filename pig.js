@@ -18,8 +18,8 @@ let playersData = [];
 let currentQuestion;
 let currentAnswer;
 let playerId;
-let currentDifficultyLevel = 1; // Define currentDifficultyLevel
-let scoreboard = { player1: '', player2: '' }; // Internal scoreboard
+let currentDifficultyLevel = 1;
+let scoreboard = { player1: '', player2: '' };
 
 let newGameBtn, setupArea, gameArea, gameUrlInput, shareLinkDiv, startGameBtn;
 let player1SubmitBtn, player2SubmitBtn;
@@ -37,7 +37,7 @@ fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_tes
 
 function createNewGame() {
   playerId = generatePlayerId();
-  const selectedPlayer = selectPlayerByDifficulty(); // Use currentDifficultyLevel
+  const selectedPlayer = selectPlayerByDifficulty();
 
   db.collection('pigGames').add({
     player1Id: playerId,
@@ -117,16 +117,7 @@ function updateGameState(gameData) {
   currentPlayer = gameData.currentPlayer;
   const isPlayer1 = playerId === gameData.player1Id;
 
-  const isCurrentPlayer = (isPlayer1 && currentPlayer === 1) || (!isPlayer1 && currentPlayer === 2);
-
-  let currentPlayerText = isPlayer1
-    ? (currentPlayer === 1 ? "Your Turn" : "Your Opponent's Turn")
-    : (currentPlayer === 2 ? "Your Turn" : "Your Opponent's Turn");
-
-  const currentPlayerElement = document.getElementById('currentPlayer');
-  if (currentPlayerElement) {
-    currentPlayerElement.textContent = currentPlayerText;
-  }
+  updateCurrentPlayerDisplay(gameData);
 
   const player1Input = document.getElementById('player1Input');
   const player1Submit = document.getElementById('player1Submit');
@@ -134,6 +125,8 @@ function updateGameState(gameData) {
   const player2Submit = document.getElementById('player2Submit');
   const player1Label = document.getElementById('player1Label');
   const player2Label = document.getElementById('player2Label');
+
+  const isCurrentPlayer = (isPlayer1 && currentPlayer === 1) || (!isPlayer1 && currentPlayer === 2);
 
   if (isCurrentPlayer) {
     if (isPlayer1) {
@@ -164,17 +157,7 @@ function updateGameState(gameData) {
     player2Submit.style.display = 'none';
   }
 
-  const player1Progress = document.getElementById('player1Progress');
-  const player2Progress = document.getElementById('player2Progress');
-
-  // Update progress depending on the perspective of the player
-  if (isPlayer1) {
-    if (player1Progress) player1Progress.textContent = gameData.player1Progress;
-    if (player2Progress) player2Progress.textContent = gameData.player2Progress;
-  } else {
-    if (player1Progress) player1Progress.textContent = gameData.player2Progress;
-    if (player2Progress) player2Progress.textContent = gameData.player1Progress;
-  }
+  updateUIForBothPlayers(gameData);
 
   currentQuestionElement = document.getElementById('currentQuestion');
   playerImageElement = document.getElementById('playerImage');
@@ -263,47 +246,68 @@ function submitGuess(playerNum) {
 function updateGameAfterGuess(playerNum, guess, gameData) {
   const isCorrect = isCloseMatch(guess, currentAnswer);
 
-  let progressField = playerNum === 1 ? 'player1Progress' : 'player2Progress';
-  let answeredField = playerNum === 1 ? 'player1Answered' : 'player2Answered';
-  let guessField = playerNum === 1 ? 'player1Guess' : 'player2Guess';
+  let currentPlayerProgressField = `player${playerNum}Progress`;
+  let otherPlayerProgressField = `player${3-playerNum}Progress`;
+  let currentPlayerAnsweredField = `player${playerNum}Answered`;
+  let otherPlayerAnsweredField = `player${3-playerNum}Answered`;
+  let currentPlayerGuessField = `player${playerNum}Guess`;
+  let otherPlayerGuessField = `player${3-playerNum}Guess`;
 
-  let otherPlayerAnsweredField = playerNum === 1 ? 'player2Answered' : 'player1Answered';
-  let otherPlayerGuessField = playerNum === 1 ? 'player2Guess' : 'player1Guess';
+  gameData[currentPlayerAnsweredField] = true;
+  gameData[currentPlayerGuessField] = guess;
 
-  // Player will only get a letter if they answer incorrectly and the other player answers correctly
+  // If the current player is incorrect and the other player is correct, add a letter to the current player's progress
   if (!isCorrect && gameData[otherPlayerAnsweredField] && isCloseMatch(gameData[otherPlayerGuessField], currentAnswer)) {
-    const currentProgress = gameData[progressField];
+    const currentProgress = gameData[currentPlayerProgressField];
     const nextLetter = getNextLetter(currentProgress);
     if (nextLetter) {
-      gameData[progressField] = currentProgress + nextLetter;
+      gameData[currentPlayerProgressField] = currentProgress + nextLetter;
     }
   }
 
-  gameData[answeredField] = true;
-  gameData[guessField] = guess;
-
-  // Update the internal scoreboard based on the player's view
-  if (playerNum === 1) {
-    scoreboard.player1 = gameData.player1Progress;
-    scoreboard.player2 = gameData.player2Progress;
-  } else {
-    scoreboard.player1 = gameData.player1Progress;
-    scoreboard.player2 = gameData.player2Progress;
-  }
+  // Update the internal scoreboard
+  scoreboard.player1 = gameData.player1Progress;
+  scoreboard.player2 = gameData.player2Progress;
 
   if (gameData.player1Answered && gameData.player2Answered) {
     setTimeout(startNewRound, 2000);
   } else {
-    gameData.currentPlayer = playerNum === 1 ? 2 : 1;
+    gameData.currentPlayer = 3 - playerNum; // Switch to the other player
   }
 
   db.collection('pigGames').doc(gameId).update(gameData)
+    .then(() => {
+      // After updating the database, update the UI for both players
+      updateUIForBothPlayers(gameData);
+    })
     .catch(error => console.error("Error updating game after guess:", error));
 
   if (isCorrect) {
     correctSound.play();
   } else {
     wrongSound.play();
+  }
+}
+
+function updateUIForBothPlayers(gameData) {
+  const player1Progress = document.getElementById('player1Progress');
+  const player2Progress = document.getElementById('player2Progress');
+
+  if (player1Progress) player1Progress.textContent = gameData.player1Progress;
+  if (player2Progress) player2Progress.textContent = gameData.player2Progress;
+
+  // Update other UI elements as needed
+  updateCurrentPlayerDisplay(gameData);
+}
+
+function updateCurrentPlayerDisplay(gameData) {
+  const currentPlayerElement = document.getElementById('currentPlayer');
+  if (currentPlayerElement) {
+    const isPlayer1 = playerId === gameData.player1Id;
+    const currentPlayerText = isPlayer1
+      ? (gameData.currentPlayer === 1 ? "Your Turn" : "Your Opponent's Turn")
+      : (gameData.currentPlayer === 2 ? "Your Turn" : "Your Opponent's Turn");
+    currentPlayerElement.textContent = currentPlayerText;
   }
 }
 
@@ -327,7 +331,6 @@ function generatePlayerId() {
   return Math.random().toString(36).substr(2, 9);
 }
 
-// Function to copy the game URL to the clipboard
 function copyGameUrl() {
   if (gameUrlInput) {
     gameUrlInput.select();
@@ -346,7 +349,6 @@ function copyGameUrl() {
   }
 }
 
-// Autocomplete functionality for player guesses
 function showSuggestions(input, playerNum) {
   const suggestionsContainer = document.getElementById(`suggestions${playerNum}`);
   if (suggestionsContainer) {
@@ -385,7 +387,6 @@ function showFeedbackMessage(message) {
   }
 }
 
-// Initialize sound effects and event listeners
 document.addEventListener('DOMContentLoaded', () => {
   correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
   wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
