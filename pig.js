@@ -146,8 +146,8 @@ function updateGameState(gameData) {
   } else {
     player1Input.disabled = true;
     player1Submit.disabled = true;
-    player2Input.style.display = 'none'; // Hide for the opposing player
-    player2Submit.style.display = 'none'; // Hide for the opposing player
+    player2Input.style.display = 'block'; // Show Player 2's input during their turn
+    player2Submit.style.display = 'block'; // Show Player 2's submit button
   }
 
   // Keep progress visible for both players
@@ -269,9 +269,18 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
     }
   }
 
+  // Update the guess and mark the player as having answered
   gameData[answeredField] = true;
   gameData[guessField] = guess;
-  gameData.currentPlayer = playerNum === 1 ? 2 : 1;
+
+  // Check if both players have answered the question
+  if (gameData.player1Answered && gameData.player2Answered) {
+    // Both players have answered, start a new round
+    setTimeout(startNewRound, 2000); // Delay to show the result for 2 seconds
+  } else {
+    // Switch turns if not both players have answered
+    gameData.currentPlayer = playerNum === 1 ? 2 : 1;
+  }
 
   db.collection('pigGames').doc(gameId).update(gameData)
     .catch(error => console.error("Error updating game after guess:", error));
@@ -289,7 +298,7 @@ function isCloseMatch(guess, answer) {
 }
 
 function getNextLetter(progress) {
-  const letters = ['P', 'I', 'G'];
+  const letters = ['H', 'O', 'R', 'S', 'E'];
   return letters[progress.length] || null;
 }
 
