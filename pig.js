@@ -1,5 +1,5 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyDicI1nKcrMDaaYkL_8q70yj1mKcrMDaaYkL_8q70yj1mM05tW5Ak",
+  apiKey: "AIzaSyDicI1nKcrMDaaYkL_8q70yj1mM05tW5Ak",
   authDomain: "mookie-pig-challenge.firebaseapp.com",
   projectId: "mookie-pig-challenge",
   storageBucket: "mookie-pig-challenge.appspot.com",
@@ -167,12 +167,13 @@ function updateGameState(gameData) {
   const player1Progress = document.getElementById('player1Progress');
   const player2Progress = document.getElementById('player2Progress');
 
+  // Update progress depending on the perspective of the player
   if (isPlayer1) {
-    if (player1Progress) player1Progress.textContent = scoreboard.player1;
-    if (player2Progress) player2Progress.textContent = scoreboard.player2;
+    if (player1Progress) player1Progress.textContent = gameData.player1Progress;
+    if (player2Progress) player2Progress.textContent = gameData.player2Progress;
   } else {
-    if (player1Progress) player1Progress.textContent = scoreboard.player2;
-    if (player2Progress) player2Progress.textContent = scoreboard.player1;
+    if (player1Progress) player1Progress.textContent = gameData.player2Progress;
+    if (player2Progress) player2Progress.textContent = gameData.player1Progress;
   }
 
   currentQuestionElement = document.getElementById('currentQuestion');
@@ -269,25 +270,26 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
   let otherPlayerAnsweredField = playerNum === 1 ? 'player2Answered' : 'player1Answered';
   let otherPlayerGuessField = playerNum === 1 ? 'player2Guess' : 'player1Guess';
 
+  // Player will only get a letter if they answer incorrectly and the other player answers correctly
   if (!isCorrect && gameData[otherPlayerAnsweredField] && isCloseMatch(gameData[otherPlayerGuessField], currentAnswer)) {
     const currentProgress = gameData[progressField];
     const nextLetter = getNextLetter(currentProgress);
     if (nextLetter) {
       gameData[progressField] = currentProgress + nextLetter;
-
-      if (playerNum === 1) {
-        scoreboard.player1 = gameData.player1Progress;
-      } else {
-        scoreboard.player2 = gameData.player2Progress;
-      }
-    } else {
-      gameData.gameStatus = 'ended';
-      gameData.winner = playerNum === 1 ? 2 : 1;
     }
   }
 
   gameData[answeredField] = true;
   gameData[guessField] = guess;
+
+  // Update the internal scoreboard based on the player's view
+  if (playerNum === 1) {
+    scoreboard.player1 = gameData.player1Progress;
+    scoreboard.player2 = gameData.player2Progress;
+  } else {
+    scoreboard.player1 = gameData.player1Progress;
+    scoreboard.player2 = gameData.player2Progress;
+  }
 
   if (gameData.player1Answered && gameData.player2Answered) {
     setTimeout(startNewRound, 2000);
