@@ -75,6 +75,7 @@ function createNewGame() {
 
 function setupGame(id) {
   gameId = id;
+  // Use existing playerId if set, otherwise generate a new one
   playerId = playerId || generatePlayerId();
 
   db.collection('pigGames').doc(gameId).get()
@@ -136,26 +137,36 @@ function updateGameState(gameData) {
   const player1Submit = document.getElementById('player1Submit');
   const player2Input = document.getElementById('player2Input');
   const player2Submit = document.getElementById('player2Submit');
+  const player1Label = document.getElementById('player1Label');
+  const player2Label = document.getElementById('player2Label');
 
+  // Toggle input field visibility and ensure it's displayed under the correct section
   if (isCurrentPlayer) {
     if (isPlayer1) {
+      // Player 1's turn
       player1Input.style.display = 'block';
       player1Submit.style.display = 'block';
       player1Input.disabled = false;
       player1Submit.disabled = false;
-
       player2Input.style.display = 'none';
       player2Submit.style.display = 'none';
+
+      player1Label.textContent = "You"; // Player 1 sees "You"
+      player2Label.textContent = "Your Opponent";
     } else {
+      // Player 2's turn
       player2Input.style.display = 'block';
       player2Submit.style.display = 'block';
       player2Input.disabled = false;
       player2Submit.disabled = false;
-
       player1Input.style.display = 'none';
       player1Submit.style.display = 'none';
+
+      player1Label.textContent = "Your Opponent"; // Player 2 sees "You" on their side
+      player2Label.textContent = "You";
     }
   } else {
+    // Hide all inputs when it's the opponent's turn
     player1Input.style.display = 'none';
     player1Submit.style.display = 'none';
     player2Input.style.display = 'none';
@@ -166,10 +177,17 @@ function updateGameState(gameData) {
   const player1Progress = document.getElementById('player1Progress');
   const player2Progress = document.getElementById('player2Progress');
 
+  // Ensure progress for each player is shown correctly
   if (isPlayer1) {
+    player1Label.textContent = "You"; // Player 1 sees "You"
+    player2Label.textContent = "Your Opponent"; // Player 1 sees "Your Opponent"
+
     if (player1Progress) player1Progress.textContent = gameData.player1Progress;
     if (player2Progress) player2Progress.textContent = gameData.player2Progress;
   } else {
+    player1Label.textContent = "Your Opponent"; // Player 2 sees "Your Opponent"
+    player2Label.textContent = "You"; // Player 2 sees "You" on their side
+
     if (player1Progress) player1Progress.textContent = gameData.player2Progress;
     if (player2Progress) player2Progress.textContent = gameData.player1Progress;
   }
@@ -198,7 +216,7 @@ function updateGameState(gameData) {
 
 function startNewRound() {
   const selectedPlayer = selectPlayerByDifficulty();
-
+  
   resetInputs();
 
   db.collection('pigGames').doc(gameId).update({
@@ -211,12 +229,13 @@ function startNewRound() {
     currentPlayer: 1
   }).catch(error => console.error("Error starting new round:", error));
 
+  // Display the new player's image
   displayPlayerImage(selectedPlayer.name);
 }
 
 function selectPlayerByDifficulty() {
-  const eligiblePlayers = playersData.filter(player =>
-    player.rarity_score <= currentDifficultyLevel ||
+  const eligiblePlayers = playersData.filter(player => 
+    player.rarity_score <= currentDifficultyLevel || 
     (player.games_played > 500 && player.retirement_year < 2000)
   );
 
@@ -231,13 +250,14 @@ function selectPlayerByDifficulty() {
 function displayPlayerImage(playerName) {
   const player = playersData.find(p => p.name === playerName);
   if (player && playerImageElement) {
-    const defaultImage = 'stilllife.png'; // Placeholder image
+    const defaultImage = 'stilllife.png'; // Path to your placeholder image
 
-    playerImageElement.src = defaultImage; // Default initially
+    playerImageElement.src = defaultImage; // Set default initially
 
     if (player.image_url) {
       playerImageElement.src = player.image_url;
 
+      // Handle image loading error
       playerImageElement.onerror = function() {
         playerImageElement.onerror = null;
         playerImageElement.src = defaultImage;
@@ -271,29 +291,36 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
   let otherPlayerAnsweredField = playerNum === 1 ? 'player2Answered' : 'player1Answered';
   let otherPlayerGuessField = playerNum === 1 ? 'player2Guess' : 'player1Guess';
 
+  // Player will only get a letter if they answer incorrectly and the other player answers correctly
   if (!isCorrect && gameData[otherPlayerAnsweredField] && isCloseMatch(gameData[otherPlayerGuessField], currentAnswer)) {
     const currentProgress = gameData[progressField];
     const nextLetter = getNextLetter(currentProgress);
     if (nextLetter) {
       gameData[progressField] = currentProgress + nextLetter;
     } else {
+      // Game over
       gameData.gameStatus = 'ended';
       gameData.winner = playerNum === 1 ? 2 : 1;
     }
   }
 
+  // Update the guess and mark the player as having answered
   gameData[answeredField] = true;
   gameData[guessField] = guess;
 
+  // Check if both players have answered the question
   if (gameData.player1Answered && gameData.player2Answered) {
-    setTimeout(startNewRound, 2000);
+    // Both players have answered, start a new round
+    setTimeout(startNewRound, 2000); // Delay to show the result for 2 seconds
   } else {
+    // Switch turns if not both players have answered
     gameData.currentPlayer = playerNum === 1 ? 2 : 1;
   }
 
   db.collection('pigGames').doc(gameId).update(gameData)
     .catch(error => console.error("Error updating game after guess:", error));
 
+  // Play sound effects
   if (isCorrect) {
     correctSound.play();
   } else {
@@ -310,10 +337,11 @@ function getNextLetter(progress) {
   return letters[progress.length] || null;
 }
 
+// Function to copy the game URL to the clipboard
 function copyGameUrl() {
   if (gameUrlInput) {
     gameUrlInput.select();
-    gameUrlInput.setSelectionRange(0, 99999);
+    gameUrlInput.setSelectionRange(0, 99999); // For mobile devices
 
     try {
       const successful = document.execCommand('copy');
@@ -373,7 +401,7 @@ function showFeedbackMessage(message) {
     feedbackMessage.classList.add('show');
     setTimeout(() => {
       feedbackMessage.classList.remove('show');
-    }, 3000);
+    }, 3000); // Hide after 3 seconds
   }
 }
 
@@ -402,6 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Event listener for the Copy Link button
   const copyGameUrlBtn = document.getElementById('copyGameUrl');
   if (copyGameUrlBtn) {
     copyGameUrlBtn.addEventListener('click', copyGameUrl);
@@ -430,6 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
     player2SubmitBtn.addEventListener('click', () => submitGuess(2));
   }
 
+  // Game initialization
   const urlParams = new URLSearchParams(window.location.search);
   const gameIdFromUrl = urlParams.get('gameId');
   if (gameIdFromUrl) {
