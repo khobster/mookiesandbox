@@ -1,5 +1,5 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyDicI1nKcrMDaaYkL_8q70yj1mM05tW5Ak",
+  apiKey: "AIzaSyDicI1nKcrMDaaYkL_8q70yj1mKcrMDaaYkL_8q70yj1mM05tW5Ak",
   authDomain: "mookie-pig-challenge.firebaseapp.com",
   projectId: "mookie-pig-challenge",
   storageBucket: "mookie-pig-challenge.appspot.com",
@@ -18,7 +18,7 @@ let playersData = [];
 let currentQuestion;
 let currentAnswer;
 let playerId;
-let currentDifficultyLevel = 1; // Define currentDifficultyLevel here with a default value
+let currentDifficultyLevel = 1; // Define currentDifficultyLevel
 let scoreboard = { player1: '', player2: '' }; // Internal scoreboard
 
 let newGameBtn, setupArea, gameArea, gameUrlInput, shareLinkDiv, startGameBtn;
@@ -37,7 +37,7 @@ fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_tes
 
 function createNewGame() {
   playerId = generatePlayerId();
-  const selectedPlayer = selectPlayerByDifficulty(); // This will now use currentDifficultyLevel
+  const selectedPlayer = selectPlayerByDifficulty(); // Use currentDifficultyLevel
 
   db.collection('pigGames').add({
     player1Id: playerId,
@@ -325,6 +325,53 @@ function generatePlayerId() {
   return Math.random().toString(36).substr(2, 9);
 }
 
+// Function to copy the game URL to the clipboard
+function copyGameUrl() {
+  if (gameUrlInput) {
+    gameUrlInput.select();
+    gameUrlInput.setSelectionRange(0, 99999); // For mobile devices
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        alert("Game URL copied to clipboard!");
+      } else {
+        alert("Failed to copy the URL. Please copy it manually.");
+      }
+    } catch (err) {
+      alert("Your browser does not support copying to clipboard. Please copy the link manually.");
+    }
+  }
+}
+
+// Autocomplete functionality for player guesses
+function showSuggestions(input, playerNum) {
+  const suggestionsContainer = document.getElementById(`suggestions${playerNum}`);
+  if (suggestionsContainer) {
+    suggestionsContainer.innerHTML = '';
+    if (input.length === 0) {
+      return;
+    }
+    const suggestions = Array.from(new Set(playersData
+      .map(player => player.college)
+      .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
+      .slice(0, 5);
+    suggestions.forEach(suggestion => {
+      const suggestionItem = document.createElement('div');
+      suggestionItem.textContent = suggestion;
+      suggestionItem.classList.add('suggestion-item');
+      suggestionItem.addEventListener('click', () => {
+        const collegeGuess = document.getElementById(`player${playerNum}Input`);
+        if (collegeGuess) {
+          collegeGuess.value = suggestion;
+        }
+        suggestionsContainer.innerHTML = '';
+      });
+      suggestionsContainer.appendChild(suggestionItem);
+    });
+  }
+}
+
 function showFeedbackMessage(message) {
   const feedbackMessage = document.getElementById('feedbackMessage');
   if (feedbackMessage) {
@@ -336,6 +383,7 @@ function showFeedbackMessage(message) {
   }
 }
 
+// Initialize sound effects and event listeners
 document.addEventListener('DOMContentLoaded', () => {
   correctSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/bing-bong.mp3');
   wrongSound = new Audio('https://vanillafrosting.agency/wp-content/uploads/2023/11/incorrect-answer-for-plunko.mp3');
@@ -358,6 +406,11 @@ document.addEventListener('DOMContentLoaded', () => {
     startGameBtn.addEventListener('click', () => {
       setupGame(gameId);
     });
+  }
+
+  const copyGameUrlBtn = document.getElementById('copyGameUrl');
+  if (copyGameUrlBtn) {
+    copyGameUrlBtn.addEventListener('click', copyGameUrl);
   }
 
   const player1Input = document.getElementById('player1Input');
