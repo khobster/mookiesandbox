@@ -146,24 +146,27 @@ function updateGameState(gameData) {
     currentPlayerElement.textContent = currentPlayerText;
   }
 
-  // Only show the current player's input field and submit button
+  // Show only the current player's input field and submit button
   const player1Input = document.getElementById('player1Input');
   const player1Submit = document.getElementById('player1Submit');
   const player2Input = document.getElementById('player2Input');
   const player2Submit = document.getElementById('player2Submit');
 
-  if (isCurrentPlayer) {
-    if (isPlayer1) {
-      player1Input.style.display = 'block';  // Show Player 1's input field
-      player1Submit.style.display = 'block';  // Show Player 1's submit button
-      player2Input.style.display = 'none';    // Hide Player 2's input field
-      player2Submit.style.display = 'none';   // Hide Player 2's submit button
-    } else {
-      player1Input.style.display = 'none';    // Hide Player 1's input field
-      player1Submit.style.display = 'none';   // Hide Player 1's submit button
-      player2Input.style.display = 'block';   // Show Player 2's input field
-      player2Submit.style.display = 'block';  // Show Player 2's submit button
-    }
+  if (isPlayer1 && currentPlayer === 1) {
+    player1Input.style.display = 'block';
+    player1Submit.style.display = 'block';
+    player2Input.style.display = 'none';
+    player2Submit.style.display = 'none';
+  } else if (!isPlayer1 && currentPlayer === 2) {
+    player2Input.style.display = 'block';
+    player2Submit.style.display = 'block';
+    player1Input.style.display = 'none';
+    player1Submit.style.display = 'none';
+  } else {
+    player1Input.style.display = 'none';
+    player1Submit.style.display = 'none';
+    player2Input.style.display = 'none';
+    player2Submit.style.display = 'none';
   }
 
   // Keep progress visible for both players
@@ -340,6 +343,34 @@ function copyGameUrl() {
       alert("Game URL copied to clipboard!");
     }).catch(function(err) {
       alert("Failed to copy the URL. Please copy it manually.");
+    });
+  }
+}
+
+// Function to handle input suggestions (add this to fix error)
+function showSuggestions(input, playerNum) {
+  const suggestionsContainer = document.getElementById(`suggestions${playerNum}`);
+  if (suggestionsContainer) {
+    suggestionsContainer.innerHTML = '';
+    if (input.length === 0) {
+      return;
+    }
+    const suggestions = Array.from(new Set(playersData
+      .map(player => player.college)
+      .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
+      .slice(0, 5);
+    suggestions.forEach(suggestion => {
+      const suggestionItem = document.createElement('div');
+      suggestionItem.textContent = suggestion;
+      suggestionItem.classList.add('suggestion-item');
+      suggestionItem.addEventListener('click', () => {
+        const collegeGuess = document.getElementById(`player${playerNum}Input`);
+        if (collegeGuess) {
+          collegeGuess.value = suggestion;
+        }
+        suggestionsContainer.innerHTML = '';
+      });
+      suggestionsContainer.appendChild(suggestionItem);
     });
   }
 }
