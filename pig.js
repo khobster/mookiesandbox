@@ -16,7 +16,7 @@ let gameId;
 let currentPlayer;
 let playersData = [];
 let currentQuestion;
-let currentAnswer;
+let currentAnswer; // Ensure this is properly set
 let currentDifficultyLevel = 1;
 let playerId;
 
@@ -117,6 +117,8 @@ function startGameListener() {
 
 function updateGameState(gameData) {
   currentPlayer = gameData.currentPlayer;
+  currentAnswer = gameData.correctAnswer; // Make sure currentAnswer is set when the game state is updated
+  
   const isPlayer1 = playerId === gameData.player1Id;
 
   // Determine if it's the current player's turn
@@ -249,7 +251,7 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
   let otherPlayerAnsweredField = playerNum === 1 ? 'player2Answered' : 'player1Answered';
   let otherPlayerGuessField = playerNum === 1 ? 'player2Guess' : 'player1Guess';
 
-  // If current player answered incorrectly and other player answered correctly
+  // If current player answered incorrectly and the other player answered correctly
   if (!isCorrect && gameData[otherPlayerAnsweredField] && isCloseMatch(gameData[otherPlayerGuessField], currentAnswer)) {
     // The player who answered incorrectly gets a letter
     const currentProgress = gameData[progressField];
