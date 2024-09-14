@@ -44,12 +44,14 @@ h1 {
 
 /* Player Image Styling */
 .player-image {
+  width: 150px;
+  height: 150px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;  /* Ensures the image stays circular */
   display: block;
-  max-width: 80%; /* Reduce image size */
-  height: auto;
-  margin: 0 auto 10px auto;
-  border-radius: 8px;
-  border: 1px solid #dcdcdc;
+  margin: 0 auto;
+  border: 5px solid #f5f5f5;  /* Optional border for styling */
 }
 
 #currentPlayer {
