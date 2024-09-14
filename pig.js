@@ -18,6 +18,7 @@ let playersData = [];
 let currentQuestion;
 let currentAnswer;
 let playerId;
+let currentDifficultyLevel = 1; // Define currentDifficultyLevel here with a default value
 let scoreboard = { player1: '', player2: '' }; // Internal scoreboard
 
 let newGameBtn, setupArea, gameArea, gameUrlInput, shareLinkDiv, startGameBtn;
@@ -36,7 +37,7 @@ fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_tes
 
 function createNewGame() {
   playerId = generatePlayerId();
-  const selectedPlayer = selectPlayerByDifficulty();
+  const selectedPlayer = selectPlayerByDifficulty(); // This will now use currentDifficultyLevel
 
   db.collection('pigGames').add({
     player1Id: playerId,
