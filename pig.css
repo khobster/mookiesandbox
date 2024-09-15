@@ -6,51 +6,50 @@
   --background-color: #f0f4f8;
   --text-color: #2c3e50;
   --card-background: #ffffff;
+  --button-color: #e74c3c;
+  --scoreboard-color: #34495e;
 }
 
-body {
+body, html {
   font-family: 'Inter', sans-serif;
   margin: 0;
   padding: 0;
   background-color: var(--background-color);
   color: var(--text-color);
   line-height: 1.4;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-#mainContainer {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  box-sizing: border-box;
-  max-height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 
+#mainContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
 h1 {
-  font-size: 1.8rem;
+  font-size: 2.5rem;
   color: var(--primary-color);
-  margin: 0 0 5px 0;
+  margin: 0 0 10px 0;
   text-align: center;
 }
 
 #currentQuestion {
-  font-size: 1.2rem;
-  margin: 5px 0;
+  font-size: 1.8rem;
+  margin: 10px 0;
   text-align: center;
   font-weight: 600;
 }
 
 .image-frame {
-  width: 80px;
-  height: 80px;
-  margin: 5px auto;
+  width: 200px;
+  height: 200px;
+  margin: 10px auto;
   border-radius: 50%;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .player-image {
@@ -62,33 +61,29 @@ h1 {
 #currentPlayer {
   text-align: center;
   font-weight: 600;
-  margin: 5px 0;
+  margin: 10px 0;
   color: var(--primary-color);
+  font-size: 1.2rem;
 }
 
 #playersContainer {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 10px;
+  justify-content: space-around;
+  margin-top: 15px;
 }
 
 .player {
   background-color: var(--card-background);
   padding: 10px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 45%;
 }
 
 .player h3 {
   margin: 0 0 5px 0;
   color: var(--primary-color);
   font-size: 1rem;
-}
-
-.player p {
-  margin: 0 0 5px 0;
-  font-size: 0.9rem;
 }
 
 .player input[type="text"] {
@@ -113,7 +108,7 @@ h1 {
 }
 
 .suggestions {
-  max-height: 100px;
+  max-height: 80px;
   overflow-y: auto;
   background-color: var(--card-background);
   border-radius: 4px;
@@ -132,18 +127,67 @@ h1 {
   margin-top: 5px;
 }
 
+/* Scoreboard styles */
+.scoreboard {
+  display: flex;
+  justify-content: space-around;
+  background-color: var(--scoreboard-color);
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 15px;
+}
+
+.score {
+  text-align: center;
+}
+
+.score-label {
+  font-size: 0.8rem;
+  margin-bottom: 5px;
+}
+
+.score-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Button styles */
+#newGameBtn, #copyGameUrl {
+  padding: 12px 20px;
+  font-size: 1.1rem;
+  color: #fff;
+  background-color: var(--button-color);
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  margin: 10px 0;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+#newGameBtn:hover, #copyGameUrl:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+}
+
+#setupArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#gameUrlInput {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  font-size: 1rem;
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+}
+
 @media (min-width: 768px) {
   #mainContainer {
     max-width: 768px;
     margin: 0 auto;
-  }
-
-  #playersContainer {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .player {
-    width: 48%;
   }
 }
