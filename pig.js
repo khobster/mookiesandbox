@@ -256,15 +256,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
   gameData[currentPlayerAnsweredField] = true;
   gameData[currentPlayerGuessField] = guess;
 
-  // If the current player is incorrect and the other player has already answered correctly, add a letter to the current player's progress
-  if (!isCorrect && gameData[otherPlayerAnsweredField] && isCloseMatch(gameData[otherPlayerGuessField], currentAnswer)) {
-    const currentProgress = gameData[currentPlayerProgressField];
-    const nextLetter = getNextLetter(currentProgress);
-    if (nextLetter) {
-      gameData[currentPlayerProgressField] = currentProgress + nextLetter;
-    }
-  }
-
   // If both players have answered, determine if a letter should be added
   if (gameData.player1Answered && gameData.player2Answered) {
     const player1Correct = isCloseMatch(gameData.player1Guess, currentAnswer);
@@ -301,7 +292,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
 
   db.collection('pigGames').doc(gameId).update(gameData)
     .then(() => {
-      // After updating the database, update the UI for both players
       updateUIForBothPlayers(gameData);
     })
     .catch(error => console.error("Error updating game after guess:", error));
