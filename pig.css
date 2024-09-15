@@ -25,10 +25,10 @@ body, html {
 #mainContainer {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  padding: 10px;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
   box-sizing: border-box;
-  justify-content: space-between;
 }
 
 h1 {
@@ -50,6 +50,43 @@ h1 {
       8px 8px 10px rgba(0,0,0,0.6);
   letter-spacing: 2px;
   line-height: 1.2;
+}
+
+#setupArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 20px;
+}
+
+#newGameBtn, #startGameBtn, #copyGameUrl {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  font-size: 1rem;
+  color: #fff;
+  background-color: var(--button-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#gameUrlInput {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  font-size: 1rem;
+  border: 1px solid var(--primary-color);
+  border-radius: 5px;
+}
+
+#shareLink {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 #currentQuestion {
@@ -107,6 +144,7 @@ h1 {
   display: flex;
   justify-content: space-around;
   margin: 20px 0;
+  width: 100%;
 }
 
 .player-score {
@@ -164,10 +202,11 @@ h1 {
   flex-direction: column;
   align-items: center;
   margin-top: 20px;
+  width: 100%;
 }
 
 .input-area input {
-  width: 80%;
+  width: 100%;
   max-width: 300px;
   padding: 10px;
   margin-bottom: 10px;
@@ -179,7 +218,7 @@ h1 {
 }
 
 .input-area button {
-  width: 80%;
+  width: 100%;
   max-width: 300px;
   padding: 10px;
   font-size: 16px;
@@ -193,7 +232,7 @@ h1 {
 }
 
 .suggestions {
-  width: 80%;
+  width: 100%;
   max-width: 300px;
   max-height: 150px;
   overflow-y: auto;
@@ -211,23 +250,6 @@ h1 {
 
 .suggestion-item:hover {
   background-color: #f0f0f0;
-}
-
-#setupArea {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-#gameUrlInput {
-  width: 100%;
-  padding: 8px;
-  margin: 8px 0;
-  font-size: 16px;
-  font-family: 'Merriweather', serif;
-  font-weight: 300;
-  border: 1px solid var(--primary-color);
-  border-radius: 4px;
 }
 
 #result {
@@ -248,7 +270,9 @@ h1 {
 #gameArea {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  align-items: center;
+  width: 100%;
+  margin-top: 20px;
 }
 
 @keyframes popIn {
