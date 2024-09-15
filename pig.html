@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>HORSE</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="pig.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-
     <div id="mainContainer">
         <h1>HORSE</h1>
         
@@ -20,32 +17,35 @@
                 <input type="text" id="gameUrlInput" readonly>
                 <button id="copyGameUrl">Copy Link</button>
             </div>
-            <!-- Add Start Game Button -->
             <button id="startGameBtn" style="display: none;">Start Game</button>
         </div>
         
         <div id="gameArea" style="display: none;">
             <div id="feedbackMessage"></div>
             <h2 id="currentQuestion"></h2>
-
-            <!-- Frame Container for the Player Image -->
             <div class="image-frame">
                 <img id="playerImage" src="" alt="Player Image" class="player-image">
             </div>
-            <!-- End of Player Image -->
-
             <div id="currentPlayer"></div>
+            <div class="scoreboard">
+                <div class="score">
+                    <div class="score-label">You</div>
+                    <div class="score-value" id="player1Score"></div>
+                </div>
+                <div class="score">
+                    <div class="score-label">Opponent</div>
+                    <div class="score-value" id="player2Score"></div>
+                </div>
+            </div>
             <div id="playersContainer">
                 <div class="player">
                     <h3 id="player1Label">You</h3>
-                    <p>Progress: <span id="player1Progress"></span></p>
                     <input type="text" id="player1Input" placeholder="Enter college">
                     <div id="suggestions1" class="suggestions"></div>
                     <button id="player1Submit">Submit</button>
                 </div>
                 <div class="player">
                     <h3 id="player2Label">Your Opponent</h3>
-                    <p>Progress: <span id="player2Progress"></span></p>
                     <input type="text" id="player2Input" placeholder="Enter college">
                     <div id="suggestions2" class="suggestions"></div>
                     <button id="player2Submit">Submit</button>
