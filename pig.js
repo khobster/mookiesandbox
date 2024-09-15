@@ -22,9 +22,19 @@ let currentDifficultyLevel = 1;
 let scoreboard = { player1: '', player2: '' };
 
 let newGameBtn, setupArea, gameArea, gameUrlInput, shareLinkDiv, startGameBtn;
-let player1SubmitBtn, player2SubmitBtn;
 let currentQuestionElement, playerImageElement;
 let correctSound, wrongSound;
+
+function showPowAnimation(message) {
+  const powElement = document.createElement('div');
+  powElement.className = 'pow-animation';
+  powElement.textContent = message;
+  document.body.appendChild(powElement);
+  
+  setTimeout(() => {
+    document.body.removeChild(powElement);
+  }, 1500);
+}
 
 // Load players data
 fetch('https://raw.githubusercontent.com/khobster/mookiesandbox/main/updated_test_data_with_ids.json')
@@ -117,47 +127,7 @@ function updateGameState(gameData) {
   currentPlayer = gameData.currentPlayer;
   const isPlayer1 = playerId === gameData.player1Id;
 
-  updateCurrentPlayerDisplay(gameData);
-
-  const player1Input = document.getElementById('player1Input');
-  const player1Submit = document.getElementById('player1Submit');
-  const player2Input = document.getElementById('player2Input');
-  const player2Submit = document.getElementById('player2Submit');
-  const player1Label = document.getElementById('player1Label');
-  const player2Label = document.getElementById('player2Label');
-
-  const isCurrentPlayer = (isPlayer1 && currentPlayer === 1) || (!isPlayer1 && currentPlayer === 2);
-
-  if (isCurrentPlayer) {
-    if (isPlayer1) {
-      player1Input.style.display = 'block';
-      player1Submit.style.display = 'block';
-      player1Input.disabled = false;
-      player1Submit.disabled = false;
-      player2Input.style.display = 'none';
-      player2Submit.style.display = 'none';
-
-      player1Label.textContent = "You"; 
-      player2Label.textContent = "Your Opponent";
-    } else {
-      player2Input.style.display = 'block';
-      player2Submit.style.display = 'block';
-      player2Input.disabled = false;
-      player2Submit.disabled = false;
-      player1Input.style.display = 'none';
-      player1Submit.style.display = 'none';
-
-      player1Label.textContent = "Your Opponent"; 
-      player2Label.textContent = "You";
-    }
-  } else {
-    player1Input.style.display = 'none';
-    player1Submit.style.display = 'none';
-    player2Input.style.display = 'none';
-    player2Submit.style.display = 'none';
-  }
-
-  updateUIForBothPlayers(gameData);
+  updateUI(gameData);
 
   currentQuestionElement = document.getElementById('currentQuestion');
   playerImageElement = document.getElementById('playerImage');
@@ -177,6 +147,41 @@ function updateGameState(gameData) {
     const winnerText = gameData.winner === (isPlayer1 ? 1 : 2) ? "You win!" : "Your opponent wins!";
     showFeedbackMessage(`Game Over! ${winnerText}`);
   }
+}
+
+function updateUI(gameData) {
+  // Update traffic light
+  const lights = document.querySelectorAll('.light');
+  lights.forEach(light => light.classList.remove('active'));
+  if (gameData.currentPlayer === 1) {
+    document.querySelector('.green').classList.add('active');
+  } else {
+    document.querySelector('.red').classList.add('active');
+  }
+
+  // Update HORSE wheel
+  const letters = ['H', 'O', 'R', 'S', 'E'];
+  letters.forEach(letter => {
+    const tile = document.getElementById(letter);
+    if (tile) {
+      if (gameData.player1Progress.includes(letter) || gameData.player2Progress.includes(letter)) {
+        tile.classList.add('hidden');
+      } else {
+        tile.classList.remove('hidden');
+      }
+    }
+  });
+
+  // Show/hide input area based on turn
+  const inputArea = document.getElementById('inputArea');
+  const isPlayer1 = playerId === gameData.player1Id;
+  const isCurrentPlayer = (isPlayer1 && gameData.currentPlayer === 1) || (!isPlayer1 && gameData.currentPlayer === 2);
+  if (inputArea) {
+    inputArea.style.display = isCurrentPlayer ? 'flex' : 'none';
+  }
+
+  // Update scores
+  updateUIForBothPlayers(gameData);
 }
 
 function startNewRound() {
@@ -228,8 +233,8 @@ function displayPlayerImage(playerName) {
   }
 }
 
-function submitGuess(playerNum) {
-  const guessInput = document.getElementById(`player${playerNum}Input`);
+function submitGuess() {
+  const guessInput = document.getElementById('collegeGuess');
   const guess = guessInput ? guessInput.value.trim() : '';
   if (!guess) return;
 
@@ -237,6 +242,7 @@ function submitGuess(playerNum) {
     .then(doc => {
       if (doc.exists) {
         const gameData = doc.data();
+        const playerNum = playerId === gameData.player1Id ? 1 : 2;
         updateGameAfterGuess(playerNum, guess, gameData);
       }
     })
@@ -292,15 +298,16 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
 
   db.collection('pigGames').doc(gameId).update(gameData)
     .then(() => {
-      updateUIForBothPlayers(gameData);
+      updateUI(gameData);
+      if (isCorrect) {
+        showPowAnimation("YES!");
+        correctSound.play();
+      } else {
+        showPowAnimation("NO!");
+        wrongSound.play();
+      }
     })
     .catch(error => console.error("Error updating game after guess:", error));
-
-  if (isCorrect) {
-    correctSound.play();
-  } else {
-    wrongSound.play();
-  }
 }
 
 function updateUIForBothPlayers(gameData) {
@@ -309,23 +316,13 @@ function updateUIForBothPlayers(gameData) {
 
   if (player1Score) player1Score.textContent = formatScore(gameData.player1Progress);
   if (player2Score) player2Score.textContent = formatScore(gameData.player2Progress);
-
-  updateCurrentPlayerDisplay(gameData);
 }
 
 function formatScore(progress) {
-  return progress.split('').join(' ');
-}
-
-function updateCurrentPlayerDisplay(gameData) {
-  const currentPlayerElement = document.getElementById('currentPlayer');
-  if (currentPlayerElement) {
-    const isPlayer1 = playerId === gameData.player1Id;
-    const currentPlayerText = isPlayer1
-      ? (gameData.currentPlayer === 1 ? "Your Turn" : "Your Opponent's Turn")
-      : (gameData.currentPlayer === 2 ? "Your Turn" : "Your Opponent's Turn");
-    currentPlayerElement.textContent = currentPlayerText;
-  }
+  const fullWord = 'HORSE';
+  return fullWord.split('').map(letter => 
+    progress.includes(letter) ? '_' : letter
+  ).join(' ');
 }
 
 function isCloseMatch(guess, answer) {
@@ -359,10 +356,8 @@ function getNextLetter(progress) {
 }
 
 function resetInputs() {
-  const player1Input = document.getElementById('player1Input');
-  const player2Input = document.getElementById('player2Input');
-  if (player1Input) player1Input.value = '';
-  if (player2Input) player2Input.value = '';
+  const collegeGuess = document.getElementById('collegeGuess');
+  if (collegeGuess) collegeGuess.value = '';
 }
 
 function generatePlayerId() {
@@ -387,8 +382,8 @@ function copyGameUrl() {
   }
 }
 
-function showSuggestions(input, playerNum) {
-  const suggestionsContainer = document.getElementById(`suggestions${playerNum}`);
+function showSuggestions(input) {
+  const suggestionsContainer = document.getElementById('suggestions');
   if (suggestionsContainer) {
     suggestionsContainer.innerHTML = '';
     if (input.length === 0) {
@@ -403,7 +398,7 @@ function showSuggestions(input, playerNum) {
       suggestionItem.textContent = suggestion;
       suggestionItem.classList.add('suggestion-item');
       suggestionItem.addEventListener('click', () => {
-        const collegeGuess = document.getElementById(`player${playerNum}Input`);
+        const collegeGuess = document.getElementById('collegeGuess');
         if (collegeGuess) {
           collegeGuess.value = suggestion;
         }
@@ -435,8 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
   gameUrlInput = document.getElementById('gameUrlInput');
   shareLinkDiv = document.getElementById('shareLink');
   startGameBtn = document.getElementById('startGameBtn');
-  player1SubmitBtn = document.getElementById('player1Submit');
-  player2SubmitBtn = document.getElementById('player2Submit');
   playerImageElement = document.getElementById('playerImage');
 
   if (newGameBtn) {
@@ -454,37 +447,22 @@ document.addEventListener('DOMContentLoaded', () => {
     copyGameUrlBtn.addEventListener('click', copyGameUrl);
   }
 
-  const player1Input = document.getElementById('player1Input');
-  const player2Input = document.getElementById('player2Input');
+  const collegeGuess = document.getElementById('collegeGuess');
+  const submitGuessBtn = document.getElementById('submitGuess');
   
-  if (player1Input) {
-    player1Input.addEventListener('keypress', (e) => {
+  if (collegeGuess) {
+    collegeGuess.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        submitGuess(1);
+        submitGuess();
       }
     });
-    player1Input.addEventListener('input', (e) => {
-      showSuggestions(e.target.value, 1);
+    collegeGuess.addEventListener('input', (e) => {
+      showSuggestions(e.target.value);
     });
   }
   
-  if (player2Input) {
-    player2Input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        submitGuess(2);
-      }
-    });
-    player2Input.addEventListener('input', (e) => {
-      showSuggestions(e.target.value, 2);
-    });
-  }
-
-  if (player1SubmitBtn) {
-    player1SubmitBtn.addEventListener('click', () => submitGuess(1));
-  }
-
-  if (player2SubmitBtn) {
-    player2SubmitBtn.addEventListener('click', () => submitGuess(2));
+  if (submitGuessBtn) {
+    submitGuessBtn.addEventListener('click', submitGuess);
   }
 
   const urlParams = new URLSearchParams(window.location.search);
