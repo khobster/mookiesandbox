@@ -56,8 +56,8 @@ h1 {
 }
 
 .player-image {
-  width: 90%;
-  height: 90%;
+  width: 60%;
+  height: 60%;
   object-fit: cover;
   border-radius: 50%;
 }
