@@ -31,15 +31,31 @@
                 <div class="light yellow"></div>
                 <div class="light green"></div>
             </div>
-            <div class="horse-wheel">
-                <div class="letter-tile" id="H">H</div>
-                <div class="letter-tile" id="O">O</div>
-                <div class="letter-tile" id="R">R</div>
-                <div class="letter-tile" id="S">S</div>
-                <div class="letter-tile" id="E">E</div>
+            <div class="scoreboard">
+                <div class="player-score">
+                    <div class="player-label">You</div>
+                    <div class="horse-wheel" id="player1Wheel">
+                        <div class="letter-tile" id="H1">H</div>
+                        <div class="letter-tile" id="O1">O</div>
+                        <div class="letter-tile" id="R1">R</div>
+                        <div class="letter-tile" id="S1">S</div>
+                        <div class="letter-tile" id="E1">E</div>
+                    </div>
+                </div>
+                <div class="player-score">
+                    <div class="player-label">Opponent</div>
+                    <div class="horse-wheel" id="player2Wheel">
+                        <div class="letter-tile" id="H2">H</div>
+                        <div class="letter-tile" id="O2">O</div>
+                        <div class="letter-tile" id="R2">R</div>
+                        <div class="letter-tile" id="S2">S</div>
+                        <div class="letter-tile" id="E2">E</div>
+                    </div>
+                </div>
             </div>
             <div class="input-area" id="inputArea">
                 <input type="text" id="collegeGuess" placeholder="Enter college">
+                <div id="suggestions" class="suggestions"></div>
                 <button id="submitGuess">Submit</button>
             </div>
             <div id="result"></div>
