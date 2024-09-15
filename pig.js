@@ -150,38 +150,41 @@ function updateGameState(gameData) {
 }
 
 function updateUI(gameData) {
+  const isPlayer1 = playerId === gameData.player1Id;
+  const isCurrentPlayer = (isPlayer1 && gameData.currentPlayer === 1) || (!isPlayer1 && gameData.currentPlayer === 2);
+
   // Update traffic light
   const lights = document.querySelectorAll('.light');
   lights.forEach(light => light.classList.remove('active'));
-  if (gameData.currentPlayer === 1) {
+  if (isCurrentPlayer) {
     document.querySelector('.green').classList.add('active');
   } else {
     document.querySelector('.red').classList.add('active');
   }
 
-  // Update HORSE wheel
-  const letters = ['H', 'O', 'R', 'S', 'E'];
-  letters.forEach(letter => {
-    const tile = document.getElementById(letter);
-    if (tile) {
-      if (gameData.player1Progress.includes(letter) || gameData.player2Progress.includes(letter)) {
-        tile.classList.add('hidden');
-      } else {
-        tile.classList.remove('hidden');
-      }
-    }
-  });
+  // Update HORSE wheels
+  updateHorseWheel('player1Wheel', isPlayer1 ? gameData.player1Progress : gameData.player2Progress);
+  updateHorseWheel('player2Wheel', isPlayer1 ? gameData.player2Progress : gameData.player1Progress);
 
   // Show/hide input area based on turn
   const inputArea = document.getElementById('inputArea');
-  const isPlayer1 = playerId === gameData.player1Id;
-  const isCurrentPlayer = (isPlayer1 && gameData.currentPlayer === 1) || (!isPlayer1 && gameData.currentPlayer === 2);
   if (inputArea) {
     inputArea.style.display = isCurrentPlayer ? 'flex' : 'none';
   }
+}
 
-  // Update scores
-  updateUIForBothPlayers(gameData);
+function updateHorseWheel(wheelId, progress) {
+  const wheel = document.getElementById(wheelId);
+  if (wheel) {
+    const tiles = wheel.querySelectorAll('.letter-tile');
+    tiles.forEach((tile, index) => {
+      if (progress.length > index) {
+        tile.classList.add('earned');
+      } else {
+        tile.classList.remove('earned');
+      }
+    });
+  }
 }
 
 function startNewRound() {
@@ -310,21 +313,6 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
     .catch(error => console.error("Error updating game after guess:", error));
 }
 
-function updateUIForBothPlayers(gameData) {
-  const player1Score = document.getElementById('player1Score');
-  const player2Score = document.getElementById('player2Score');
-
-  if (player1Score) player1Score.textContent = formatScore(gameData.player1Progress);
-  if (player2Score) player2Score.textContent = formatScore(gameData.player2Progress);
-}
-
-function formatScore(progress) {
-  const fullWord = 'HORSE';
-  return fullWord.split('').map(letter => 
-    progress.includes(letter) ? '_' : letter
-  ).join(' ');
-}
-
 function isCloseMatch(guess, answer) {
     if (!guess.trim()) {
         return false;
@@ -387,25 +375,28 @@ function showSuggestions(input) {
   if (suggestionsContainer) {
     suggestionsContainer.innerHTML = '';
     if (input.length === 0) {
+      suggestionsContainer.style.display = 'none';
       return;
     }
     const suggestions = Array.from(new Set(playersData
       .map(player => player.college)
       .filter(college => college && college.toLowerCase().indexOf(input.toLowerCase()) !== -1)))
       .slice(0, 5);
-    suggestions.forEach(suggestion => {
-      const suggestionItem = document.createElement('div');
-      suggestionItem.textContent = suggestion;
-      suggestionItem.classList.add('suggestion-item');
-      suggestionItem.addEventListener('click', () => {
-        const collegeGuess = document.getElementById('collegeGuess');
-        if (collegeGuess) {
-          collegeGuess.value = suggestion;
-        }
-        suggestionsContainer.innerHTML = '';
+    if (suggestions.length > 0) {
+      suggestionsContainer.style.display = 'block';
+      suggestions.forEach(suggestion => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.textContent = suggestion;
+        suggestionItem.classList.add('suggestion-item');
+        suggestionItem.addEventListener('click', () => {
+          document.getElementById('collegeGuess').value = suggestion;
+          suggestionsContainer.style.display = 'none';
+        });
+        suggestionsContainer.appendChild(suggestionItem);
       });
-      suggestionsContainer.appendChild(suggestionItem);
-    });
+    } else {
+      suggestionsContainer.style.display = 'none';
+    }
   }
 }
 
