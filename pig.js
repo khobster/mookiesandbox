@@ -24,6 +24,7 @@ let scoreboard = { player1: '', player2: '' };
 let newGameBtn, setupArea, gameArea, gameUrlInput, shareLinkDiv, startGameBtn;
 let currentQuestionElement, playerImageElement;
 let correctSound, wrongSound;
+const letterSound = new Audio('wheeloffortune.mp3');
 
 function showPowAnimation(message) {
   const powElement = document.createElement('div');
@@ -179,6 +180,9 @@ function updateHorseWheel(wheelId, progress) {
     const tiles = wheel.querySelectorAll('.letter-tile');
     tiles.forEach((tile, index) => {
       if (progress.length > index) {
+        if (!tile.classList.contains('earned')) {
+          letterSound.play();  // Play sound when revealing a new letter
+        }
         tile.classList.add('earned');
       } else {
         tile.classList.remove('earned');
