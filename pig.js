@@ -308,10 +308,10 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
       updateUI(gameData);
       if (isCorrect) {
         showPowAnimation("YES!");
-        correctSound.play();
+        // correctSound.play();  // Comment out or remove this line
       } else {
         showPowAnimation("NO!");
-        wrongSound.play();
+        // wrongSound.play();  // Comment out or remove this line
       }
     })
     .catch(error => console.error("Error updating game after guess:", error));
