@@ -90,16 +90,16 @@ h1 {
 }
 
 #currentQuestion {
-  font-size: 1.5rem;
-  margin: 5px 0;
+  font-size: 2rem;
+  margin: 15px 0;
   text-align: center;
   font-weight: 700;
 }
 
 .image-frame {
-  width: 170px;
-  height: 170px;
-  margin: 10px auto;
+  width: 250px;
+  height: 250px;
+  margin: 20px auto;
   background-image: url('circularframeformookie.png');
   background-size: cover;
   position: relative;
@@ -109,8 +109,8 @@ h1 {
 }
 
 .player-image {
-  width: 62%;
-  height: 62%;
+  width: 70%;
+  height: 70%;
   object-fit: cover;
   border-radius: 50%;
 }
@@ -303,12 +303,12 @@ h1 {
   }
   
   #currentQuestion {
-    font-size: 1.3rem;
+    font-size: 1.7rem;
   }
   
   .image-frame {
-    width: 120px;
-    height: 120px;
+    width: 200px;
+    height: 200px;
   }
   
   .letter-tile {
@@ -322,10 +322,5 @@ h1 {
   #mainContainer {
     max-width: 768px;
     margin: 0 auto;
-  }
-  
-  .image-frame {
-    width: 200px;
-    height: 200px;
   }
 }
