@@ -50,17 +50,16 @@ h1 {
   background-image: url('circularframeformookie.png');
   background-size: cover;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .player-image {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
+  width: 90%;
+  height: 90%;
   object-fit: cover;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  border-radius: 50%;
 }
 
 #currentPlayer {
@@ -136,7 +135,6 @@ h1 {
   margin-top: 5px;
 }
 
-/* Scoreboard styles */
 .scoreboard {
   display: flex;
   justify-content: space-around;
@@ -149,19 +147,15 @@ h1 {
 
 .score {
   text-align: center;
-}
-
-.score-label {
-  font-size: 0.8rem;
-  margin-bottom: 5px;
+  width: 45%;
 }
 
 .score-value {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: bold;
+  letter-spacing: 0.5em;
 }
 
-/* Button styles */
 #newGameBtn, #copyGameUrl, #startGameBtn {
   padding: 12px 20px;
   font-size: 1.1rem;
@@ -216,7 +210,6 @@ h1 {
   }
 }
 
-/* Ensure no scrolling */
 #gameArea {
   display: flex;
   flex-direction: column;
