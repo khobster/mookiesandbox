@@ -17,7 +17,7 @@ body, html {
   padding: 0;
   background-color: var(--background-color);
   color: var(--text-color);
-  line-height: 1.6;
+  line-height: 1.4;
   height: 100%;
   overflow: hidden;
 }
@@ -26,30 +26,29 @@ body, html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
-  padding: 20px;
+  height: 100vh;
+  padding: 10px;
   box-sizing: border-box;
 }
 
 h1 {
-  font-size: 4rem;
+  font-size: 3rem;
   font-weight: 900;
   color: white;
   text-align: center;
-  margin: 20px 0;
+  margin: 10px 0;
   text-shadow: 
-      3px 3px 0 #000,
+      2px 2px 0 #000,
       -1px -1px 0 #000,  
       1px -1px 0 #000,
       -1px 1px 0 #000,
       1px 1px 0 #000,
-      4px 4px 0 #444,
-      5px 5px 0 #666,
-      6px 6px 0 #888,
-      7px 7px 0 #aaa,
-      8px 8px 10px rgba(0,0,0,0.6);
+      3px 3px 0 #444,
+      4px 4px 0 #666,
+      5px 5px 0 #888,
+      6px 6px 8px rgba(0,0,0,0.6);
   letter-spacing: 2px;
-  line-height: 1.2;
+  line-height: 1;
 }
 
 #setupArea {
@@ -58,14 +57,14 @@ h1 {
   align-items: center;
   width: 100%;
   max-width: 400px;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 #newGameBtn, #startGameBtn, #copyGameUrl {
   width: 100%;
-  padding: 10px;
-  margin: 5px 0;
-  font-size: 1rem;
+  padding: 8px;
+  margin: 3px 0;
+  font-size: 0.9rem;
   color: #fff;
   background-color: var(--button-color);
   border: none;
@@ -75,31 +74,24 @@ h1 {
 
 #gameUrlInput {
   width: 100%;
-  padding: 10px;
-  margin: 5px 0;
-  font-size: 1rem;
+  padding: 8px;
+  margin: 3px 0;
+  font-size: 0.9rem;
   border: 1px solid var(--primary-color);
   border-radius: 5px;
 }
 
-#shareLink {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 #currentQuestion {
-  font-size: 2rem;
-  margin: 15px 0;
+  font-size: 1.5rem;
+  margin: 10px 0;
   text-align: center;
   font-weight: 700;
 }
 
 .image-frame {
-  width: 250px;
-  height: 250px;
-  margin: 20px auto;
+  width: 180px;
+  height: 180px;
+  margin: 10px auto;
   background-image: url('circularframeformookie.png');
   background-size: cover;
   position: relative;
@@ -124,7 +116,7 @@ h1 {
   justify-content: space-around;
   align-items: center;
   padding: 5px;
-  margin: 10px auto;
+  margin: 5px auto;
 }
 
 .light {
@@ -142,19 +134,21 @@ h1 {
 
 .scoreboard {
   display: flex;
-  justify-content: space-around;
-  margin: 20px 0;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px 0;
   width: 100%;
 }
 
 .player-score {
   text-align: center;
+  margin-bottom: 10px;
 }
 
 .player-label {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: bold;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .horse-wheel {
@@ -163,17 +157,17 @@ h1 {
 }
 
 .letter-tile {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   background-color: #3498db;
   color: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
-  margin: 0 5px;
-  border-radius: 5px;
+  margin: 0 3px;
+  border-radius: 3px;
   transition: transform 0.6s;
   transform-style: preserve-3d;
 }
@@ -194,23 +188,23 @@ h1 {
   align-items: center;
   backface-visibility: hidden;
   transform: rotateY(180deg);
-  border-radius: 5px;
+  border-radius: 3px;
 }
 
 .input-area {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 10px;
   width: 100%;
 }
 
 .input-area input {
   width: 100%;
   max-width: 300px;
-  padding: 10px;
-  margin-bottom: 10px;
-  font-size: 16px;
+  padding: 8px;
+  margin-bottom: 5px;
+  font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-family: 'Merriweather', serif;
@@ -220,8 +214,8 @@ h1 {
 .input-area button {
   width: 100%;
   max-width: 300px;
-  padding: 10px;
-  font-size: 16px;
+  padding: 8px;
+  font-size: 14px;
   background-color: #3498db;
   color: white;
   border: none;
@@ -234,7 +228,7 @@ h1 {
 .suggestions {
   width: 100%;
   max-width: 300px;
-  max-height: 150px;
+  max-height: 100px;
   overflow-y: auto;
   background-color: var(--card-background);
   border: 1px solid #ccc;
@@ -244,27 +238,16 @@ h1 {
 }
 
 .suggestion-item {
-  padding: 10px;
+  padding: 5px;
   cursor: pointer;
-}
-
-.suggestion-item:hover {
-  background-color: #f0f0f0;
+  font-size: 12px;
 }
 
 #result {
   text-align: center;
-  font-size: 1.1rem;
-  margin-top: 10px;
+  font-size: 1rem;
+  margin-top: 5px;
   font-weight: 700;
-}
-
-.correct {
-  color: var(--secondary-color);
-}
-
-.incorrect {
-  color: var(--button-color);
 }
 
 #gameArea {
@@ -272,7 +255,7 @@ h1 {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 @keyframes popIn {
@@ -288,39 +271,37 @@ h1 {
   transform: translate(-50%, -50%);
   background-color: #ffff00;
   color: #ff0000;
-  font-size: 48px;
+  font-size: 36px;
   font-weight: bold;
-  padding: 20px 40px;
-  border-radius: 20px;
+  padding: 15px 30px;
+  border-radius: 15px;
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
   animation: popIn 0.5s ease-out;
   z-index: 1000;
 }
 
-@media (max-width: 768px) {
-  h1 {
-    font-size: 3rem;
-  }
-  
-  #currentQuestion {
-    font-size: 1.7rem;
-  }
-  
-  .image-frame {
-    width: 200px;
-    height: 200px;
-  }
-  
-  .letter-tile {
-    width: 30px;
-    height: 30px;
-    font-size: 18px;
-  }
-}
-
-@media (min-width: 769px) {
+@media (min-width: 768px) {
   #mainContainer {
     max-width: 768px;
     margin: 0 auto;
+  }
+  
+  h1 {
+    font-size: 4rem;
+  }
+  
+  #currentQuestion {
+    font-size: 1.8rem;
+  }
+  
+  .image-frame {
+    width: 220px;
+    height: 220px;
+  }
+  
+  .letter-tile {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
   }
 }
