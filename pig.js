@@ -30,6 +30,15 @@ function showPowAnimation(message) {
   const powElement = document.createElement('div');
   powElement.className = 'pow-animation';
   powElement.textContent = message;
+
+   if (message === "YES!") {
+    powElement.style.backgroundColor = "#00ff00";  // Green background for correct answers
+    powElement.style.color = "#ffffff";  // White text for contrast
+  } else {
+    powElement.style.backgroundColor = "#ff0000";  // Red background for incorrect answers
+    powElement.style.color = "#ffffff";  // White text for contrast
+  }
+  
   document.body.appendChild(powElement);
   
   setTimeout(() => {
