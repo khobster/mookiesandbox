@@ -24,41 +24,41 @@ body, html {
 #mainContainer {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
   padding: 10px;
   box-sizing: border-box;
+  justify-content: space-between;
 }
 
 h1 {
-    font-size: 3rem;
-    color: white;
-    text-align: center;
-    margin: 20px 0;
-    text-shadow: 
-        3px 3px 0 #000,
-        -1px -1px 0 #000,  
-        1px -1px 0 #000,
-        -1px 1px 0 #000,
-        1px 1px 0 #000,
-        4px 4px 0 #444,
-        5px 5px 0 #666,
-        6px 6px 0 #888,
-        7px 7px 0 #aaa,
-        8px 8px 10px rgba(0,0,0,0.6);
-    font-weight: bold;
-    letter-spacing: 2px;
+  font-size: 2.5rem;
+  color: white;
+  text-align: center;
+  margin: 10px 0;
+  text-shadow: 
+      2px 2px 0 #000,
+      -1px -1px 0 #000,  
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000,
+      3px 3px 0 #444,
+      4px 4px 0 #666,
+      5px 5px 0 #888,
+      6px 6px 8px rgba(0,0,0,0.6);
+  font-weight: bold;
+  letter-spacing: 2px;
 }
 
 #currentQuestion {
-  font-size: 1.8rem;
-  margin: 10px 0;
+  font-size: 1.5rem;
+  margin: 5px 0;
   text-align: center;
   font-weight: 600;
 }
 
 .image-frame {
-  width: 200px;
-  height: 200px;
+  width: 150px;
+  height: 150px;
   margin: 10px auto;
   background-image: url('circularframeformookie.png');
   background-size: cover;
@@ -78,20 +78,21 @@ h1 {
 #currentPlayer {
   text-align: center;
   font-weight: 600;
-  margin: 10px 0;
+  margin: 5px 0;
   color: var(--primary-color);
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 #playersContainer {
   display: flex;
   justify-content: space-around;
-  margin-top: 15px;
+  margin-top: 10px;
+  height: 150px; /* Fixed height to prevent layout shifts */
 }
 
 .player {
   background-color: var(--card-background);
-  padding: 10px;
+  padding: 5px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 45%;
@@ -100,14 +101,14 @@ h1 {
 .player h3 {
   margin: 0 0 5px 0;
   color: var(--primary-color);
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .player input[type="text"] {
   width: 100%;
   padding: 8px;
   margin-bottom: 5px;
-  font-size: 0.9rem;
+  font-size: 16px; /* Prevents zoom on iOS */
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
@@ -125,7 +126,7 @@ h1 {
 }
 
 .suggestions {
-  max-height: 80px;
+  max-height: 60px;
   overflow-y: auto;
   background-color: var(--card-background);
   border-radius: 4px;
@@ -153,9 +154,9 @@ h1 {
   justify-content: space-around;
   background-color: var(--scoreboard-color);
   color: white;
-  padding: 10px;
+  padding: 8px;
   border-radius: 8px;
-  margin-top: 15px;
+  margin: 10px 0;
 }
 
 .score {
@@ -164,20 +165,20 @@ h1 {
 }
 
 .score-value {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  letter-spacing: 0.5em;
+  letter-spacing: 0.3em;
 }
 
 #newGameBtn, #copyGameUrl, #startGameBtn {
-  padding: 12px 20px;
-  font-size: 1.1rem;
+  padding: 10px 15px;
+  font-size: 1rem;
   color: #fff;
   background-color: var(--button-color);
   border: none;
   border-radius: 25px;
   cursor: pointer;
-  margin: 10px 0;
+  margin: 8px 0;
   transition: background-color 0.3s, transform 0.2s;
 }
 
@@ -194,17 +195,17 @@ h1 {
 
 #gameUrlInput {
   width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  font-size: 1rem;
+  padding: 8px;
+  margin: 8px 0;
+  font-size: 16px;
   border: 1px solid var(--primary-color);
   border-radius: 4px;
 }
 
 #result {
   text-align: center;
-  font-size: 1.2rem;
-  margin-top: 15px;
+  font-size: 1.1rem;
+  margin-top: 10px;
   font-weight: 600;
 }
 
@@ -216,20 +217,32 @@ h1 {
   color: var(--button-color);
 }
 
+#gameArea {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
 @media (min-width: 768px) {
   #mainContainer {
     max-width: 768px;
     margin: 0 auto;
   }
-}
-
-#gameArea {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-#playersContainer {
-  flex-grow: 1;
-  overflow-y: auto;
+  
+  h1 {
+    font-size: 3rem;
+  }
+  
+  #currentQuestion {
+    font-size: 1.8rem;
+  }
+  
+  .image-frame {
+    width: 200px;
+    height: 200px;
+  }
+  
+  #playersContainer {
+    height: auto;
+  }
 }
