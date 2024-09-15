@@ -329,7 +329,28 @@ function updateCurrentPlayerDisplay(gameData) {
 }
 
 function isCloseMatch(guess, answer) {
-  return guess.trim().toLowerCase() === answer.trim().toLowerCase();
+    if (!guess.trim()) {
+        return false;
+    }
+
+    let simpleGuess = simplifyString(guess);
+    let simpleAnswer = simplifyString(answer);
+
+    // Handle "no college" case
+    if (simpleAnswer === '') {
+        const noCollegeResponses = ['no', 'nocollege', 'didntgotocollege', 'didnotgotocollege'];
+        return noCollegeResponses.includes(simpleGuess);
+    }
+
+    // Handle multiple colleges
+    const answerColleges = simpleAnswer.split(',').map(college => simplifyString(college));
+
+    // Check if the guess matches any of the colleges
+    return answerColleges.some(college => college.includes(simpleGuess) || simpleGuess.includes(college));
+}
+
+function simplifyString(str) {
+    return str.trim().toLowerCase().replace(/university|college|the| /g, '');
 }
 
 function getNextLetter(progress) {
