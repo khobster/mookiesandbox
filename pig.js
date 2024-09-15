@@ -283,13 +283,19 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
     }
   }
 
+  // Check for game end
+  if (gameData.player1Progress.length === 5 || gameData.player2Progress.length === 5) {
+    gameData.gameStatus = 'ended';
+    gameData.winner = gameData.player1Progress.length === 5 ? 2 : 1;
+  }
+
   // Update the internal scoreboard
   scoreboard.player1 = gameData.player1Progress;
   scoreboard.player2 = gameData.player2Progress;
 
-  if (gameData.player1Answered && gameData.player2Answered) {
+  if (gameData.player1Answered && gameData.player2Answered && gameData.gameStatus !== 'ended') {
     setTimeout(startNewRound, 2000);
-  } else {
+  } else if (gameData.gameStatus !== 'ended') {
     gameData.currentPlayer = 3 - playerNum; // Switch to the other player
   }
 
@@ -308,14 +314,21 @@ function updateGameAfterGuess(playerNum, guess, gameData) {
 }
 
 function updateUIForBothPlayers(gameData) {
-  const player1Progress = document.getElementById('player1Progress');
-  const player2Progress = document.getElementById('player2Progress');
+  const player1Score = document.getElementById('player1Score');
+  const player2Score = document.getElementById('player2Score');
 
-  if (player1Progress) player1Progress.textContent = gameData.player1Progress;
-  if (player2Progress) player2Progress.textContent = gameData.player2Progress;
+  if (player1Score) player1Score.textContent = formatScore(gameData.player1Progress);
+  if (player2Score) player2Score.textContent = formatScore(gameData.player2Progress);
 
   // Update other UI elements as needed
   updateCurrentPlayerDisplay(gameData);
+}
+
+function formatScore(progress) {
+  const fullWord = 'HORSE';
+  return fullWord.split('').map(letter => 
+    progress.includes(letter) ? '_' : letter
+  ).join(' ');
 }
 
 function updateCurrentPlayerDisplay(gameData) {
@@ -438,12 +451,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const player2Input = document.getElementById('player2Input');
   
   if (player1Input) {
+    player1Input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        submitGuess(1);
+      }
+    });
     player1Input.addEventListener('input', (e) => {
       showSuggestions(e.target.value, 1);
     });
   }
   
   if (player2Input) {
+    player2Input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        submitGuess(2);
+      }
+    });
     player2Input.addEventListener('input', (e) => {
       showSuggestions(e.target.value, 2);
     });
