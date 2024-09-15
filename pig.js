@@ -320,15 +320,11 @@ function updateUIForBothPlayers(gameData) {
   if (player1Score) player1Score.textContent = formatScore(gameData.player1Progress);
   if (player2Score) player2Score.textContent = formatScore(gameData.player2Progress);
 
-  // Update other UI elements as needed
   updateCurrentPlayerDisplay(gameData);
 }
 
 function formatScore(progress) {
-  const fullWord = 'HORSE';
-  return fullWord.split('').map(letter => 
-    progress.includes(letter) ? '_' : letter
-  ).join(' ');
+  return progress.split('').join(' ');
 }
 
 function updateCurrentPlayerDisplay(gameData) {
